@@ -3,7 +3,7 @@ msrepo = https://github.com/dushoff
 gitroot = ../
 
 -include local.mk
--include $(gitroot)/local/local.mk
+-include $(gitroot)/local.mk
 
 ms = $(gitroot)/makestuff
 

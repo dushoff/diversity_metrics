@@ -27,3 +27,15 @@ ssrDiversity <- function(p){
 		, Richness  = popDiversity(p, 1)
 	))
 }
+
+piePop <- function(p){
+	d <- data.frame(
+		label = as.factor(1:length(p))
+		, p=sample(p)
+	)
+	return(
+		ggplot(d, aes(x=factor(1), fill=label, y=p))
+		+ geom_bar(stat="identity")
+		+ coord_polar(theta="y")
+	)
+}
