@@ -1,23 +1,25 @@
 ### Hooks for the editor to set the default target
 current: target
 
-target pngtarget pdftarget vtarget acrtarget: notarget
+target pngtarget pdftarget vtarget acrtarget: examples.Rout 
 
 ##################################################################
 
 
 # make files
 
-Sources = Makefile .gitignore README.md
+Sources = Makefile .gitignore README.md stuff.mk
 
-######################################################################
+include stuff.mk
 
-msrepo = https://github.com/dushoff
-gitroot = ../
+##################################################################
 
--include local.mk
--include $(gitroot)/local/local.mk
-ms = $(gitroot)/makestuff
+Sources += $(wildcard *.R)
+
+functions.Rout: functions.R
+	$(run-R)
+
+examples.Rout: functions.Rout examples.R
 
 ##################################################################
 
@@ -26,14 +28,8 @@ ms = $(gitroot)/makestuff
 ## Change this name to download a new version of the makestuff directory
 Makefile: start.makestuff
 
-%.makestuff:
-	-cd $(dir $(ms)) && mv -f $(notdir $(ms)) .$(notdir $(ms))
-	cd $(dir $(ms)) && git clone $(msrepo)/$(notdir $(ms)).git
-	-cd $(dir $(ms)) && rm -rf .$(notdir $(ms))
-	touch $@
-
 -include $(ms)/git.mk
 -include $(ms)/visual.mk
+-include $(ms)/wrapR.mk
 
-# -include $(ms)/wrapR.mk
 # -include $(ms)/oldlatex.mk
