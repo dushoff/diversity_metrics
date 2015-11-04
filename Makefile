@@ -5,7 +5,6 @@ target pngtarget pdftarget vtarget acrtarget: examples.Rout
 
 ##################################################################
 
-
 # make files
 
 Sources = Makefile .gitignore README.md stuff.mk

@@ -37,5 +37,19 @@ piePop <- function(p){
 		ggplot(d, aes(x=factor(1), fill=label, y=p))
 		+ geom_bar(stat="identity")
 		+ coord_polar(theta="y")
+		# + scale_fill_brewer( type = "div" , palette = "RdBu" )
+		+ theme(legend.position="none")
+		+ theme(
+			line = element_blank(),
+			text = element_blank(),
+			title = element_blank()
+		)
+		+ xlab("")
+		+ ylab("")
 	)
+}
+
+pieStats <- function(p){
+	print(piePop(p))
+	return(ssrDiversity(p))
 }
