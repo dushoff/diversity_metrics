@@ -71,3 +71,4 @@ pieStats <- function(p){
 	print(piePop(p))
 	return(ssrDiversity(p))
 }
+
