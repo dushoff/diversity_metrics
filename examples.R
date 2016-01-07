@@ -15,3 +15,4 @@ print(pieStats(powPop(20,4)))
 print(pieStats(powPop(20,1.26)))
 print(pieStats(powPop(20,.4)))
 powPop
+
