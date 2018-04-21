@@ -28,4 +28,4 @@ examples.Rout: functions.Rout examples.R
 -include $(ms)/visual.mk
 -include $(ms)/wrapR.mk
 
-# -include $(ms)/oldlatex.mk
+# -include $(ms)/texdeps.mk
