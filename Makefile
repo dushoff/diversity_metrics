@@ -13,6 +13,9 @@ include sub.mk
 
 ##################################################################
 
+## Early examples
+## go examples.Rout.pdf
+
 Sources += $(wildcard *.R)
 
 functions.Rout: functions.R
@@ -22,10 +25,19 @@ examples.Rout: functions.Rout examples.R
 
 ##################################################################
 
-### Makestuff
+
+Sources += notes.md
+
+## Draft MS
+
+Sources += rarity.tex
+rarity.pdf: rarity.tex
+
+######################################################################
 
 -include $(ms)/git.mk
 -include $(ms)/visual.mk
+-include $(ms)/texdeps.mk
 -include $(ms)/wrapR.mk
 
 # -include $(ms)/texdeps.mk
