@@ -5,6 +5,9 @@ target.mk
 make.log
 .gitignore 
 
+# from RStudio
+*.Rproj*
+
 ## content from makestuff
 up.time
 commit.time
