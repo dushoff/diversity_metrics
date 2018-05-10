@@ -6,6 +6,7 @@ make.log
 .gitignore 
 
 ## content from makestuff
+.ignore
 up.time
 commit.time
 commit.default
@@ -33,6 +34,7 @@ rarity.out
 .Rhistory
 *.Rout*
 *.wrapR.*
+.ignore
 up.time
 commit.time
 commit.default

@@ -9,6 +9,10 @@ target pngtarget pdftarget vtarget acrtarget: examples.Rout
 
 Sources = Makefile .gitignore README.md sub.mk
 
+## I wrote somewhere not to do this, but I think the best thing is to 
+## not track .gitignore
+Ignore += .ignore
+
 include sub.mk
 
 ##################################################################
