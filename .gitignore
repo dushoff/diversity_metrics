@@ -43,3 +43,4 @@ clonedir/
 .Rhistory
 *.Rout*
 *.wrapR.*
+.Rproj.user
