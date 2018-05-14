@@ -5,10 +5,8 @@ target.mk
 make.log
 .gitignore 
 
-# from RStudio
-*.Rproj*
-
 ## content from makestuff
+.ignore
 up.time
 commit.time
 commit.default
@@ -18,6 +16,16 @@ clonedir/
 *.hup
 *.oldfile
 *.olddiff
+*.log
+*.aux
+.*.aux
+*.blg
+*.bbl
+*.bcf
+*.run.xml
+.texdeps/
+rarity.pdf
+rarity.out
 *.page.pdf
 *.wide.pdf
 *.RData
@@ -26,6 +34,7 @@ clonedir/
 .Rhistory
 *.Rout*
 *.wrapR.*
+.ignore
 up.time
 commit.time
 commit.default
@@ -35,6 +44,16 @@ clonedir/
 *.hup
 *.oldfile
 *.olddiff
+*.log
+*.aux
+.*.aux
+*.blg
+*.bbl
+*.bcf
+*.run.xml
+.texdeps/
+rarity.pdf
+rarity.out
 *.page.pdf
 *.wide.pdf
 *.RData
