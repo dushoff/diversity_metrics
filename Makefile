@@ -1,7 +1,6 @@
 ### Hooks for the editor to set the default target
 current: target
-
-target pngtarget pdftarget vtarget acrtarget: examples.Rout 
+-include target.mk
 
 ##################################################################
 
@@ -28,7 +27,6 @@ functions.Rout: functions.R
 examples.Rout: functions.Rout examples.R
 
 ##################################################################
-
 
 Sources += notes.md
 
