@@ -57,8 +57,10 @@ rarity.pdf: rarity.tex
 
 ## Reference stuff
 
+Sources += auto.rmu
 auto.html: auto.rmu
 
+Ignore += library
 library: dir=$(Drop)/rarity_docs
 library:
 	$(linkdirname)
