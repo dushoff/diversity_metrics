@@ -6,13 +6,31 @@ current: target
 
 # make files
 
-Sources = Makefile .gitignore README.md sub.mk
+Sources = Makefile .ignore README.md
 
-## I wrote somewhere not to do this, but I think the best thing is to 
-## not track .gitignore
-Ignore += .ignore
+Ignore += .gitignore
 
-include sub.mk
+Sources += Makefile .ignore 
+Ignore += .gitignore
+
+msrepo = https://github.com/dushoff
+ms = makestuff
+
+Drop = ~/Dropbox
+Ignore += local.mk
+-include local.mk
+-include $(ms)/os.mk
+
+Ignore += $(ms)
+## Sources += $(ms)
+Makefile: $(ms) $(ms)/Makefile
+$(ms):
+	git submodule add -b master $(msrepo)/$(ms)
+
+## Only meant to work with makestuff.sub
+$(ms)/%.mk: $(ms) $(ms)/Makefile ;
+$(ms)/Makefile:
+	git submodule update -i
 
 ##################################################################
 
@@ -37,9 +55,19 @@ rarity.pdf: rarity.tex
 
 ######################################################################
 
+## Reference stuff
+
+auto.html: auto.rmu
+
+library: dir=$(Drop)/rarity_docs
+library:
+	$(linkdirname)
+
+######################################################################
+
 -include $(ms)/git.mk
 -include $(ms)/visual.mk
 -include $(ms)/texdeps.mk
+-include $(ms)/autorefs.mk
+-include $(ms)/pandoc.mk
 -include $(ms)/wrapR.mk
-
-# -include $(ms)/texdeps.mk
