@@ -21,8 +21,7 @@ Ignore += local.mk
 -include local.mk
 -include $(ms)/os.mk
 
-Ignore += $(ms)
-## Sources += $(ms)
+Sources += $(ms)
 Makefile: $(ms) $(ms)/Makefile
 $(ms):
 	git submodule add -b master $(msrepo)/$(ms)
