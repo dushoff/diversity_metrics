@@ -50,7 +50,7 @@ Sources += notes.md
 ## Draft MS
 
 Sources += rarity.tex
-rarity.pdf: rarity.tex
+RARITy.pdf: rarity.tex
 
 ######################################################################
 
