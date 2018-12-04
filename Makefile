@@ -14,7 +14,7 @@ ms = makestuff
 Drop = ~/Dropbox
 -include $(ms)/os.mk
 
-## Only meant to work with makestuff.sub
+Sources += $(ms)
 $(ms)/%.mk: $(ms) $(ms)/Makefile ;
 $(ms)/Makefile:
 	git submodule update -i
