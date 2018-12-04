@@ -6,25 +6,13 @@ current: target
 
 # make files
 
-Sources = Makefile .ignore README.md
-
-Ignore += .gitignore
-
-Sources += Makefile .ignore 
-Ignore += .gitignore
+Sources = Makefile README.md
 
 msrepo = https://github.com/dushoff
 ms = makestuff
 
 Drop = ~/Dropbox
-Ignore += local.mk
--include local.mk
 -include $(ms)/os.mk
-
-Sources += $(ms)
-Makefile: $(ms) $(ms)/Makefile
-$(ms):
-	git submodule add -b master $(msrepo)/$(ms)
 
 ## Only meant to work with makestuff.sub
 $(ms)/%.mk: $(ms) $(ms)/Makefile ;
