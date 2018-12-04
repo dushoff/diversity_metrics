@@ -52,6 +52,9 @@ Sources += notes.md
 Sources += rarity.tex
 ## rarity.pdf: rarity.tex
 
+## Dump from MR via email
+Sources += prospectus.md diversity.md
+
 ######################################################################
 
 ## Reference stuff
