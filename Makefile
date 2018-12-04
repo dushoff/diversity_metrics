@@ -57,6 +57,15 @@ Sources += prospectus.md diversity.md
 
 ######################################################################
 
+## Scaling illustrations (to be merged?)
+
+Sources += $(wildcard *.R)
+
+scaled_means.Rout: scaled_means.R 
+scaling_not_weighting.Rout: scaling_not_weighting.R
+
+######################################################################
+
 ## Reference stuff
 
 Sources += auto.rmu

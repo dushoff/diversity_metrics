@@ -7,19 +7,21 @@ library(vegan)
 
 #use 20,30,50 so it's obvious why x!=3
 a<-c(20,30,50)
+
 #This script isn't that flexible yet b/c the x-axis ticks don't work for randomly generated data, for example
 #a<-rpois(6,5)
+
 a_norm<-a/sum(a) #normalized, rel abundances
 a_rare<-1/a_norm #rarities
 
 #make a d.f. for easy manipulation of scales in ggplot2
 comm<-data.frame("rarity"=a_rare,"abundance"=a)
 
-
-#need to figure out how to set bar widths the same, or better yet replace with boxes or somehting that looks like units (and then go back to 2,3,5 instead of 20,30,50)
+#need to figure out how to set bar widths the same, or better yet replace with boxes or something that looks like units (and then go back to 2,3,5 instead of 20,30,50)
 
 #unweighted by # individuals (as far as I know this is not a diversity metric people use, although I've encountered mean and geometric mean rel. abundance)
-comm %>% ggplot(aes(rarity, rep(1, length(a))))+
+## Suppressed for now
+g0 <- comm %>% ggplot(aes(rarity, rep(1, length(a))))+
     geom_col(width=0.01)+
     geom_vline(xintercept=mean(a_rare), color="red")+
     theme_classic()
@@ -27,10 +29,14 @@ comm %>% ggplot(aes(rarity, rep(1, length(a))))+
 #weighted by # individuals
 
 #Richness (arithmetic scale)
-comm %>% ggplot(aes(rarity, abundance))+
-    geom_col(width=0.01)+
-    geom_vline(xintercept=renyi(comm$abundance, scales=0, hill=T), color="red")+
-    theme_classic()
+print(comm
+	%>% ggplot(aes(rarity, abundance))
+	+ geom_col(width=0.01)
+   + geom_vline(
+		xintercept=renyi(comm$abundance, scales=0, hill=T), color="red"
+	)
+   + theme_classic()
+)
 
 #rescale x axis
 #shannon (log) scale
