@@ -60,7 +60,7 @@ Sources += auto.rmu
 auto.html: auto.rmu
 
 Ignore += library
-library: dir=$(Drop)/rarity_docs
+library: dir=$(Drop)/mean_rarity_lit
 library:
 	$(linkdirname)
 
