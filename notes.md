@@ -1,3 +1,20 @@
+Poisson logic
+=============
+
+If the community size is large, then we expect the representation of a given rare species to follow a Poisson distribution, with mean μ=n p_r. This gives the following probabilities that it will be:
+
+* absent: exp(-μ)
+* singleton: μ exp(-μ)
+* doubleleton: μ² exp(-μ)/2
+
+Thus, the expected _number_ of species in these categories are:
+
+* absent: f₀ = S_r exp(-μ)
+* singleton: f₁ = S_r μ exp(-μ)
+* doubleleton: f₂ = S_r μ² exp(-μ)/2
+
+Chao1 estimates 
+
 Dead-simple Chao1
 =================
 
