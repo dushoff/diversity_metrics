@@ -33,7 +33,9 @@ examples.Rout: functions.Rout examples.R
 
 ##################################################################
 
+Ignore += notes.html
 Sources += notes.md
+notes.html: notes.md
 
 ## Draft MS
 
