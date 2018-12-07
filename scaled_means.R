@@ -1,5 +1,6 @@
 library(tidyverse)
-theme_set(theme_classic())
+library(ggthemes)
+theme_set(theme_tufte())
 
 require(scales) # trans_new() is in the scales library
 #need the reverse bit for the scaling of the axes to get them in the right orientation
@@ -37,8 +38,9 @@ rarity_plot <- function(abundance, p){
 	)) %>% pull(div)
 	rp <- (ggplot(rf, aes(x=rarity, y=abundance))
 		+ geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0))
-		+ scale_x_continuous(trans=power_trans(pow=p), breaks=c(1.5,2,2.5,3,5,8))
-		#+ scale_size_identity()
+		+ scale_x_continuous(trans=power_trans(pow=p), breaks=c(sum(abundance)/max(abundance),2.5,3,sum(abundance)/min(abundance)))
+		+ scale_y_continuous(expand=c(0,0))
+		+ geom_rangeframe(data=data.frame(rarity=c(sum(abundance)/max(abundance),sum(abundance)/min(abundance)), abundance=c(0,max(abundance)+10)))
 		+ geom_vline(xintercept=div, color="red")
 	)
 	return(rp)
@@ -49,6 +51,5 @@ ab <- c(20,30,50)
 rarity_plot(ab, 1)
 rarity_plot(ab, 0)
 rarity_plot(ab, -1)
-
 
 
