@@ -25,7 +25,7 @@ power_trans = function(pow) trans_new(name="power"
 	#, breaks = function(x)extended_breaks(n = 30)(x)
 )
 
-## pow does not work if passed, but does work if set globally
+
 rarity_plot <- function(abundance, p){
 	rf <- tibble(names = as.factor(1:length(abundance))
 		, abundance
@@ -37,19 +37,18 @@ rarity_plot <- function(abundance, p){
 	)) %>% pull(div)
 	rp <- (ggplot(rf, aes(x=rarity, y=abundance))
 		+ geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0))
-		+ scale_x_continuous(trans=power_trans(pow=p), breaks=c(1,3,5,10,50))
+		+ scale_x_continuous(trans=power_trans(pow=p), breaks=c(1.5,2,2.5,3,5,8))
 		#+ scale_size_identity()
 		+ geom_vline(xintercept=div, color="red")
 	)
 	return(rp)
 }
 
-ab <- c(300,30,10)
+ab <- c(20,30,50)
 
 rarity_plot(ab, 1)
 rarity_plot(ab, 0)
 rarity_plot(ab, -1)
-?stat
 
 
 
