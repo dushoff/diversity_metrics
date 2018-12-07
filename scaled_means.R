@@ -38,8 +38,11 @@ rarity_plot <- function(abundance, p){
 	)) %>% pull(div)
 	rp <- (ggplot(rf, aes(x=rarity, y=abundance))
 		+ geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0))
+		#could probably set breaks more flexibly
 		+ scale_x_continuous(trans=power_trans(pow=p), breaks=c(sum(abundance)/max(abundance),2.5,3,sum(abundance)/min(abundance)))
+		#the expand=c(0,0) is what fixes x-axis in place at y=0
 		+ scale_y_continuous(expand=c(0,0))
+		#this is what makes the axis lines... it is just a line segment from min to max of the provided data. teh breaks are provided in scale_x_continuous or scale_y_continuous
 		+ geom_rangeframe(data=data.frame(rarity=c(sum(abundance)/max(abundance),sum(abundance)/min(abundance)), abundance=c(0,max(abundance)+10)))
 		+ geom_vline(xintercept=div, color="red")
 	)
