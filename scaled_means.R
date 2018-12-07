@@ -19,6 +19,9 @@ ipfun=function(x, pow, rever=F){
 	return(x^(1/pow))
 }
 
+#add a diversity function to make graphs more complicated
+dfun<-function(ab, l){ipfun(sum(ab*pfun(sum(ab)/ab, l))/sum(ab),l)}
+
 ## This is weird craftiness to make functions above work with coord_trans
 
 prettify <- function(breaks){
@@ -47,21 +50,30 @@ rarity_plot <- function(abundance, p){
 		, p
 	)) %>% pull(div)
 	rp <- (ggplot(rf, aes(x=rarity, y=abundance))
-		+ geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0))
+	       + geom_vline(xintercept=div, color="red", size=1.5)
+	       + geom_vline(xintercept=div(ab,1), color="blue", linetype=3, size=1.1)
+	       + geom_vline(xintercept=div(ab,-1), color="purple", linetype=4, size=1.1)
+	       + geom_vline(xintercept=div(ab,0), color="green", linetype=5, size=1.1)
+		+ geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0), size=1.6)
 		#could probably set breaks more flexibly
 		+ scale_x_continuous(trans=power_trans(pow=p))
 		#the expand=c(0,0) is what fixes x-axis in place at y=0
 		+ scale_y_continuous(expand=c(0,0))
 		#this is what makes the axis lines... it is just a line segment from min to max of the provided data. teh breaks are provided in scale_x_continuous or scale_y_continuous, wich in turn can get them from 
 		+ geom_rangeframe(data=data.frame(rarity=c(min(rf$rarity), max(rf$rarity)), abundance=c(0,max(abundance)+10)))
-		+ geom_vline(xintercept=div, color="red")
+	
+	    + theme(legend.position="none")
+		
 	)
 	return(rp)
 }
 
-#ab <- c(20,30,50)
-ab<-c(100, 20, 15, 10, 2, 1, 1,1)
+
+
+ab <- c(20,30,50)
+# ab<-c(100, 20, 15, 10, 2, 1, 1,1)
+ab<-c(50,20,30,5,3,2)
 rarity_plot(ab, 1)
 rarity_plot(ab, 0)
 rarity_plot(ab, -1)
-
+?geom_segment
