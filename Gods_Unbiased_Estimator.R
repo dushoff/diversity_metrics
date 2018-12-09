@@ -23,9 +23,7 @@ S<-50
 N<-30
 l<-1
 
-out<-vector("list", reps)
-
-out<-map_dfr(lapply(1:reps, function(x){
+out<-map_dfr(1:reps, function(x){
 #make a lognormal SAD with S species
 
 a<-exp(rnorm(S))
@@ -45,7 +43,7 @@ chao1<-c1(freqs)
 
 
 return(data.frame(true, gods, naive, chao1, S, l, N))
-}), rbind)
+})
 
 
 plot_ests<-function(df, e1, e2){(df %>% ggplot(aes(x=get(e1), y=get(e2)))
