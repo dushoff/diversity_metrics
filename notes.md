@@ -1,3 +1,13 @@
+Tasks TODO
+=====
+
+* Chao-Shannon
+* God is not stupid
+* Simpson estimates
+	* Finite-size correction (Dushoff?)
+	* Better-for-Hill version
+* Good Turing plugins (naive and regularized)
+
 Poisson logic
 =============
 

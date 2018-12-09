@@ -23,6 +23,18 @@ Unbiased estimates always sound like a good idea, and sometimes they are. But es
 
 To see this we recall that the definition of unbiased is that the _mean_ of hypothetical large ensemble of estimates would approach the true vale. Thus, applying a non-linear transformation before taking the mean will generally convert an unbiased estimate to a biased estimate. In particular, the unbiased estimates available for the Simpson index yield biased estimates for Simpson numbers. Specifically, since [TODO something tricky about curvature], the estimates are biased high on the numbers scale. This is not necessarily a problem. As sample size increases, the estimate converges to the right answer, which is the same on either scale, and it is therefore _asymptotically_ unbiased on both scales.
 
-So biased estimates of _mean_ rarity are not necessarily a problem.
+So biased estimates of _mean_ rarity are not necessarily a problem. Biased estimates of individual or species rarity are more problematic: the index estimate is based on an average of these rarities, and if they are biased, there is no reason why the mean rarity estimate should converge. Specifically, while estimators unbiased on the Simpson scale produce consistent estimates of Simpson indices and numbers, they produce inconsistent, high estimates of Shannon or richness diversities.
 
 ### Ways to estimate rarity
+
+We are super-interested in ways to estimate rarity and whether (and how) they're biased on particular scales.
+
+Here's a list of some of the ones that do or should exist
+
+* Probability based. Simpson and Simpson-notDushoff
+
+* Simpson-Hill
+
+* Poisson based; these apply Good-Turing logic to singletons and doubletons, recover coverage and Chao estimates, and produce estimates ☹: they are smaller than Chao1
+
+* Formal Chao: Is there a logic that ties Chao1 to a set of specific rarity estimates? Does it provide
