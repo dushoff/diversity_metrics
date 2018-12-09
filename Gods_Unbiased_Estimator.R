@@ -1,6 +1,8 @@
 # script to test god's unbiased rarity estimator on simluated community data
-library(tidyverse)
+
 #a couple useful diversity estimators
+
+library(tidyverse)
 
 #Now make GUE (God's Unbiased Estimator)
 GUE<-function(freqs, true_p,l){
@@ -51,6 +53,7 @@ plot_ests<-function(df, e1, e2){(df %>% ggplot(aes(x=get(e1), y=get(e2)))
     +labs(x=e1, y=e2)
     +geom_hline(yintercept=S, color="red")
     +geom_vline(xintercept=S, color="red")
+	 +geom_abline()
     +theme_classic())
 }
 

@@ -62,6 +62,8 @@ Sources += $(wildcard *.R)
 scaled_means.Rout: scaled_means.R 
 scaling_not_weighting.Rout: scaling_not_weighting.R
 
+Gods_Unbiased_Estimator.Rout: Gods_Unbiased_Estimator.R
+
 ######################################################################
 
 ## Reference stuff
