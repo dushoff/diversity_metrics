@@ -33,9 +33,17 @@ examples.Rout: functions.Rout examples.R
 
 ##################################################################
 
-Ignore += notes.html
-Sources += notes.md
+md = $(wildcard *.md)
+mh = $(md:md=html)
+
+Sources += $(md)
+Ignore += $(mh)
+
+## Derivations, simplifications, dead ends
 notes.html: notes.md
+
+## Stuff we sort of want to say
+outline.html: outline.md
 
 ## Draft MS
 
