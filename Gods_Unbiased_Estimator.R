@@ -1,7 +1,7 @@
 # script to test god's unbiased rarity estimator on simluated community data
 
 #a couple useful diversity estimators
-
+library(tidyverse)
 
 #Now make GUE (God's Unbiased Estimator)
 GUE<-function(freqs, true_p,l){
