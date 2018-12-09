@@ -39,6 +39,7 @@ power_trans = function(pow) trans_new(name="power"
     , domain = c(1, 10000)
 )
 
+fancy_rep<-function(df){data.frame(df[rep(1:nrow(df), df$abundance),])}
 
 rarity_plot <- function(abundance, p){
 	rf <- tibble(names = as.factor(1:length(abundance))
@@ -49,12 +50,15 @@ rarity_plot <- function(abundance, p){
 		sum(abundance*pfun(rarity, p))/sum(abundance)
 		, p
 	)) %>% pull(div)
-	rp <- (ggplot(rf, aes(x=rarity, y=abundance))
+	rf2<-data.frame("boxcol"=1:nrow(fancy_rep(rf)),fancy_rep(rf))
+	rp <- (ggplot(rf, aes(x=rarity))
+	             # +geom_bar(aes(fill=boxcol), colour="red")
+	       # +scale_fill_manual(c("red", "blue"))
 	       + geom_vline(xintercept=div, color="red", size=1.5)
-	       + geom_vline(xintercept=div(ab,1), color="blue", linetype=3, size=1.1)
-	       + geom_vline(xintercept=div(ab,-1), color="purple", linetype=4, size=1.1)
-	       + geom_vline(xintercept=div(ab,0), color="green", linetype=5, size=1.1)
-		+ geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0), size=1.6)
+	       + geom_vline(xintercept=dfun(ab,1), color="blue", linetype=3, size=1.1)
+	       + geom_vline(xintercept=dfun(ab,-1), color="purple", linetype=4, size=1.1)
+	       + geom_vline(xintercept=dfun(ab,0), color="green", linetype=5, size=1.1)
+	+ geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0), size=1.6)
 		#could probably set breaks more flexibly
 		+ scale_x_continuous(trans=power_trans(pow=p))
 		#the expand=c(0,0) is what fixes x-axis in place at y=0
@@ -73,7 +77,9 @@ rarity_plot <- function(abundance, p){
 ab <- c(20,30,50)
 # ab<-c(100, 20, 15, 10, 2, 1, 1,1)
 ab<-c(50,20,30,5,3,2)
+
+
 rarity_plot(ab, 1)
 rarity_plot(ab, 0)
 rarity_plot(ab, -1)
-?geom_segment
+
