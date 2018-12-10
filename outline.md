@@ -29,6 +29,28 @@ So biased estimates of _mean_ rarity are not necessarily a problem. Biased estim
 
 We are super-interested in ways to estimate species rarity and whether (and how) they're biased on particular scales.
 
+An estimator that is unbiased on the arithmetic scale is one we call "God's estimator." It is not practical for observed data, but is informative to compare other estimators against. 
+
+God's estimator works by plugging in the true rarity for each observed species. 
+
+Formally, if we use our notation from the notes.md file, we have God's esitmator as 
+
+s~hat~God= sum[ i=1 -> S~total~] \( n~i~ * r~i~ \) /sum[ i=1 -> S~total~] \( n~i~ \)
+
+
+
+Where S is the total # species in the community
+n_i is the number of individuals from species i observed in the community
+r_i is the true, unobserved rarity of species i in the community. 
+
+It follows that God, while not always correct, is not stupid. That is to say, God never predicts a mean rarity< S_obs, the number of species God already observed in a given sample, using this estimator.
+
+The minimum addition an arbitrary species can have to this sum is 1; No r_i<1 can exist. This implies that God's estimator is always greater than a naive estimator, which predicts S_obs, subsituting 
+
+(sum[i=1->S_total](n_i))/n_i for God's r_i.
+
+#more estimators
+
 Here's a list of some of the ones that do or should exist
 
 * Probability based unbiased Simpson estimators

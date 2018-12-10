@@ -54,7 +54,7 @@ freqs<-unlist(lapply(1:S, function(x){length(which(obs_namelist==x))}))
 
 true<-GUE(true_p, true_p, l)
 gods<-GUE(freqs/sum(freqs), true_p, l)   
-naive<-GUE((freqs/sum(freqs))[freqs/sum(freqs)!=0],(freqs/sum(freqs))[freqs/sum(freqs)!=0],l)
+naive<-GUE((freqs/sum(freqs))[freqs/sum(freqs)!=0],(freqs/sum(freqs))[freqs/sum(freqs)!=0],l) # equals sum(freqs>0) for richness
 chao1<-c1(freqs)
 simple_good1<-GT1(freqs)
 # good_plugin<-GT2(freqs)
