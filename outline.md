@@ -27,14 +27,20 @@ So biased estimates of _mean_ rarity are not necessarily a problem. Biased estim
 
 ### Ways to estimate rarity
 
-We are super-interested in ways to estimate rarity and whether (and how) they're biased on particular scales.
+We are super-interested in ways to estimate species rarity and whether (and how) they're biased on particular scales.
 
 Here's a list of some of the ones that do or should exist
 
-* Probability based. Simpson and Simpson-notDushoff
+* Probability based unbiased Simpson estimators
 
-* Simpson-Hill
+* Simpson-Hill estimator to be tracked by MR.
 
-* Poisson based; these apply Good-Turing logic to singletons and doubletons, recover coverage and Chao estimates, and produce estimates ☹: they are smaller than Chao1
+* Poisson based. Worked out during Hamilton visit. These apply Good-Turing logic to singletons and doubletons, recover coverage and Chao estimates, and produce disappointing estimates ☹ (smaller than Chao1
 
-* Formal Chao: Is there a logic that ties Chao1 to a set of specific rarity estimates? Does it provide
+* Formal Chao1: Is there a logic that ties Chao1 to a set of specific rarity estimates? If so, does it provide any insights?
+
+* Almost unbiased Shannon estimates.
+
+* Good based. These would use Good's formula, with or without regularization.
+
+* Fancy. These would use expansions (like Efron, Haegeman, newer Chao)
