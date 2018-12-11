@@ -1,5 +1,6 @@
 library(tidyverse)
 library(ggthemes)
+library(grid)
 
 theme_set(theme_tufte(base_family = "sans"))
 
@@ -8,14 +9,14 @@ require(scales) # trans_new() is in the scales library
 pfun=function(x, pow, rever=F){
 	if (pow==0) return(log(x))
     if (rever==T){
-    if (pow<0) return(-x^pow)
+    if (pow<(0)) return(-x^pow)
         return(x^pow)}
 	return(x^pow)
 }
 
 ipfun=function(x, pow, rever=F){
 	if (pow==0) return(exp(x))
-    if(rever==T){if (pow<0) return(-x^(1/pow))
+    if(rever==T){if (pow<(0)) return(-x^(1/pow))
         return(x^(1/pow))}
 	return(x^(1/pow))
 }
@@ -70,10 +71,10 @@ rarity_plot <- function(abundance, p){
 	  #This makes a nice line that doesn't have issues with scaling
 	# + geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0), size=1.6)
 	
-	   +coord_trans(x=power_trans(pow=p), y="identity", clip="off")
+	   # +coord_cartesian(clip="off")
 	
 	#this one seems to work better with the labels
-	# + scale_x_continuous(trans=power_trans(pow=p))
+	+ scale_x_continuous(trans=power_trans(pow=p))
 		
 	#the expand=c(0,0) is what fixes x-axis in place at y=0
 		+ scale_y_continuous(expand=c(0,0))
@@ -99,6 +100,12 @@ ab<-c(100, 20, 15, 10, 2, 1, 1,1)
 # ab<-c(50,20,30,5,3,2)
 
 #actually plot data
-rarity_plot(ab,1)
-rarity_plot(ab, 0)
-rarity_plot(ab, -1)
+plot_properly<-function(x){
+    gt<-x
+gt$layout$clip[gt$layout$name=="panel"] <- "off"
+grid.draw(gt)
+}
+
+plot_properly(rarity_plot(ab,1))
+plot_properly(rarity_plot(ab,0))
+plot_properly(rarity_plot(ab,-1))
