@@ -56,11 +56,6 @@ rarity_plot <- function(abundance, p){
 	       +geom_point(aes(y=gr-0.6), size=2, shape=22)
 	       #line segment instead of stacked boxes
 	    # + geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0), size=1.6)
-	    
-	        #add colored marks for each mean
-	    + geom_point(x=dfun(ab,1), y=0, color="#C77CFF", size=2)
-	    + geom_point(x=dfun(ab,0), y=0, color="#00BFC4", size=2)
-	    + geom_point(x=dfun(ab,-1), y=0, color="#F8766D", size=2)
 	
 	    #This deals with clipping, but messes up axis ticks transformation
 	   +coord_trans(x=power_trans(pow=p),clip="off")
@@ -78,7 +73,12 @@ rarity_plot <- function(abundance, p){
 		+ theme(legend.position="none")
 		+ labs(y="species abundance")
 		
-	#This is the fulcrum
+		#add colored marks for each mean
+		+ geom_point(x=dfun(ab,1), y=0, color="#C77CFF", size=2)
+		+ geom_point(x=dfun(ab,0), y=0, color="#00BFC4", size=2)
+		+ geom_point(x=dfun(ab,-1), y=0, color="#F8766D", size=2)
+		
+    	#This is the fulcrum
 		+ geom_point(x=div, y=-0.025*max(ab), size=6, shape=2)
 	)
 	return(rp)
@@ -90,8 +90,8 @@ ab<-c(100, 20, 15, 10, 2, 1, 1,1)
 # ab<-c(50,20,30,5,3,2)
 
 
-quartz()
-
+# quartz()
+pdf(file="rarity_seesaws_1.pdf")
 rarity_plot(ab,1)
 rarity_plot(ab,0)
 rarity_plot(ab,-1)
