@@ -39,9 +39,11 @@ power_trans = function(pow) trans_new(name="power"
     , domain = c(1, 10000)
 )
 
+#add some stupid columns and rows to df to make easier to graph
 fancy_rep<-function(df){k<-data.frame(df[rep(1:nrow(df), df$abundance),])
     k %>% group_by(abundance) %>% mutate(gr=1:abundance)}
 
+#Function to plot everything, with some complicated parts inside
 rarity_plot <- function(abundance, p){
 	rf <- tibble(names = as.factor(1:length(abundance))
 		, abundance
