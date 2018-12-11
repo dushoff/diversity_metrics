@@ -59,10 +59,13 @@ Sources += prospectus.md diversity.md
 
 Sources += $(wildcard *.R)
 
+Ignore += rarity_seesaws_1.pdf
 rarity_seesaws_1.pdf: scaled_means.Rout ;
 
 scaled_means.Rout: scaled_means.R 
+seesaw.Rout: seesaw.R
 
+Ignore += scaled_means.debug
 scaled_means.debug: scaled_means.Rout
 	perl -ne "print " $< > $@
 
