@@ -40,7 +40,8 @@ power_trans = function(pow) trans_new(name="power"
     , domain = c(1, 10000)
 )
 
-fancy_rep<-function(df){data.frame(df[rep(1:nrow(df), df$abundance),])}
+fancy_rep<-function(df){k<-data.frame(df[rep(1:nrow(df), df$abundance),])
+    k %>% group_by(abundance) %>% mutate(gr=1:abundance)}
 
 rarity_plot <- function(abundance, p){
 	rf <- tibble(names = as.factor(1:length(abundance))
@@ -51,10 +52,13 @@ rarity_plot <- function(abundance, p){
 		sum(abundance*pfun(rarity, p))/sum(abundance)
 		, p
 	)) %>% pull(div)
-	rf2<-data.frame("gr"=as.factor(1:nrow(fancy_rep(rf))),fancy_rep(rf))
+	# rf2<-data.frame("gr"=as.factor(1:nrow(fancy_rep(rf))),fancy_rep(rf))
+	rf2<-fancy_rep(rf) 
+	
 	rp <- (ggplot(rf2, aes(x=rarity))
 	       #This makes almost ok stacks of boxes. not ok because of scaling transformations
-	       +geom_bar(aes(group=gr),fill="grey", colour="black", width=0.1,size=0.1)
+	       +geom_point(aes(y=gr-1), size=0.25)
+	       # +geom_bar(aes(group=gr, width=0.1),fill="grey", colour="black", size=0.1)
 	       # + geom_vline(xintercept=div, color="red", size=1.1)
 	  
 	       
@@ -65,7 +69,7 @@ rarity_plot <- function(abundance, p){
 	# + geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0), size=1.6)
 	
 	   +coord_trans(x=power_trans(pow=p), y="identity", clip="off")
-		# + scale_x_continuous(trans=power_trans(pow=p))
+	# + scale_x_continuous(trans=power_trans(pow=p), clip="off")
 		
 	#the expand=c(0,0) is what fixes x-axis in place at y=0
 		+ scale_y_continuous(expand=c(0,0))
@@ -75,18 +79,19 @@ rarity_plot <- function(abundance, p){
 	# + geom_point(aes(x=div, y=-2, color="red"))
 	
 	    + theme(legend.position="none")
+	+labs(y="species abundance")
 	
 	+ geom_point(x=dfun(ab,1), y=0, color="blue", size=1)
 	+ geom_point(x=dfun(ab,0), y=0, color="orange", size=1)
 	+ geom_point(x=dfun(ab,-1), y=0, color="red", size=1)
-	+ geom_point(x=div, y=-2.5, size=6, shape=2)
+	+ geom_point(x=div, y=-0.05*max(ab), size=6, shape=2)
 	)
 	return(rp)
 }
 
 
 ab <- c(20,30,50)
-# ab<-c(100, 20, 15, 10, 2, 1, 1,1)
+ab<-c(100, 20, 15, 10, 2, 1, 1,1)
 # ab<-c(50,20,30,5,3,2)
 
 # library(grid)
