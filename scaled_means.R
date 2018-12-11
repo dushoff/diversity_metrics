@@ -1,4 +1,3 @@
-
 library(tidyverse)
 library(ggthemes)
 library(grid)
@@ -53,26 +52,10 @@ rarity_plot <- function(abundance, p){
 	rf2<-fancy_rep(rf) 
 	
 	rp <- (ggplot(rf2, aes(x=rarity))
-<<<<<<< HEAD
-	       #This makes almost ok stacks of boxes. not ok because of scaling transformations
-	       +geom_point(aes(y=gr-1), size=0.25)
-	       # +geom_bar(aes(group=gr, width=0.1),fill="grey", colour="black", size=0.1)
-	       # + geom_vline(xintercept=div, color="red", size=1.1)
-	  
-	       
-	       # + geom_vline(xintercept=dfun(ab,-1), color="purple", linetype=4, size=1)
-	       # + geom_vline(xintercept=dfun(ab,0), color="green", linetype=5, size=1)
-	     
-	  #This makes a nice line that doesn't have issues with scaling
-	# + geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0), size=1.6)
-	
-	   # +coord_cartesian(clip="off")
-=======
 	      
 	       +geom_point(aes(y=gr-0.6), size=2, shape=22)
 	       #line segment instead of stacked boxes
 	    # + geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0), size=1.6)
->>>>>>> 1975ceb6799d7929c31db433761372e0c499956f
 	
 	    #This deals with clipping, but messes up axis ticks transformation
 	   +coord_trans(x=power_trans(pow=p),clip="off")
