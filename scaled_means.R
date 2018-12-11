@@ -3,16 +3,23 @@ library(ggthemes)
 library(grid)
 
 theme_set(theme_tufte(base_family = "sans"))
+library(scales) # trans_new() is in the scales library
 
-require(scales) # trans_new() is in the scales library
-pfun=function(x, pow){
+epsPretty <- 1e-4
+offStart <- 1e-3
+
+pfun=function(x, pow, offset=offStart){
 	if (pow==0) return(log(x))
-	return(sign(pow)*x^pow)
+	r <- sign(pow)*(x+offset)^pow
+	cat("pfun", x, "pow", pow, "v", r, "\n")
+	return(r)
 }
 
-ipfun=function(x, pow, offset=0){
+ipfun=function(x, pow, offset=offStart){
 	if (pow==0) return(exp(x))
-	return(sign(pow)*(x+offset)^(1/pow))
+	r <- sign(pow)*(x)^(1/pow)
+	cat("ipfun", x, "pow", pow, "v", r, "\n")
+	return(r)
 }
 
 #add a diversity function to make graphs more complicated
@@ -30,7 +37,12 @@ prettify <- function(breaks){
 power_trans = function(pow) trans_new(name="power"
     , transform = function(x) pfun(x, pow)
 	, inverse = function(x) ipfun(x, pow)
-	, breaks = function(x) prettify(trans_breaks(function(x) pfun(x, pow), function(x) ipfun(x, pow), n =5) (c(0,x)*1.1))
+	, breaks = function(x) prettify(
+		trans_breaks(
+			function(x) pfun(x, pow), function(x) ipfun(x, pow), n =5
+		)
+		(c(epsPretty,x)*1.1)
+	)
     , domain = c(1, 10000)
 )
 
@@ -56,12 +68,13 @@ rarity_plot <- function(abundance, p){
 	       +geom_point(aes(y=gr-0.6), size=2, shape=22)
 	       #line segment instead of stacked boxes
 	    # + geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0), size=1.6)
-	
+
 	    #This deals with clipping, but messes up axis ticks transformation
-	   +coord_trans(x=power_trans(pow=p),clip="off")
+	   ## + coord_trans(x=power_trans(pow=p),clip="off")
+	   + coord_cartesian(clip="off")
 		#works with ticks but not fulcrum
-	    # + scale_x_continuous(trans=power_trans(pow=p))
-		
+	    + scale_x_continuous(trans=power_trans(pow=p))
+
 	    # fix x-axis at y=0
 		+ scale_y_continuous(expand=c(0,0))
 		
@@ -91,7 +104,7 @@ ab<-c(100, 20, 15, 10, 2, 1, 1,1)
 
 
 # quartz()
-pdf(file="rarity_seesaws_1.pdf")
+# pdf(file="rarity_seesaws_1.pdf")
 rarity_plot(ab,1)
 rarity_plot(ab,0)
 rarity_plot(ab,-1)
