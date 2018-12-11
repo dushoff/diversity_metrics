@@ -1,6 +1,6 @@
 library(tidyverse)
 library(ggthemes)
-library(cowplot)
+
 theme_set(theme_tufte(base_family = "sans"))
 
 require(scales) # trans_new() is in the scales library
@@ -31,7 +31,6 @@ prettify <- function(breaks){
     digits[breaks == 0] <- 0
     return(round(breaks, digits = digits))
 }
-
 
 power_trans = function(pow) trans_new(name="power"
     , transform = function(x) pfun(x, pow, rever=T)
