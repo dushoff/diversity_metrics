@@ -71,7 +71,9 @@ rarity_plot <- function(abundance, p){
 	# + geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0), size=1.6)
 	
 	   +coord_trans(x=power_trans(pow=p), y="identity", clip="off")
-	# + scale_x_continuous(trans=power_trans(pow=p), clip="off")
+	
+	#this one seems to work better with the labels
+	# + scale_x_continuous(trans=power_trans(pow=p))
 		
 	#the expand=c(0,0) is what fixes x-axis in place at y=0
 		+ scale_y_continuous(expand=c(0,0))
@@ -91,17 +93,12 @@ rarity_plot <- function(abundance, p){
 	return(rp)
 }
 
-
+#provide abundance vectors
 ab <- c(20,30,50)
 ab<-c(100, 20, 15, 10, 2, 1, 1,1)
 # ab<-c(50,20,30,5,3,2)
 
-# library(grid)
-
-
-# p<-function(x){ggdraw(x %>% add_sub(label="^", size=20, colour="blue", x=0.351, y=1.4, vjust=0))}
-
-
+#actually plot data
 rarity_plot(ab,1)
 rarity_plot(ab, 0)
 rarity_plot(ab, -1)
