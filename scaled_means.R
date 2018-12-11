@@ -53,47 +53,46 @@ rarity_plot <- function(abundance, p){
 	
 	rp <- (ggplot(rf2, aes(x=rarity))
 	      
-	       +geom_point(aes(y=gr-1), size=1.2, shape=22)
+	       +geom_point(aes(y=gr-0.6), size=2, shape=22)
 	       #line segment instead of stacked boxes
 	    # + geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0), size=1.6)
+	    
+	        #add colored marks for each mean
+	    + geom_point(x=dfun(ab,1), y=0, color="#C77CFF", size=2)
+	    + geom_point(x=dfun(ab,0), y=0, color="#00BFC4", size=2)
+	    + geom_point(x=dfun(ab,-1), y=0, color="#F8766D", size=2)
 	
 	    #This deals with clipping, but messes up axis ticks transformation
 	   +coord_trans(x=power_trans(pow=p),clip="off")
 		#works with ticks but not fulcrum
-	    + scale_x_continuous(trans=power_trans(pow=p))
+	    # + scale_x_continuous(trans=power_trans(pow=p))
 		
 	    # fix x-axis at y=0
 		+ scale_y_continuous(expand=c(0,0))
-
-		#this is what makes the axis lines... it is just a line segment from min to max of the provided data. the breaks are provided in scale_x_continuous or scale_y_continuous, wich in turn can get them from 
-		+ geom_rangeframe(data=data.frame(rarity=c(min(rf$rarity), max(rf$rarity)), abundance=c(0,max(rf$abundance)+10)))
-	# + geom_point(aes(x=div, y=-2, color="red"))
+		
+		#this is what makes the axis lines... it is just a line segment from min to max of the provided data. breaks work with scale_x_continuous/ scale_y_continuous, which can use the whole trans argument. coord_trans doesn't play nice with that
+		+ geom_rangeframe(aes(rarity, abundance)
+		                  , data=data.frame(rarity=c(min(rf$rarity), max(rf$rarity)), abundance=c(0,max(rf$abundance)*1.1))
+		                  , inherit.aes = F)
 	
-	    + theme(legend.position="none")
-	+labs(y="species abundance")
-	
-	+ geom_point(x=dfun(ab,1), y=0, color="blue", size=1)
-	+ geom_point(x=dfun(ab,0), y=0, color="orange", size=1)
-	+ geom_point(x=dfun(ab,-1), y=0, color="red", size=1)
-	+ geom_point(x=div, y=-0.05*max(ab), size=6, shape=2)
+		+ theme(legend.position="none")
+		+ labs(y="species abundance")
+		
+	#This is the fulcrum
+		+ geom_point(x=div, y=-0.025*max(ab), size=6, shape=2)
 	)
 	return(rp)
 }
 
 #provide abundance vectors
-ab <- c(20,30,50)
+# ab <- c(20,30,50)
 ab<-c(100, 20, 15, 10, 2, 1, 1,1)
 # ab<-c(50,20,30,5,3,2)
 
-#actually plot data
-# plot_properly<-function(x){
-#     gt<-x
-# gt$layout$clip[gt$layout$name=="panel"] <- "off"
-# grid.draw(gt)
-# }
+
 quartz()
 
 rarity_plot(ab,1)
 rarity_plot(ab,0)
 rarity_plot(ab,-1)
-
+dev.off()
