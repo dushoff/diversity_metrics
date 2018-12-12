@@ -5,6 +5,7 @@ library(ggthemes)
 ## stacking of repeats
 ## Offsets
 ## Squares: we need either to fiddle with spacing, or make rectangles!
+## OPTIONAL: color the species (so that stacking becomes clear)
 
 library(scales) # trans_new() is in the scales library
 
@@ -120,7 +121,6 @@ mean_points <- function(ab, ell){
 	return(geom_point(
 		data=tibble(x=div, y=0*div, c=1:length(div))
 		, aes(x, y, color=c)
-		, inherits.aes=FALSE
 	))
 }
 
