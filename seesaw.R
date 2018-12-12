@@ -46,9 +46,38 @@ power_trans = function(pow) trans_new(name="power"
 )
 
 # replicate to make stacks with geom_point
+# Doesn't work (stack) if we have repeated abundance values
 fancy_rep<-function(df){
 	return(data.frame(df[rep(1:nrow(df), df$abundance),])
 		%>% group_by(abundance) %>% mutate(gr=1:abundance[[1]])
+	)
+}
+
+base_plot <- function(abundance){
+	
+	rf <- tibble(names = as.factor(1:length(abundance))
+		, abundance
+		, rarity = sum(abundance)/abundance
+	)
+	rfrepeated <-fancy_rep(rf) 
+
+	return(ggplot(rfrepeated, aes(x=rarity))
+		 + geom_point(aes(y=gr-0.6), size=2, shape=22) ## FIX (magic)
+
+	   # fix x-axis
+		+ scale_y_continuous(expand=c(0,0))
+
+		# make axis lines with line segments 
+		+ geom_rangeframe(aes(rarity, abundance)
+			, data=data.frame(
+				rarity=c(min(rf$rarity), max(rf$rarity))
+				, abundance=c(0,max(rf$abundance)*1.1)
+			)
+			, inherit.aes = FALSE
+		)
+
+		+ theme(legend.position="none")
+		+ labs(y="species abundance")
 	)
 }
 
@@ -58,7 +87,7 @@ rarity_plot <- function(abundance, p){
 		, abundance
 		, rarity = sum(abundance)/abundance
 	)
-	rflist <-fancy_rep(rf) 
+	rfrepeated <-fancy_rep(rf) 
 
 	div <- (
 		summarise(rf, div=ipfun(
@@ -67,10 +96,8 @@ rarity_plot <- function(abundance, p){
 		))
 		%>% pull(div)
 	)
-	
-	
-	rp <- (ggplot(rflist, aes(x=rarity))
-	      
+
+	rp <- (ggplot(rfrepeated, aes(x=rarity))
 	       +geom_point(aes(y=gr-0.6), size=2, shape=22)
 	       #line segment instead of stacked boxes
 	    # + geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0), size=1.6)
@@ -83,26 +110,42 @@ rarity_plot <- function(abundance, p){
 
 	    # fix x-axis at y=0
 		+ scale_y_continuous(expand=c(0,0))
-		
+
 		#this is what makes the axis lines... it is just a line segment from min to max of the provided data. breaks work with scale_x_continuous/ scale_y_continuous, which can use the whole trans argument. coord_trans doesn't play nice with that
 		+ geom_rangeframe(aes(rarity, abundance)
 		                  , data=data.frame(rarity=c(min(rf$rarity), max(rf$rarity)), abundance=c(0,max(rf$abundance)*1.1))
 		                  , inherit.aes = F)
-	
+
 		+ theme(legend.position="none")
 		+ labs(y="species abundance")
-		
+
 		#add colored marks for each mean
 		+ geom_point(x=dfun(ab,1), y=0, color="#C77CFF", size=2)
 		+ geom_point(x=dfun(ab,0), y=0, color="#00BFC4", size=2)
 		+ geom_point(x=dfun(ab,-1), y=0, color="#F8766D", size=2)
-		
+
     	# Fulcrum
 		+ geom_point(x=div, y=-0.025*max(ab), size=6, shape=2)
 	)
 	return(rp)
 }
 
-ab<-c(100, 20, 15, 9, 3, 2, 1)
+scale_plot <- function(base_plot, ab, ell){
+	div <- dfun(ab, ell)
+	return (bp 
+		+ scale_x_continuous(trans=power_trans(pow=ell))
+		+ coord_cartesian(clip="off")
+		+ geom_point(x=div, y=-0.025*max(ab), size=6, shape=2)
+	)
+}
 
-rarity_plot(ab,1)
+ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
+
+bp <- base_plot(ab)
+
+print(bp + coord_cartesian(clip="off"))
+
+print(scale_plot(base_plot))
+
+# rarity_plot(ab,1)
+
