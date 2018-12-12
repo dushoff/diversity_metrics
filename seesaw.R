@@ -2,10 +2,9 @@ library(tidyverse)
 library(ggthemes)
 
 ## TODO
-## Not worry too much
 ## stacking of repeats
-## goff (a formula and maybe an argument)
-## How did you make normal axis lines disappear? Can we get them back?
+## Offsets
+## Squares: we need either to fiddle with spacing, or make rectangles!
 
 library(scales) # trans_new() is in the scales library
 
