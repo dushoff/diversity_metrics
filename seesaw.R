@@ -56,7 +56,7 @@ power_trans = function(pow) trans_new(name="power"
 # Doesn't work (stack) if we have repeated abundance values
 fancy_rep<-function(df){
 	return(data.frame(df[rep(1:nrow(df), df$abundance),])
-		%>% group_by(abundance) %>% mutate(gr=1:abundance[[1]])
+		%>% group_by(abundance) %>% mutate(gr=1:length(abundance))
 	)
 }
 
