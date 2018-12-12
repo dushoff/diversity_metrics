@@ -5,10 +5,8 @@ library(ggthemes)
 ## Not worry too much
 ## stacking of repeats
 ## goff (a formula and maybe an argument)
-## Control triangle position
-## Worry about limits
+## How did you make normal axis lines disappear? Can we get them back?
 
-theme_set(theme_tufte(base_family = "sans"))
 library(scales) # trans_new() is in the scales library
 
 epsPretty <- 0
@@ -71,16 +69,10 @@ base_plot <- function(abundance, pointScale=200){
 	pointsize <- pointScale/max(abundance)
 	goff <- 0.6
 
-	return(ggplot(rfrepeated, aes(x=rarity))
-		+ geom_point(aes(y=gr-goff), size=pointsize, shape=22) ## FIX (magic)
+	base <- (ggplot(rfrepeated, aes(x=rarity, y=abundance))
+		+ geom_point(aes(y=gr-goff), size=pointsize, shape=22)
 
-	   # fix x-axis
-		+ scale_y_continuous(
-			expand=c(0,0)
-			, limits=c(-50, 1.1*max(rf$abundance))
-		)
-
-		# make axis lines with line segments 
+		# make plank
 		+ geom_segment(
 			aes(x, y, xend=xend, yend=yend)
 			, data=data.frame(
@@ -91,8 +83,22 @@ base_plot <- function(abundance, pointScale=200){
 			)
 		)
 
-		+ theme(legend.position="none")
 		+ labs(y="species abundance")
+	)
+	return(theme_plot(base))
+}
+
+theme_plot <- function(p){
+	return(p
+		+ theme_tufte(base_family = "sans")
+		+ theme(legend.position="none")
+		+ theme(
+			axis.line.x = element_line(
+				colour = 'black', size=0.2, linetype='solid'
+			), axis.line.y =  element_line(
+				colour = 'black', size=0.2, linetype='solid'
+			)
+		)
 	)
 }
 
@@ -113,16 +119,25 @@ scale_plot <- function(ab, ell){
 mean_points <- function(ab, ell){
 	div <- Vectorize(dfun, vectorize.args=("l"))(ab, ell)
 	return(geom_point(
-		data=tibble(x=div, y=0*div)
-		, aes(x, y)
+		data=tibble(x=div, y=0*div, c=1:length(div))
+		, aes(x, y, color=c)
 		, inherits.aes=FALSE
 	))
 }
 
-ab <- c(20, 15, 9, 3, 2, 1, 1)
+rarity_plot <- function(ab, ell, lrange=-1:1){
+	return(
+		scale_plot(ab, ell) + mean_points(ab, lrange)
+	)
+}
+
+rarity_series <- function(ab, lrange=-1:1){
+	for(l in lrange){
+		print(rarity_plot(ab, l, lrange))
+	}
+}
+
 ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
+ab <- c(20, 15, 9, 3, 2, 1, 1)
 
-print(scale_plot(ab, 0))
-
-# rarity_plot(ab,1)
-
+rarity_series(ab, 1:-1)
