@@ -70,7 +70,7 @@ rarity_plot <- function(abundance, p){
 		                  , data=data.frame(rarity=c(min(rf$rarity), max(rf$rarity)), abundance=c(0,max(rf$abundance)*1.1))
 		                  , inherit.aes = F)
 	
-		+ theme(legend.position="none")
+		+ theme(legend.position="none", text=element_text(size=23))
 		+ labs(y="species abundance")
 		
 		#add colored marks for each mean
@@ -86,7 +86,7 @@ rarity_plot <- function(abundance, p){
 
 #provide abundance vectors
 # ab <- c(20,30,50)
-ab<-c(100, 20, 15, 10, 2, 1, 1,1)
+ab<-c(100, 20, 15, 10, 5)
 # ab<-c(50,20,30,5,3,2)
 
 
