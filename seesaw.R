@@ -1,6 +1,13 @@
 library(tidyverse)
 library(ggthemes)
 
+## TODO
+## Not worry too much
+## stacking of repeats
+## goff (a formula and maybe an argument)
+## Control triangle position
+## Worry about limits
+
 theme_set(theme_tufte(base_family = "sans"))
 library(scales) # trans_new() is in the scales library
 
@@ -53,27 +60,35 @@ fancy_rep<-function(df){
 	)
 }
 
-base_plot <- function(abundance){
-	
+base_plot <- function(abundance, pointScale=200){
+
 	rf <- tibble(names = as.factor(1:length(abundance))
 		, abundance
 		, rarity = sum(abundance)/abundance
 	)
 	rfrepeated <-fancy_rep(rf) 
 
+	pointsize <- pointScale/max(abundance)
+	goff <- 0.6
+
 	return(ggplot(rfrepeated, aes(x=rarity))
-		 + geom_point(aes(y=gr-0.6), size=2, shape=22) ## FIX (magic)
+		+ geom_point(aes(y=gr-goff), size=pointsize, shape=22) ## FIX (magic)
 
 	   # fix x-axis
-		+ scale_y_continuous(expand=c(0,0))
+		+ scale_y_continuous(
+			expand=c(0,0)
+			, limits=c(-50, 1.1*max(rf$abundance))
+		)
 
 		# make axis lines with line segments 
-		+ geom_rangeframe(aes(rarity, abundance)
+		+ geom_segment(
+			aes(x, y, xend=xend, yend=yend)
 			, data=data.frame(
-				rarity=c(min(rf$rarity), max(rf$rarity))
-				, abundance=c(0,max(rf$abundance)*1.1)
+				x=c(min(rf$rarity))
+				, y=c(0)
+				, xend=c(max(rf$rarity))
+				, yend=c(0)
 			)
-			, inherit.aes = FALSE
 		)
 
 		+ theme(legend.position="none")
@@ -81,71 +96,33 @@ base_plot <- function(abundance){
 	)
 }
 
-#Function to plot everything, with some complicated parts inside
-rarity_plot <- function(abundance, p){
-	rf <- tibble(names = as.factor(1:length(abundance))
-		, abundance
-		, rarity = sum(abundance)/abundance
-	)
-	rfrepeated <-fancy_rep(rf) 
-
-	div <- (
-		summarise(rf, div=ipfun(
-			sum(abundance*pfun(rarity, p))/sum(abundance)
-			, p
-		))
-		%>% pull(div)
-	)
-
-	rp <- (ggplot(rfrepeated, aes(x=rarity))
-	       +geom_point(aes(y=gr-0.6), size=2, shape=22)
-	       #line segment instead of stacked boxes
-	    # + geom_segment(aes(x=rarity, xend=rarity, y=abundance, yend=0), size=1.6)
-
-	    #This deals with clipping, but messes up axis ticks transformation
-	   ## + coord_trans(x=power_trans(pow=p),clip="off")
-	   + coord_cartesian(clip="off")
-		#works with ticks but not fulcrum
-	    + scale_x_continuous(trans=power_trans(pow=p))
-
-	    # fix x-axis at y=0
-		+ scale_y_continuous(expand=c(0,0))
-
-		#this is what makes the axis lines... it is just a line segment from min to max of the provided data. breaks work with scale_x_continuous/ scale_y_continuous, which can use the whole trans argument. coord_trans doesn't play nice with that
-		+ geom_rangeframe(aes(rarity, abundance)
-		                  , data=data.frame(rarity=c(min(rf$rarity), max(rf$rarity)), abundance=c(0,max(rf$abundance)*1.1))
-		                  , inherit.aes = F)
-
-		+ theme(legend.position="none")
-		+ labs(y="species abundance")
-
-		#add colored marks for each mean
-		+ geom_point(x=dfun(ab,1), y=0, color="#C77CFF", size=2)
-		+ geom_point(x=dfun(ab,0), y=0, color="#00BFC4", size=2)
-		+ geom_point(x=dfun(ab,-1), y=0, color="#F8766D", size=2)
-
-    	# Fulcrum
-		+ geom_point(x=div, y=-0.025*max(ab), size=6, shape=2)
-	)
-	return(rp)
-}
-
-scale_plot <- function(base_plot, ab, ell){
+scale_plot <- function(ab, ell){
 	div <- dfun(ab, ell)
-	return (bp 
+	print(div)
+	return (base_plot(ab) 
+		+ geom_point(
+			data=tibble(x=div, y=-0.025*max(ab))
+			, size=6, shape=2
+			, aes(x, y)
+		)
 		+ scale_x_continuous(trans=power_trans(pow=ell))
 		+ coord_cartesian(clip="off")
-		+ geom_point(x=div, y=-0.025*max(ab), size=6, shape=2)
 	)
 }
 
+mean_points <- function(ab, ell){
+	div <- Vectorize(dfun, vectorize.args=("l"))(ab, ell)
+	return(geom_point(
+		data=tibble(x=div, y=0*div)
+		, aes(x, y)
+		, inherits.aes=FALSE
+	))
+}
+
+ab <- c(20, 15, 9, 3, 2, 1, 1)
 ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
 
-bp <- base_plot(ab)
-
-print(bp + coord_cartesian(clip="off"))
-
-print(scale_plot(base_plot))
+print(scale_plot(ab, 0))
 
 # rarity_plot(ab,1)
 
