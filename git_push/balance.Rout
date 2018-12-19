@@ -1,0 +1,84 @@
+> 
+> # Generated using wrapR file balance.wrapR.r
+> source('balance.R', echo=TRUE)
+
+> library(tidyverse)
+
+> library(ggthemes)
+
+> library(scales)
+
+> epsPretty <- 0
+
+> offStart <- 0
+
+> pfun = function(x, pow, offset = offStart) {
++     if (pow == 0) 
++         return(log(x))
++     r <- sign(pow) * (x + offset)^pow
++     return(r)
++ .... [TRUNCATED] 
+
+> ipfun = function(x, pow, offset = offStart) {
++     if (pow == 0) 
++         return(exp(x))
++     r <- sign(pow) * (x)^(1/pow)
++     return(r)
++ }
+
+> dfun <- function(ab, l) {
++     rp <- ab/sum(ab)
++     return(ipfun(sum(rp * pfun(1/rp, l)), l))
++ }
+
+> prettify <- function(breaks) {
++     digits <- -floor(log10(abs(breaks))) + 1
++     digits[breaks == 0] <- 0
++     return(round(breaks, digits = dig .... [TRUNCATED] 
+
+> power_trans = function(pow) trans_new(name = "power", 
++     transform = function(x) pfun(x, pow), inverse = function(x) ipfun(x, 
++         pow), b .... [TRUNCATED] 
+
+> fancy_rep <- function(df) {
++     return(data.frame(df[rep(1:nrow(df), df$abundance), ]) %>% 
++         group_by(abundance) %>% mutate(gr = 1:abunda .... [TRUNCATED] 
+
+> base_plot <- function(abundance, pointScale = 200) {
++     rf <- tibble(names = as.factor(1:length(abundance)), abundance, 
++         rarity = sum(a .... [TRUNCATED] 
+
+> theme_plot <- function(p) {
++     return(p + theme_tufte(base_family = "sans") + theme(legend.position = "none") + 
++         theme(axis.line.x = el .... [TRUNCATED] 
+
+> scale_plot <- function(ab, ell) {
++     div <- dfun(ab, ell)
++     print(div)
++     return(base_plot(ab) + geom_point(data = tibble(x = div, 
++      .... [TRUNCATED] 
+
+> mean_points <- function(ab, ell) {
++     div <- Vectorize(dfun, vectorize.args = ("l"))(ab, ell)
++     return(geom_point(data = tibble(x = div, y =  .... [TRUNCATED] 
+
+> rarity_plot <- function(ab, ell, lrange = -1:1) {
++     return(scale_plot(ab, ell) + mean_points(ab, lrange))
++ }
+
+> rarity_series <- function(ab, lrange = -1:1) {
++     for (l in lrange) {
++         print(rarity_plot(ab, l, lrange))
++     }
++ }
+
+> ab <- c(20, 15, 9, 3, 2, 1, 1)
+
+> ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
+
+> rarity_series(ab, 1:-1)
+[1] 8
+[1] 3.125934
+[1] 2.126761
+> # Wrapped output file balance.wrapR.rout
+> 
