@@ -127,10 +127,10 @@ mean_points <- function(ab, l_scale,ell=-1:1){
 
 #abundance distribution
 # ab<-c(50,30,20)
-ab<-c(4,3,2)
+# ab<-c(4,3,2)
 # ab <- c(20, 15, 9, 3, 2, 1, 1)
-# ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
-ab<-floor(exp(rnorm(50, 4,1.5)))
+ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
+# ab<-floor(exp(rnorm(50, 4,1.5)))
 
 #plot the data
 # quartz()
