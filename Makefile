@@ -63,7 +63,8 @@ Ignore += rarity_seesaws_1.pdf
 rarity_seesaws_1.pdf: scaled_means.Rout ;
 
 scaled_means.Rout: scaled_means.R 
-seesaw.Rout: seesaw.R
+
+balance.Rout: balance.R
 
 adaptive.Rout: adaptive.R
 
