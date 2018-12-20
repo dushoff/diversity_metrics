@@ -124,19 +124,20 @@ mean_points <- function(ab, ell){
 	))
 }
 
-rarity_plot <- function(ab, ell, lrange=-1:1){
+rarity_plot <- function(ab, ell, means=-1:1){
 	return(
-		scale_plot(ab, ell) + mean_points(ab, lrange)
+		scale_plot(ab, ell) + mean_points(ab, means)
 	)
 }
 
-rarity_series <- function(ab, lrange=-1:1){
+rarity_series <- function(ab, lrange=-1:1, means=lrange){
 	for(l in lrange){
-		print(rarity_plot(ab, l, lrange))
+		print(rarity_plot(ab, l, means))
 	}
 }
 
-ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
 ab <- c(20, 15, 9, 3, 2, 1, 1)
+ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
 
 rarity_series(ab, 1:-1)
+rarity_series(ab, 0, 1:-1)

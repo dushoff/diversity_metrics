@@ -65,6 +65,8 @@ rarity_seesaws_1.pdf: scaled_means.Rout ;
 scaled_means.Rout: scaled_means.R 
 seesaw.Rout: seesaw.R
 
+adaptive.Rout: adaptive.R
+
 Ignore += scaled_means.debug
 scaled_means.debug: scaled_means.Rout
 	perl -ne "print " $< > $@
