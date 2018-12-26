@@ -107,6 +107,7 @@ theme_plot <- function(p){
 }
 
 scale_plot <- function(ab, ell){
+    ab<-ab[ab!=0]
 	div <- dfun(ab, ell)
 	print(div)
 	return (base_plot(ab) 
@@ -121,6 +122,7 @@ scale_plot <- function(ab, ell){
 }
 
 mean_points <- function(ab, ell){
+    ab<-ab[ab!=0]
 	div <- Vectorize(dfun, vectorize.args=("l"))(ab, ell)
 	return(geom_point(
 		data=tibble(x=div, y=0*div, clr=1:length(div))
@@ -129,6 +131,7 @@ mean_points <- function(ab, ell){
 }
 
 rarity_plot <- function(ab, ell, means=-1:1){
+    ab<-ab[ab!=0]
 	return(
 		scale_plot(ab, ell) 
 		+ mean_points(ab, means)
@@ -142,28 +145,28 @@ rarity_series <- function(ab, lrange=-1:1, means=lrange){
 	}
 }
 
-ab <- c(20, 15, 9, 3, 2, 1, 1)
-ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
-
-rarity_series(ab, 1:-1)
-rarity_series(ab, 0, 1:-1)
+# ab <- c(20, 15, 9, 3, 2, 1, 1)
+# ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
+# 
+# rarity_series(ab, 1:-1)
+# rarity_series(ab, 0, 1:-1)
 
 #some SADs to play with
 
 # ab <- c(20, 15, 9, 3, 2, 1, 1)
-ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
-# ab<-c(50,30,20)
+# ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
+# ab<-c(50,30,20,0,0,0)
 # ab<-c(4,3,2)
-# ab <- c(20, 15, 9, 3, 2, 1, 1)
+ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
 # ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-floor(exp(rnorm(50, 4,1.5)))
 
-# quartz()
+quartz()
 rarity_plot(ab, 1)
 
-# quartz()
+quartz()
 rarity_plot(ab, 0)
 
-# quartz()
+quartz()
 rarity_plot(ab, -1)
 
