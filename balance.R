@@ -70,7 +70,7 @@ base_plot <- function(abundance, pointScale=200){
 	goff <- 0.5
 
 	base <- (ggplot(rfrepeated, aes(x=rarity, y=abundance))
-		+ geom_point(aes(y=gr-goff, alpha=0.2), size=pointsize, fill="lightgrey", shape=22, color="black", stroke=0.5) #some stylistic things to deal with squeezing
+		+ geom_point(aes(y=gr-goff, alpha=0.2), size=pointsize, fill=fill_col, shape=22, color="black", stroke=0.5) #some stylistic things to deal with squeezing
 		
 		# make plank
 		+ geom_segment(
@@ -130,7 +130,7 @@ mean_points <- function(ab, ell){
 	))
 }
 
-rarity_plot <- function(ab, ell, means=-1:1){
+rarity_plot <- function(ab, ell, means=-1:1, fill_col="lightgrey"){
     ab<-ab[ab!=0]
 	return(
 		scale_plot(ab, ell) 
@@ -157,16 +157,16 @@ rarity_series <- function(ab, lrange=-1:1, means=lrange){
 # ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-c(50,30,20,0,0,0)
 # ab<-c(4,3,2)
-ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
+# ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
 # ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-floor(exp(rnorm(50, 4,1.5)))
-
-quartz()
-rarity_plot(ab, 1)
-
-quartz()
-rarity_plot(ab, 0)
-
-quartz()
-rarity_plot(ab, -1)
-
+# 
+# quartz()
+# rarity_plot(ab, 1)
+# 
+# quartz()
+# rarity_plot(ab, 0)
+# 
+# quartz()
+# rarity_plot(ab, -1)
+# 
