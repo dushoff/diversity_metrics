@@ -56,7 +56,7 @@ fancy_rep<-function(df){
     )
 }
 
-base_plot <- function(abundance, pointScale=200){
+base_plot <- function(abundance, pointScale=200, fill_col="lightgrey"){
     
 	rf <- tibble(names = as.factor(1:length(abundance))
 		, abundance
@@ -106,11 +106,11 @@ theme_plot <- function(p){
 	)
 }
 
-scale_plot <- function(ab, ell){
+scale_plot <- function(ab, ell, fill_col="lightgrey"){
     ab<-ab[ab!=0]
 	div <- dfun(ab, ell)
 	print(div)
-	return (base_plot(ab) 
+	return (base_plot(ab, fill_col=fill_col) 
 		+ geom_point(
 			data=tibble(x=div, y=-0.028*max(ab))# don't recall why 0.028, but it gets fulcrum point just right. 
 			, size=6, shape=2
@@ -130,10 +130,10 @@ mean_points <- function(ab, ell){
 	))
 }
 
-rarity_plot <- function(ab, ell, means=-1:1, fill_col="lightgrey"){
+rarity_plot <- function(ab, ell, means=-1:1, ...){
     ab<-ab[ab!=0]
 	return(
-		scale_plot(ab, ell) 
+		scale_plot(ab, ell,...) 
 		+ mean_points(ab, means)
 		+ scale_color_brewer(type="qual", palette="Dark2") #playing with color choices
 	)
@@ -168,5 +168,5 @@ rarity_series <- function(ab, lrange=-1:1, means=lrange){
 # rarity_plot(ab, 0)
 # 
 # quartz()
-# rarity_plot(ab, -1)
+rarity_plot(ab=ab, ell=-1, fill=rep(1:3, 17))
 # 
