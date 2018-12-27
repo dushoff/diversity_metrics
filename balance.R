@@ -106,7 +106,7 @@ theme_plot <- function(p){
 	)
 }
 
-scale_plot <- function(ab, ell, fill_col="lightgrey", y_extent=max(max(ab), 15){
+scale_plot <- function(ab, ell, fill_col="lightgrey", y_extent=max(max(ab), 15)){
     ab<-ab[ab!=0]
 	div <- dfun(ab, ell)
 	print(div)
@@ -168,5 +168,5 @@ ab<-c(4,3,2)
 # rarity_plot(ab, 0)
 # 
 quartz()
-rarity_plot(ab=ab, ell=-1, fill="lightgrey", y_extent=20)
+rarity_plot(ab=ab, ell=-1, fill="lightgrey")
 # 
