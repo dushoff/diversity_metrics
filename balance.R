@@ -116,7 +116,7 @@ scale_plot <- function(ab, ell, fill_col="lightgrey", y_extent=max(max(ab), 15))
 			, size=6, shape=2
 			, aes(x, y)
 		)
-		# + scale_x_continuous(trans=power_trans(pow=ell))
+		+ scale_x_continuous(trans=power_trans(pow=ell))
 		# + coord_cartesian(clip="off")
 	)
 }
@@ -156,9 +156,9 @@ rarity_series <- function(ab, lrange=-1:1, means=lrange){
 # ab <- c(20, 15, 9, 3, 2, 1, 1)
 # ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-c(50,30,20,0,0,0)
-ab<-c(4,3,2)
+# ab<-c(4,3,2)
 # ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
-# ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
+ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-floor(exp(rnorm(50, 4,1.5)))
 # 
 # quartz()
