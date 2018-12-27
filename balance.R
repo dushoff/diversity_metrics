@@ -3,7 +3,8 @@ library(ggthemes)
 
 ## TODO
 ## OPTIONAL: color the species (so that stacking becomes clear)
-## fix box size for small max abundance so it doesn't e.g. cross y-axis
+## make x-axis extent a variable like y_extent is now to facilitate plotting multiple communities on the same axes
+## use dev.size() somewhere in the function to make point sizes (the boxes and the fulcrum) work regardless of graphic device. 
 ## think about squeezing when rarities aren't equal but are close s.t. boxes overlap
 ## select colors for reference points http://colorbrewer2.org/#type=qualitative&scheme=Dark2&n=3
 ## switch plotting order so that fulcrum point sits above reference points
@@ -136,6 +137,7 @@ rarity_plot <- function(ab, ell, means=-1:1, ...){
 		scale_plot(ab, ell,...) 
 		+ mean_points(ab, means)
 		+ scale_color_brewer(type="qual", palette="Dark2") #playing with color choices
+		+ theme(aspect.ratio=1)
 	)
 }
 
