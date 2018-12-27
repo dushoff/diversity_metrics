@@ -56,7 +56,7 @@ fancy_rep<-function(df){
     )
 }
 
-base_plot <- function(abundance, pointScale=200, fill_col="lightgrey"){
+base_plot <- function(abundance, pointScale=200, fill_col="lightgrey", y_extent=max(abundance)){
     
 	rf <- tibble(names = as.factor(1:length(abundance))
 		, abundance
@@ -64,14 +64,14 @@ base_plot <- function(abundance, pointScale=200, fill_col="lightgrey"){
 	)
 	rfrepeated <-fancy_rep(rf) 
 
-	pointsize <- pointScale/max(abundance)
+	pointsize <- pointScale/y_extent
 	
 	#This pretty much has to be 0.5 because the shape is centered on its x- and y-locations, but we want to offset so it rests upon it
 	goff <- 0.5
 
 	base <- (ggplot(rfrepeated, aes(x=rarity, y=abundance))
 		+ geom_point(aes(y=gr-goff, alpha=0.2), size=pointsize, fill=fill_col, shape=22, color="black", stroke=0.5) #some stylistic things to deal with squeezing
-		
+		# +scale_size_continuous(limits=c(0, max(abundance)/200))
 		# make plank
 		+ geom_segment(
 			aes(x, y, xend=xend, yend=yend)
@@ -85,7 +85,7 @@ base_plot <- function(abundance, pointScale=200, fill_col="lightgrey"){
 # adding this in let the boxes fill the y-space pretty well without gaps, don't think it ruined appearance of y-axis
 		+scale_y_continuous(
 		    expand=c(0,0)
-		    , limits=c(max(rf$abundance)-1.1*max(rf$abundance), 1.1*max(rf$abundance))
+		    , limits=c(y_extent-1.1*y_extent, 1.1*y_extent)
 		)
 		+ labs(y="species abundance")
 	)
@@ -106,18 +106,18 @@ theme_plot <- function(p){
 	)
 }
 
-scale_plot <- function(ab, ell, fill_col="lightgrey"){
+scale_plot <- function(ab, ell, fill_col="lightgrey", y_extent=max(ab)){
     ab<-ab[ab!=0]
 	div <- dfun(ab, ell)
 	print(div)
-	return (base_plot(ab, fill_col=fill_col) 
+	return (base_plot(ab, fill_col=fill_col, y_extent=y_extent) 
 		+ geom_point(
-			data=tibble(x=div, y=-0.028*max(ab))# don't recall why 0.028, but it gets fulcrum point just right. 
+			data=tibble(x=div, y=-0.028*y_extent)# don't recall why 0.028, but it gets fulcrum point just right. 
 			, size=6, shape=2
 			, aes(x, y)
 		)
-		+ scale_x_continuous(trans=power_trans(pow=ell))
-		+ coord_cartesian(clip="off")
+		# + scale_x_continuous(trans=power_trans(pow=ell))
+		# + coord_cartesian(clip="off")
 	)
 }
 
@@ -157,7 +157,7 @@ rarity_series <- function(ab, lrange=-1:1, means=lrange){
 # ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-c(50,30,20,0,0,0)
 # ab<-c(4,3,2)
-# ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
+ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
 # ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-floor(exp(rnorm(50, 4,1.5)))
 # 
@@ -167,6 +167,6 @@ rarity_series <- function(ab, lrange=-1:1, means=lrange){
 # quartz()
 # rarity_plot(ab, 0)
 # 
-# quartz()
-rarity_plot(ab=ab, ell=-1, fill=rep(1:3, 17))
+quartz()
+rarity_plot(ab=ab, ell=-1, fill="lightgrey", y_extent=50)
 # 
