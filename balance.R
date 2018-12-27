@@ -57,16 +57,16 @@ fancy_rep<-function(df){
     )
 }
 
-base_plot <- function(abundance, pointScale=200, fill_col="lightgrey", y_extent=max(max(abundance),15)){
-    
+base_plot <- function(abundance, pointScale, fill_col="lightgrey", y_extent=max(max(abundance),15)){
+    pointScale<-10.9*dev.size("cm")[2]
 	rf <- tibble(names = as.factor(1:length(abundance))
 		, abundance
 		, rarity = sum(abundance)/abundance
 	)
 	rfrepeated <-fancy_rep(rf) 
 
-	pointsize <- pointScale/y_extent
-	
+	 pointsize <- pointScale/y_extent
+
 	#This pretty much has to be 0.5 because the shape is centered on its x- and y-locations, but we want to offset so it rests upon it
 	goff <- 0.5
 
@@ -114,7 +114,7 @@ scale_plot <- function(ab, ell, fill_col="lightgrey", y_extent=max(max(ab), 15))
 	return (base_plot(ab, fill_col=fill_col, y_extent=y_extent) 
 		+ geom_point(
 			data=tibble(x=div, y=-0.028*y_extent)# don't recall why 0.028, but it gets fulcrum point just right. 
-			, size=6, shape=2
+			, size=0.33746*dev.size("cm")[2], shape=2
 			, aes(x, y)
 		)
 		+ scale_x_continuous(trans=power_trans(pow=ell))
@@ -141,7 +141,7 @@ rarity_plot <- function(ab, ell, means=-1:1, ...){
 	)
 }
 
-rarity_series <- function(ab, lrange=-1:1, means=lrange){
+rarity_series <- function(ab, lrange=-1:1, means=lrange,...){
 	for(l in lrange){
 		print(rarity_plot(ab, l, means))
 	}
@@ -159,8 +159,8 @@ rarity_series <- function(ab, lrange=-1:1, means=lrange){
 # ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-c(50,30,20,0,0,0)
 # ab<-c(4,3,2)
-# ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
-ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
+ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
+# ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-floor(exp(rnorm(50, 4,1.5)))
 # 
 # quartz()
@@ -171,4 +171,4 @@ ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # 
 quartz()
 rarity_plot(ab=ab, ell=-1, fill="lightgrey")
-# 
+
