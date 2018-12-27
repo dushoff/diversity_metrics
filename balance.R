@@ -56,7 +56,7 @@ fancy_rep<-function(df){
     )
 }
 
-base_plot <- function(abundance, pointScale=200, fill_col="lightgrey", y_extent=max(abundance)){
+base_plot <- function(abundance, pointScale=200, fill_col="lightgrey", y_extent=max(max(abundance),15)){
     
 	rf <- tibble(names = as.factor(1:length(abundance))
 		, abundance
@@ -106,7 +106,7 @@ theme_plot <- function(p){
 	)
 }
 
-scale_plot <- function(ab, ell, fill_col="lightgrey", y_extent=max(ab)){
+scale_plot <- function(ab, ell, fill_col="lightgrey", y_extent=max(max(ab), 15){
     ab<-ab[ab!=0]
 	div <- dfun(ab, ell)
 	print(div)
@@ -156,8 +156,8 @@ rarity_series <- function(ab, lrange=-1:1, means=lrange){
 # ab <- c(20, 15, 9, 3, 2, 1, 1)
 # ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-c(50,30,20,0,0,0)
-# ab<-c(4,3,2)
-ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
+ab<-c(4,3,2)
+# ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
 # ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-floor(exp(rnorm(50, 4,1.5)))
 # 
@@ -168,5 +168,5 @@ ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
 # rarity_plot(ab, 0)
 # 
 quartz()
-rarity_plot(ab=ab, ell=-1, fill="lightgrey", y_extent=50)
+rarity_plot(ab=ab, ell=-1, fill="lightgrey", y_extent=20)
 # 
