@@ -5,9 +5,9 @@ library(ggthemes)
 ## OPTIONAL: color the species (so that stacking becomes clear)
 ## make x-axis extent a variable like y_extent is now to facilitate plotting multiple communities on the same axes
 ## use dev.size() somewhere in the function to make point sizes (the boxes and the fulcrum) work regardless of graphic device. 
-## think about squeezing when rarities aren't equal but are close s.t. boxes overlap
+## think about squeezing when rarities aren't equal but are close s.t. boxes overlap... maybe go back to lines (or make an option?)
 ## select colors for reference points http://colorbrewer2.org/#type=qualitative&scheme=Dark2&n=3
-## switch plotting order so that fulcrum point sits above reference points
+
 
 library(scales) # trans_new() is in the scales library
 
@@ -58,7 +58,8 @@ fancy_rep<-function(df){
 }
 
 base_plot <- function(abundance, pointScale, fill_col="lightgrey", y_extent=max(max(abundance),15)){
-    pointScale<-10.9*dev.size("cm")[2]
+    pointScale<-10.4*dev.size("cm")[2]
+    # pointScale<-200
 	rf <- tibble(names = as.factor(1:length(abundance))
 		, abundance
 		, rarity = sum(abundance)/abundance
@@ -95,7 +96,7 @@ base_plot <- function(abundance, pointScale, fill_col="lightgrey", y_extent=max(
 
 theme_plot <- function(p){
 	return(p
-		+ theme_tufte(base_family = "sans")
+		+ theme_tufte(base_family = "sans", base_size=24)
 		+ theme(legend.position="none")
 		+ theme(
 			axis.line.x = element_line(
@@ -108,15 +109,7 @@ theme_plot <- function(p){
 }
 
 scale_plot <- function(ab, ell, fill_col="lightgrey", y_extent=max(max(ab), 15)){
-    ab<-ab[ab!=0]
-	div <- dfun(ab, ell)
-	print(div)
 	return (base_plot(ab, fill_col=fill_col, y_extent=y_extent) 
-		+ geom_point(
-			data=tibble(x=div, y=-0.028*y_extent)# don't recall why 0.028, but it gets fulcrum point just right. 
-			, size=0.33746*dev.size("cm")[2], shape=2
-			, aes(x, y)
-		)
 		+ scale_x_continuous(trans=power_trans(pow=ell))
 		# + coord_cartesian(clip="off")
 	)
@@ -128,7 +121,21 @@ mean_points <- function(ab, ell){
 	return(geom_point(
 		data=tibble(x=div, y=0*div, clr=1:length(div))
 		, aes(x, y, color=as.factor(clr))
+		,size=0.2*dev.size("cm")[2]
 	))
+}
+
+fulcrum<-function(ab, ell, y_extent=max(ab)){
+    ab<-ab[ab!=0]
+    div <- dfun(ab, ell)
+    print(div)
+    return(geom_point(
+        data=tibble(x=div, y=-0.052*y_extent)# don't recall why 0.028, but it gets fulcrum point just right. 
+        #This needs to be adjusted by considering margin size
+        , size=0.6*dev.size("cm")[2], shape=17
+        , aes(x, y) 
+    )
+    )
 }
 
 rarity_plot <- function(ab, ell, means=-1:1, ...){
@@ -136,8 +143,9 @@ rarity_plot <- function(ab, ell, means=-1:1, ...){
 	return(
 		scale_plot(ab, ell,...) 
 		+ mean_points(ab, means)
+		+ fulcrum(ab, ell, ...)
 		+ scale_color_brewer(type="qual", palette="Dark2") #playing with color choices
-		+ theme(aspect.ratio=1)
+		# + theme(aspect.ratio=1)
 	)
 }
 
@@ -156,10 +164,11 @@ rarity_series <- function(ab, lrange=-1:1, means=lrange,...){
 #some SADs to play with
 
 # ab <- c(20, 15, 9, 3, 2, 1, 1)
+ab<-c(20,8,5,4,2,1)
 # ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-c(50,30,20,0,0,0)
 # ab<-c(4,3,2)
-ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
+# ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
 # ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-floor(exp(rnorm(50, 4,1.5)))
 # 
@@ -169,6 +178,6 @@ ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
 # quartz()
 # rarity_plot(ab, 0)
 # 
-quartz()
-rarity_plot(ab=ab, ell=-1, fill="lightgrey")
-
+pdf(file="figures/20_8_5_3_2_1.pdf") #, height=2.5, width=2.5)
+rarity_series(ab=ab, 1:-1, fill="lightgrey")
+dev.off()
