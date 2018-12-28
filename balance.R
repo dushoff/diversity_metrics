@@ -3,9 +3,17 @@ library(ggthemes)
 
 ## TODO
 ## OPTIONAL: color the species (so that stacking becomes clear)
-## make x-axis extent a variable like y_extent is now to facilitate plotting multiple communities on the same axes
-## use dev.size() somewhere in the function to make point sizes (the boxes and the fulcrum) work regardless of graphic device. 
-## think about squeezing when rarities aren't equal but are close s.t. boxes overlap... maybe go back to lines (or make an option?)
+
+#figure out how to shrink according to viewport rather than device size, and do it to all things rather than just some
+
+## might want to do get text and axis widths to scale with device/viewport
+
+## arguments about whether to print y-axis, axis titles (for multi-paneled figures). Might even want to handle that component inside the fucntion for more control. actually, probably want to graduate to https://cran.r-project.org/web/packages/ggplot2/vignettes/extending-ggplot2.html
+
+## think about squeezing when rarities aren't equal but are close s.t. boxes overlap... maybe go back to lines (or make an option?) (Or a smart option that can calculate whether overlap occurs?)
+
+## along similar lines, consider including an optional argument for plotting in local graphics device vs. the nice version to pdf, where some compromises in the former to enable flexibility, but don't make those sacrifices when printing to file. 
+
 ## select colors for reference points http://colorbrewer2.org/#type=qualitative&scheme=Dark2&n=3
 
 
@@ -14,6 +22,7 @@ library(scales) # trans_new() is in the scales library
 epsPretty <- 0
 offStart <- 0
 
+#transformation and back-transformation functions
 pfun=function(x, pow, offset=offStart){
 	if (pow==0) return(log(x))
 	r <- sign(pow)*(x+offset)^pow
@@ -39,6 +48,7 @@ prettify <- function(breaks){
     return((round(breaks, digits = digits))[round(breaks, digits = digits)!=(-Inf)]) #klugey fix to -Inf
 }
 
+#function for scales
 power_trans = function(pow) trans_new(name="power"
    , transform = function(x) pfun(x, pow)
 	, inverse = function(x) ipfun(x, pow)
@@ -57,8 +67,11 @@ fancy_rep<-function(df){
     )
 }
 
-base_plot <- function(abundance, pointScale, fill_col="lightgrey", y_extent=max(max(abundance),15)){
-    pointScale<-10.4*dev.size("cm")[2]
+base_plot <- function(abundance, pointScale, fill_col="lightgrey"
+                      , y_extent=max(max(abundance),15), x_max=sum(abundance)/min(abundance), base_size=24){
+    #0.0353 is approximate points to cm conversion (a little less than 3 pts per mm)
+    #11.4 is empirically derived scaling factor. Seems like stuff below axis is about 2.5* height of text
+    pointScale<-11.25*(dev.size("cm")[2]-(2.5*0.0353*base_size))
     # pointScale<-200
 	rf <- tibble(names = as.factor(1:length(abundance))
 		, abundance
@@ -66,14 +79,16 @@ base_plot <- function(abundance, pointScale, fill_col="lightgrey", y_extent=max(
 	)
 	rfrepeated <-fancy_rep(rf) 
 
-	 pointsize <- pointScale/y_extent
+	pointsize <- pointScale/(y_extent)
 
 	#This pretty much has to be 0.5 because the shape is centered on its x- and y-locations, but we want to offset so it rests upon it
 	goff <- 0.5
 
+	#ggplot command to generate basic plot object
 	base <- (ggplot(rfrepeated, aes(x=rarity, y=abundance))
-		+ geom_point(aes(y=gr-goff, alpha=0.2), size=pointsize, fill=fill_col, shape=22, color="black", stroke=0.5) #some stylistic things to deal with squeezing
-		# +scale_size_continuous(limits=c(0, max(abundance)/200))
+	    #bricks
+		+ geom_point(aes(y=gr-goff, alpha=0.2), size=pointsize, fill=fill_col
+		             , shape=22, color="black", stroke=0.5) 
 		# make plank
 		+ geom_segment(
 			aes(x, y, xend=xend, yend=yend)
@@ -84,12 +99,13 @@ base_plot <- function(abundance, pointScale, fill_col="lightgrey", y_extent=max(
 				, yend=c(0)
 			)
 		)
-# adding this in let the boxes fill the y-space pretty well without gaps, don't think it ruined appearance of y-axis
+		
+#fix plank location and add space above and below data range
 		+scale_y_continuous(
 		    expand=c(0,0)
 		    , limits=c(y_extent-1.1*y_extent, 1.1*y_extent)
 		)
-		+ labs(y="species abundance")
+    	+ labs(y="individuals")
 	)
 	return(theme_plot(base))
 }
@@ -108,13 +124,18 @@ theme_plot <- function(p){
 	)
 }
 
-scale_plot <- function(ab, ell, fill_col="lightgrey", y_extent=max(max(ab), 15)){
-	return (base_plot(ab, fill_col=fill_col, y_extent=y_extent) 
+#rescales x-axis
+scale_plot <- function(ab, ell, fill_col="lightgrey", y_extent=max(max(ab), 15)
+                       , x_max=sum(ab)/min(ab)){
+	return (base_plot(ab, fill_col=fill_col, y_extent=y_extent, x_max=x_max) 
 		+ scale_x_continuous(trans=power_trans(pow=ell))
+		#allows for an x_max point to determine axes
+		+ geom_point(aes(x,y), data=tibble(x=x_max, y=0), color="white", alpha=0)
 		# + coord_cartesian(clip="off")
 	)
 }
 
+#plots reference points at means with power ell
 mean_points <- function(ab, ell){
     ab<-ab[ab!=0]
 	div <- Vectorize(dfun, vectorize.args=("l"))(ab, ell)
@@ -125,59 +146,49 @@ mean_points <- function(ab, ell){
 	))
 }
 
-fulcrum<-function(ab, ell, y_extent=max(ab)){
+#plot the fulcrum
+fulcrum<-function(ab, ell, y_extent=max(max(ab), 15), x_max=1
+                  , fill="light_grey", base_size=24){
     ab<-ab[ab!=0]
     div <- dfun(ab, ell)
     print(div)
     return(geom_point(
-        data=tibble(x=div, y=-0.052*y_extent)# don't recall why 0.028, but it gets fulcrum point just right. 
-        #This needs to be adjusted by considering margin size
-        , size=0.6*dev.size("cm")[2], shape=17
+        data=tibble(x=div, y=-0.045*y_extent)# don't recall why 0.045, but it gets fulcrum point close. 
+        , size=0.6*(dev.size("cm")[2]-(2.5*0.0353*base_size)), shape=17
         , aes(x, y) 
     )
     )
 }
 
+#construct the full plot for scale ell, with reference means=means
 rarity_plot <- function(ab, ell, means=-1:1, ...){
     ab<-ab[ab!=0]
 	return(
 		scale_plot(ab, ell,...) 
 		+ mean_points(ab, means)
 		+ fulcrum(ab, ell, ...)
-		+ scale_color_brewer(type="qual", palette="Dark2") #playing with color choices
-		# + theme(aspect.ratio=1)
+		+ scale_color_brewer(type="qual", palette="Dark2") 
 	)
 }
 
+#one option for plotting all three plots for l=-1:1, with reference points at integer l 
 rarity_series <- function(ab, lrange=-1:1, means=lrange,...){
 	for(l in lrange){
-		print(rarity_plot(ab, l, means))
+		print(rarity_plot(ab, l, means,...))
 	}
 }
 
-# ab <- c(20, 15, 9, 3, 2, 1, 1)
-# ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
-# 
-# rarity_series(ab, 1:-1)
-# rarity_series(ab, 0, 1:-1)
-
 #some SADs to play with
 
-# ab <- c(20, 15, 9, 3, 2, 1, 1)
-ab<-c(20,8,5,4,2,1)
+# ab <- c(20, 15, 9, 3, 2, 1, 1) #includes stacking
+# ab<-c(20,8,5,4,2,1) #candidate for user's guide
 # ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-c(50,30,20,0,0,0)
 # ab<-c(4,3,2)
 # ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
-# ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
+ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-floor(exp(rnorm(50, 4,1.5)))
-# 
-# quartz()
-# rarity_plot(ab, 1)
-# 
-# quartz()
-# rarity_plot(ab, 0)
-# 
-pdf(file="figures/20_8_5_3_2_1.pdf") #, height=2.5, width=2.5)
+
+# quartz() 
+
 rarity_series(ab=ab, 1:-1, fill="lightgrey")
-dev.off()
