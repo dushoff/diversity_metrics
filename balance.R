@@ -71,7 +71,7 @@ base_plot <- function(abundance, pointScale, fill_col="lightgrey"
                       , y_extent=max(max(abundance),15), x_max=sum(abundance)/min(abundance), base_size=24){
     #0.0353 is approximate points to cm conversion (a little less than 3 pts per mm)
     #11.4 is empirically derived scaling factor. Seems like stuff below axis is about 2.5* height of text
-    pointScale<-11.25*(dev.size("cm")[2]-(2.5*0.0353*base_size))
+    pointScale<-11.25*(min(dev.size("cm"))-(2.5*0.0353*base_size))
     # pointScale<-200
 	rf <- tibble(names = as.factor(1:length(abundance))
 		, abundance
@@ -107,12 +107,12 @@ base_plot <- function(abundance, pointScale, fill_col="lightgrey"
 		)
     	+ labs(y="individuals")
 	)
-	return(theme_plot(base))
+	return(theme_plot(base, base_size=base_size))
 }
 
-theme_plot <- function(p){
+theme_plot <- function(p, base_size=24){
 	return(p
-		+ theme_tufte(base_family = "sans", base_size=24)
+		+ theme_tufte(base_family = "sans", base_size=base_size)
 		+ theme(legend.position="none")
 		+ theme(
 			axis.line.x = element_line(
@@ -121,13 +121,14 @@ theme_plot <- function(p){
 				colour = 'black', size=0.2, linetype='solid'
 			)
 		)
+		+ theme(aspect.ratio = )
 	)
 }
 
 #rescales x-axis
 scale_plot <- function(ab, ell, fill_col="lightgrey", y_extent=max(max(ab), 15)
-                       , x_max=sum(ab)/min(ab)){
-	return (base_plot(ab, fill_col=fill_col, y_extent=y_extent, x_max=x_max) 
+                       , x_max=sum(ab)/min(ab), ...){
+	return (base_plot(ab, fill_col=fill_col, y_extent=y_extent, x_max=x_max, ...) 
 		+ scale_x_continuous(trans=power_trans(pow=ell))
 		#allows for an x_max point to determine axes
 		+ geom_point(aes(x,y), data=tibble(x=x_max, y=0), color="white", alpha=0)
@@ -142,7 +143,7 @@ mean_points <- function(ab, ell){
 	return(geom_point(
 		data=tibble(x=div, y=0*div, clr=1:length(div))
 		, aes(x, y, color=as.factor(clr))
-		,size=0.2*dev.size("cm")[2]
+		,size=0.2*min(dev.size("cm"))
 	))
 }
 
@@ -154,7 +155,7 @@ fulcrum<-function(ab, ell, y_extent=max(max(ab), 15), x_max=1
     print(div)
     return(geom_point(
         data=tibble(x=div, y=-0.045*y_extent)# don't recall why 0.045, but it gets fulcrum point close. 
-        , size=0.6*(dev.size("cm")[2]-(2.5*0.0353*base_size)), shape=17
+        , size=0.6*0.8*min((dev.size("cm"))-(2.5*0.0353*base_size)), shape=17
         , aes(x, y) 
     )
     )
@@ -178,17 +179,28 @@ rarity_series <- function(ab, lrange=-1:1, means=lrange,...){
 	}
 }
 
+#convenience function to omit all y-axis elements for constructing multi-panel plots
+omit_y<-function(p){
+    return(p
+           +theme(axis.text.y=element_blank(), axis.title.y=element_blank()
+                  , axis.ticks.y = element_blank()))
+}
+
+
 #some SADs to play with
 
 # ab <- c(20, 15, 9, 3, 2, 1, 1) #includes stacking
-# ab<-c(20,8,5,4,2,1) #candidate for user's guide
+ab<-c(20,8,5,4,2,1) #candidate for user's guide
 # ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-c(50,30,20,0,0,0)
-# ab<-c(4,3,2)
+# ab<-c(4,3,2)   
 # ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
-ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
+# ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-floor(exp(rnorm(50, 4,1.5)))
 
 # quartz() 
 
-rarity_series(ab=ab, 1:-1, fill="lightgrey")
+# rarity_plot(ab, 1, base_size=8)
+
+
+rarity_series(ab=ab, 1:-1)
