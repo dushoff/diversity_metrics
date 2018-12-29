@@ -1,19 +1,15 @@
 library(tidyverse)
 library(ggthemes)
+library(scales) # trans_new() is in the scales library
 
 ## TODO
 ## OPTIONAL: color the species (so that stacking becomes clear)
 
 ## might want to do get text and axis widths to scale with device/viewport. currently base_size argument can control manually
 
-## think about squeezing when rarities aren't equal but are close s.t. boxes overlap... maybe go back to lines (or make an option?) (Or a smart option that can calculate whether overlap occurs?)
-
-## along similar lines, consider including an optional argument for plotting in local graphics device vs. the nice version to pdf, where some compromises in the former to enable flexibility, but don't make those sacrifices when printing to file. 
+## think about squeezing when rarities aren't equal but are close s.t. boxes overlap... smart option that can calculate whether overlap occurs?
 
 ## select colors for reference points http://colorbrewer2.org/#type=qualitative&scheme=Dark2&n=3
-
-
-library(scales) # trans_new() is in the scales library
 
 epsPretty <- 0 # probably can delete these?
 offStart <- 0
