@@ -4,11 +4,11 @@ library(ggthemes)
 ## TODO
 ## OPTIONAL: color the species (so that stacking becomes clear)
 
-#figure out how to shrink according to viewport rather than device size, and do it to all things rather than just some
+#figure out how to shrink according to viewport rather than device size, and do it to all things rather than just some, would allow easier integration into multi-panel figures
 
-## might want to do get text and axis widths to scale with device/viewport
+## might want to do get text and axis widths to scale with device/viewport. currently base_size argument can control manually
 
-## arguments about whether to print y-axis, axis titles (for multi-paneled figures). Might even want to handle that component inside the fucntion for more control. actually, probably want to graduate to https://cran.r-project.org/web/packages/ggplot2/vignettes/extending-ggplot2.html
+## flexibly design multipaneled figures: https://cran.r-project.org/web/packages/ggplot2/vignettes/extending-ggplot2.html
 
 ## think about squeezing when rarities aren't equal but are close s.t. boxes overlap... maybe go back to lines (or make an option?) (Or a smart option that can calculate whether overlap occurs?)
 
@@ -67,21 +67,27 @@ fancy_rep<-function(df){
     )
 }
 
-base_plot <- function(abundance, pointScale, fill_col="lightgrey"
-                      , y_extent=max(max(abundance),15), x_max=sum(abundance)/min(abundance), base_size=24){
+base_plot <- function(abundance, pointScale
+                      , fill_col="lightgrey" #can set to match communities
+                      , y_extent=max(max(abundance),15) #how tall to draw y
+                      , x_max=sum(abundance)/min(abundance) #plots a point to extend x
+                      , x_min=sum(abundance)/max(abundance) # point to exted x
+                      , base_size=24 #controls text size, default for 7" sq plotting device
+                      , noco=1 #number of columns, shrinks text and point size proportional to number of panels
+                      ){
     #0.0353 is approximate points to cm conversion (a little less than 3 pts per mm)
-    #11.4 is empirically derived scaling factor. Seems like stuff below axis is about 2.5* height of text
-    pointScale<-11.25*(min(dev.size("cm"))-(2.5*0.0353*base_size))
-    # pointScale<-200
-	rf <- tibble(names = as.factor(1:length(abundance))
+    #11.25 is empirically derived scaling factor. Seems like stuff below axis is about 2.5* height of 1 line of text
+    pointScale<-(11.25*(min(dev.size("cm"))/noco-(2.5*0.0353*base_size)))
+    pointsize <- pointScale/(y_extent)
+	
+    #make plotting data
+    rf <- tibble(names = as.factor(1:length(abundance))
 		, abundance
 		, rarity = sum(abundance)/abundance
 	)
 	rfrepeated <-fancy_rep(rf) 
 
-	pointsize <- pointScale/(y_extent)
-
-	#This pretty much has to be 0.5 because the shape is centered on its x- and y-locations, but we want to offset so it rests upon it
+	#0.5; shape is centered on  x,y; offset so it rests upon it
 	goff <- 0.5
 
 	#ggplot command to generate basic plot object
@@ -89,7 +95,7 @@ base_plot <- function(abundance, pointScale, fill_col="lightgrey"
 	    #bricks
 		+ geom_point(aes(y=gr-goff, alpha=0.2), size=pointsize, fill=fill_col
 		             , shape=22, color="black", stroke=0.5) 
-		# make plank
+		# plank
 		+ geom_segment(
 			aes(x, y, xend=xend, yend=yend)
 			, data=data.frame(
@@ -107,12 +113,12 @@ base_plot <- function(abundance, pointScale, fill_col="lightgrey"
 		)
     	+ labs(y="individuals")
 	)
-	return(theme_plot(base, base_size=base_size))
+	return(theme_plot(base, base_size=base_size, noco=noco))
 }
 
-theme_plot <- function(p, base_size=24){
+theme_plot <- function(p, base_size=24, noco=1,...){
 	return(p
-		+ theme_tufte(base_family = "sans", base_size=base_size)
+		+ theme_tufte(base_family = "sans", base_size=base_size/noco)
 		+ theme(legend.position="none")
 		+ theme(
 			axis.line.x = element_line(
@@ -121,53 +127,54 @@ theme_plot <- function(p, base_size=24){
 				colour = 'black', size=0.2, linetype='solid'
 			)
 		)
-		+ theme(aspect.ratio = )
 	)
 }
 
 #rescales x-axis
 scale_plot <- function(ab, ell, fill_col="lightgrey", y_extent=max(max(ab), 15)
-                       , x_max=sum(ab)/min(ab), ...){
-	return (base_plot(ab, fill_col=fill_col, y_extent=y_extent, x_max=x_max, ...) 
+                       , x_max=sum(ab)/min(ab), x_min=sum(ab)/max(ab), noco=1,...){
+	return (base_plot(ab, fill_col=fill_col, y_extent=y_extent
+	                  , x_max=x_max, x_min=x_min, noco=noco, ...) 
 		+ scale_x_continuous(trans=power_trans(pow=ell))
-		#allows for an x_max point to determine axes
-		+ geom_point(aes(x,y), data=tibble(x=x_max, y=0), color="white", alpha=0)
-		# + coord_cartesian(clip="off")
-	)
+		#allows for x min and max points to determine axes
+		+ geom_point(aes(x,y), data=tibble(x=c(x_max, x_min), y=c(0,0)), color="white", alpha=0)
+		)
 }
 
 #plots reference points at means with power ell
-mean_points <- function(ab, ell){
+mean_points <- function(ab, ell, noco=1){
     ab<-ab[ab!=0]
 	div <- Vectorize(dfun, vectorize.args=("l"))(ab, ell)
 	return(geom_point(
 		data=tibble(x=div, y=0*div, clr=1:length(div))
 		, aes(x, y, color=as.factor(clr))
-		,size=0.2*min(dev.size("cm"))
+		,size=0.2*min(dev.size("cm"))/noco
 	))
 }
 
 #plot the fulcrum
 fulcrum<-function(ab, ell, y_extent=max(max(ab), 15), x_max=1
-                  , fill="light_grey", base_size=24){
+                  , x_min=1, fill_col="light_grey", base_size=24, noco=1){
     ab<-ab[ab!=0]
     div <- dfun(ab, ell)
     print(div)
     return(geom_point(
-        data=tibble(x=div, y=-0.045*y_extent)# don't recall why 0.045, but it gets fulcrum point close. 
-        , size=0.6*0.8*min((dev.size("cm"))-(2.5*0.0353*base_size)), shape=17
+        data=tibble(x=div, y=-0.035*y_extent) # gets fulcrum point close. 
+        , size=(0.48*min(dev.size("cm"))-(2.5*0.0353*base_size))/noco #scales with plotting device and number of columns
+        # , size=rel(0.3)
+        , shape=17
         , aes(x, y) 
     )
     )
 }
 
 #construct the full plot for scale ell, with reference means=means
-rarity_plot <- function(ab, ell, means=-1:1, ...){
+rarity_plot <- function(ab, ell, means=-1:1, noco=1, ...){
     ab<-ab[ab!=0]
 	return(
-		scale_plot(ab, ell,...) 
-		+ mean_points(ab, means)
-		+ fulcrum(ab, ell, ...)
+		scale_plot(ab, ell, noco=noco,...) 
+		+ mean_points(ab, means, noco=noco)
+		+ fulcrum(ab, ell, noco=noco, ...)
 		+ scale_color_brewer(type="qual", palette="Dark2") 
 	)
 }
@@ -182,8 +189,11 @@ rarity_series <- function(ab, lrange=-1:1, means=lrange,...){
 #convenience function to omit all y-axis elements for constructing multi-panel plots
 omit_y<-function(p){
     return(p
-           +theme(axis.text.y=element_blank(), axis.title.y=element_blank()
-                  , axis.ticks.y = element_blank()))
+           +theme(axis.text.y=element_text(color="white")
+                  , axis.title.y=element_text(color="white")
+                  , axis.ticks.y = element_blank(), axis.line.x=element_line(
+                      colour = 'black', size=0.2, linetype='solid'
+                  )))
 }
 
 
@@ -198,9 +208,8 @@ ab<-c(20,8,5,4,2,1) #candidate for user's guide
 # ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab<-floor(exp(rnorm(50, 4,1.5)))
 
-# quartz() 
-
-# rarity_plot(ab, 1, base_size=8)
-
-
-rarity_series(ab=ab, 1:-1)
+quartz()
+p<-rarity_plot(ab, 1, fill_col="blue", x_min=1, x_max=45, noco=3, base_size=12)
+grid.arrange(p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p))
+grid.arrange(p,p,p,p,p,p,p,p)
+# rarity_series(ab=ab, 1:-1)
