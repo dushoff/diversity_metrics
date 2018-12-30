@@ -139,7 +139,7 @@ scale_plot <- function(ab, ell, fill_col="lightgrey", y_extent=max(max(ab), 15)
                        , x_max=sum(ab)/min(ab), x_min=sum(ab)/max(ab), noco=1, lines=F, ...){
 	return (base_plot(ab, fill_col=fill_col, y_extent=y_extent
 	                  , x_max=x_max, x_min=x_min, noco=noco, lines=lines, ...) 
-		+ scale_x_continuous(trans=power_trans(pow=ell))
+		+ scale_x_continuous(trans=power_trans(pow=ell), labels=signif)
 		+ geom_point(aes(x,y) #allows for x min and max points to determine axes
 		             , data=tibble(x=c(x_max, x_min), y=c(0,0))
 		             , color="white", alpha=0)
@@ -153,7 +153,7 @@ mean_points <- function(ab, ell, noco=1){
 	return(geom_point(
 		data=tibble(x=div, y=0*div, clr=1:length(div))
 		, aes(x, y, color=as.factor(clr))
-		,size=0.2*min(dev.size("cm"))/noco
+		, size=0.2*min(dev.size("cm"))/noco
 	))
 }
 
@@ -171,8 +171,8 @@ fulcrum<-function(ab, ell, y_extent=max(max(ab), 15), x_max=1
                 , " min observed rarity= ", sum(ab)/max(ab)))}
     
     return(geom_point(
-        data=tibble(x=div, y=-0.035*y_extent) # gets fulcrum point close. 
-        , size=(0.48*min(dev.size("cm"))-(2.5*0.0353*base_size))/noco #scales with plotting device and number of columns
+        data=tibble(x=div, y=-0.03*y_extent) # gets fulcrum point close. 
+        , size=(0.48*min(dev.size("cm"))/noco-(2.5*0.0353*base_size)) #scales with plotting device and number of columns
         # , size=rel(0.3)
         , shape=17
         , aes(x, y) 
@@ -222,11 +222,11 @@ omit_y<-function(p){
 # ab <- c(50,30,20,0,0,0)
 # ab <- c(4,3,2)
 # ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
-# ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
+ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab <- floor(exp(rnorm(50, 4,1.5)))
 
-
-# rarity_plot(ab,0, lines=T, fill_col="red", base_size=24, verbose=T)
+quartz(height=2, width=2)
+rarity_plot(ab,0, lines=T, fill_col="red", base_size=9, verbose=T)
 
 # p<-rarity_plot(ab, 1, fill_col="blue", x_min=1, x_max=45, noco=3, base_size=12)
 # 
