@@ -46,7 +46,7 @@ power_trans = function(pow) trans_new(name="power"
 	, inverse = function(x) ipfun(x, pow)
 	, breaks = function(x) prettify(
 		trans_breaks(
-			function(x) pfun(x, pow), function(x) ipfun(x, pow), n = 6
+			function(x) pfun(x, pow), function(x) ipfun(x, pow), n = 5
 		)(c(epsPretty,x)*1.1)
 	)
    , domain = c(1, 10000)
@@ -112,7 +112,7 @@ base_plot <- function(abundance, pointScale
 #fix plank location and add space above and below data range
 		+scale_y_continuous(
 		    expand=c(0,0)
-		    , limits=c(y_extent-1.1*y_extent, 1.1*y_extent)
+		    , limits=c(y_extent-1.05*y_extent, 1.05*y_extent)
 		)
     	+ labs(y="individuals")
 	)
