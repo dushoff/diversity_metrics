@@ -166,9 +166,9 @@ fulcrum<-function(ab, ell, y_extent=max(max(ab), 15), x_max=1
     div <- dfun(ab, ell)
     
     if(verbose==T){
-        print(c(paste("diversity= ", div), paste(" community size= ", sum(ab))
-                , paste(" max observed rarity= ", sum(ab)/min(ab))
-                , paste(" min observed rarity= ", sum(ab)/max(ab))))}
+        print(c(paste("diversity =", div), paste("community size =", sum(ab))
+                , paste("max observed rarity =", sum(ab)/min(ab))
+                , paste("min observed rarity =", sum(ab)/max(ab))))}
     
     return(geom_point(
         data=tibble(x=div, y=-0.03*y_extent) # gets fulcrum point close. 
