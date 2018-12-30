@@ -89,7 +89,7 @@ base_plot <- function(abundance, pointScale
 	         +(if(lines==T){
 	             #line segments
 	             geom_segment(aes(x=rarity, xend=rarity, y=inds, yend=0)
-	                           , color="black"
+	                           , color=fill_col
 	                           , size=1
 	                           )
 	         } else{
