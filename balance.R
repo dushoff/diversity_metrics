@@ -172,7 +172,7 @@ fulcrum<-function(ab, ell, y_extent=max(max(ab), 15), x_max=1
     
     return(geom_point(
         data=tibble(x=div, y=-0.03*y_extent) # gets fulcrum point close. 
-        , size=(0.48*min(dev.size("cm"))/noco-(2.5*0.0353*base_size)) #scales with plotting device and number of columns
+        , size=(0.48*min(dev.size("cm"))-(2.5*0.0353*base_size))/noco #scales with plotting device and number of columns
         # , size=rel(0.3)
         , shape=17
         , aes(x, y) 
@@ -225,8 +225,8 @@ omit_y<-function(p){
 ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab <- floor(exp(rnorm(50, 4,1.5)))
 
-quartz(height=2, width=2)
-rarity_plot(ab,0, lines=T, fill_col="red", base_size=9, verbose=T)
+quartz(height=7, width=7)
+rarity_plot(ab,0, fill_col="red", base_size=24, verbose=T, noco=1)
 
 # p<-rarity_plot(ab, 1, fill_col="blue", x_min=1, x_max=45, noco=3, base_size=12)
 # 
