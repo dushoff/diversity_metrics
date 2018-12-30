@@ -96,7 +96,7 @@ base_plot <- function(abundance, pointScale
 	    
 	   #bricks
 	    geom_point(aes(y=gr-goff, alpha=0.2), size=pointsize, fill=fill_col
-		             , shape=22, color="black", stroke=0.5) 
+		             , shape=22, color="black", stroke=0.5/noco) 
 	         })
 		# plank
 		+ geom_segment(
@@ -225,9 +225,9 @@ omit_y<-function(p){
 ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab <- floor(exp(rnorm(50, 4,1.5)))
 
-quartz(height=7, width=7)
-rarity_plot(ab,0, fill_col="red", base_size=24, verbose=T, noco=1)
-
+# quartz(height=7, width=7)
+# rarity_plot(ab,0, fill_col="red", base_size=24, verbose=T, noco=2)
+# 
 # p<-rarity_plot(ab, 1, fill_col="blue", x_min=1, x_max=45, noco=3, base_size=12)
 # 
 # grid.arrange(p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p))
