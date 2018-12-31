@@ -41,12 +41,12 @@ prettify <- function(breaks){
 }
 
 #function for scale transformation
-power_trans = function(pow) trans_new(name="power"
+power_trans = function(pow, nb) trans_new(name="power"
    , transform = function(x) pfun(x, pow)
 	, inverse = function(x) ipfun(x, pow)
 	, breaks = function(x) prettify(
 		trans_breaks(
-			function(x) pfun(x, pow), function(x) ipfun(x, pow), n = 5
+			function(x) pfun(x, pow), function(x) ipfun(x, pow), n = nb
 		)(c(epsPretty,x)*1.1)
 	)
    , domain = c(1, 10000)
@@ -135,15 +135,18 @@ theme_plot <- function(p, base_size=24, noco=1,...){
 }
 
 #starts with baseplot, rescales x-axis, adds space to allow matching scales between comms
-scale_plot <- function(ab, ell, fill_col="lightgrey", y_extent=max(max(ab), 15)
-                       , x_max=sum(ab)/min(ab), x_min=sum(ab)/max(ab), noco=1, lines=F, ...){
-	return (base_plot(ab, fill_col=fill_col, y_extent=y_extent
-	                  , x_max=x_max, x_min=x_min, noco=noco, lines=lines, ...) 
-		+ scale_x_continuous(trans=power_trans(pow=ell), labels=signif)
+scale_plot <- function(
+        ab, ell, fill_col="lightgrey", y_extent=max(max(ab), 15)
+        , x_max=sum(ab)/min(ab), x_min=sum(ab)/max(ab), noco=1
+        , lines=F, nbreaks=5, ...
+){
+    return (base_plot(ab, fill_col=fill_col, y_extent=y_extent
+	            , x_max=x_max, x_min=x_min, noco=noco, lines=lines, ...) 
+		+ scale_x_continuous(trans=power_trans(pow=ell, nb=nbreaks), labels=signif)
 		+ geom_point(aes(x,y) #allows for x min and max points to determine axes
-		             , data=tibble(x=c(x_max, x_min), y=c(0,0))
-		             , color="white", alpha=0)
-		)
+		  , data=tibble(x=c(x_max, x_min), y=c(0,0))
+		  , color="white", alpha=0)
+	        )
 }
 
 #plots reference points at means with power "ell"
@@ -160,7 +163,7 @@ mean_points <- function(ab, ell, noco=1){
 #plot the fulcrum
 fulcrum<-function(ab, ell, y_extent=max(max(ab), 15), x_max=1
                   , x_min=1, fill_col="light_grey"
-                  , base_size=24, noco=1, verbose=T){
+                  , base_size=24, noco=1, nbreaks=5, verbose=T){
     
     ab<-ab[ab!=0]
     div <- dfun(ab, ell)
@@ -203,7 +206,7 @@ rarity_series <- function(ab, lrange=-1:1, means=lrange,...){
 omit_y<-function(p){
     return(p
            +theme(axis.text.y=element_text(color="white")
-                  , axis.title.y=element_text(color="white")
+                  , axis.title.y=element_blank() #element_text(color="white")
                   , axis.ticks.y = element_line(color="white")
                   , axis.line.y = element_line(color="white")
                   , axis.line.x=element_line(
@@ -222,7 +225,7 @@ omit_y<-function(p){
 # ab <- c(50,30,20,0,0,0)
 # ab <- c(4,3,2)
 # ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
-ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
+# ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab <- floor(exp(rnorm(50, 4,1.5)))
 
 # quartz(height=7, width=7)
