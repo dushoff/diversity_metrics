@@ -203,10 +203,10 @@ rarity_series <- function(ab, lrange=-1:1, means=lrange,...){
 }
 
 #convenience function to omit y-axis elements for constructing multi-panel plots... mostly 
-omit_y<-function(p){
+white_y<-function(p){
     return(p
            +theme(axis.text.y=element_text(color="white")
-                  , axis.title.y=element_blank() #element_text(color="white")
+                  , axis.title.y=element_text(color="white")
                   , axis.ticks.y = element_line(color="white")
                   , axis.line.y = element_line(color="white")
                   , axis.line.x=element_line(
@@ -216,6 +216,18 @@ omit_y<-function(p){
            )
 }
 
+omit_y<-function(p){
+    return(p
+           +theme(axis.text.y = element_blank()
+                  , axis.title.y = element_blank()
+                  , axis.ticks.y = element_blank()
+                  , axis.line.y = element_blank()
+                  , axis.line.x=element_line(
+                      colour = 'black', size=0.2, linetype='solid'
+                  )
+           )
+    )
+}
 
 #some SADs to play with
 
