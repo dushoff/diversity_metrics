@@ -81,13 +81,13 @@ base_plot <- function(abundance, pointScale
 	)
 	rfrepeated <-fancy_rep(rf) 
 
-	#0.5; shape is centered on  x,y; offset so it rests upon it
+	#0.5; shape is centered on  x,y; offset so it rests upon x, y-1
 	goff <- 0.5
 
 	#ggplot command to generate basic plot object
 	base <- (ggplot(rfrepeated, aes(x=rarity, y=abundance))
 	         +(if(lines==T){
-	             #line segments
+	   #line segments
 	             geom_segment(aes(x=rarity, xend=rarity, y=inds, yend=0)
 	                           , color=fill_col
 	                           , size=1
@@ -116,6 +116,7 @@ base_plot <- function(abundance, pointScale
 		)
     	+ labs(y="individuals")
 	)
+	#calls the function theme plot to generate basic figure
 	return(theme_plot(base, base_size=base_size, noco=noco))
 }
 
@@ -195,14 +196,14 @@ rarity_plot <- function(ab, ell, means=-1:1, noco=1, lines=F, ...){
 	)
 }
 
-#one option for plotting all three plots for l=-1:1, with reference points at integer l
+#conventiently plot for l=-1:1, with reference points in each fig
 rarity_series <- function(ab, lrange=-1:1, means=lrange,...){
 	for(l in lrange){
 		print(rarity_plot(ab, l, means,...))
 	}
 }
 
-#convenience function to omit y-axis elements for constructing multi-panel plots... mostly 
+#convenience functions to omit y-axis elements for constructing multi-panel plots.
 white_y<-function(p){
     return(p
            +theme(axis.text.y=element_text(color="white")
@@ -246,7 +247,6 @@ omit_y<-function(p){
 # p<-rarity_plot(ab, 1, fill_col="blue", x_min=1, x_max=45, noco=3, base_size=12)
 # 
 # grid.arrange(p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p))
-# 
-# grid.arrange(p,p,p,p,p,p,p,p)
+
 
 # rarity_series(ab=ab, 1:-1)
