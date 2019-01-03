@@ -5,6 +5,8 @@
 
 *Gods_Unbiased_Estimator.R* compares mean rarity estimates where true rarities are known and sample abundances used in mean estimation (Gods unbiased estimator) to diversity estimates from other (less divine) realms
 
+*just_scales.R* unsophisticated script to plot the different scales, with no data besides a handful of reference points
+
 
 *balance.R* includes functions to take an observed SAD and plot abundance and rarity on various scales with mean as the fulcrum
 
