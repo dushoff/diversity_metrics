@@ -232,6 +232,8 @@ omit_y<-function(p){
 
 #some SADs to play with
 
+## First one overlaps on richness scale; also, I'm not following how I can 
+## interpret stacking by viewing the graph
 # ab <- c(20, 15, 9, 3, 2, 1, 1) #includes stacking
 # ab<-c(20,8,5,4,2,1) #candidate for user's guide
 # ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
