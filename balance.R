@@ -29,8 +29,9 @@ ipfun=function(x, pow, offset=offStart){
 
 # Diversity function 
 dfun<-function(ab, l){
-	rp <- ab/sum(ab)
-	return(ipfun(sum(rp*pfun(1/rp, l)),l))
+    rp <- ab/sum(ab)
+    if(l==0) return(exp(sum(rp*log(1/rp))))
+    return(sign(l)*ipfun(sign(l)*sum(rp*pfun(1/rp, l)),l))
 }
 
 # round numbers, more aggressively the larger they are
@@ -243,6 +244,7 @@ omit_y<-function(p){
 # ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab <- floor(exp(rnorm(50, 4,1.5)))
 
+rarity_plot(ab,)
 # quartz(height=7, width=7)
 # rarity_plot(ab,0, fill_col="red", base_size=24, verbose=T, noco=2)
 # 
