@@ -59,8 +59,22 @@ Sources += prospectus.md diversity.md
 
 Sources += $(wildcard *.R)
 
+Ignore += rarity_seesaws_1.pdf
+rarity_seesaws_1.pdf: scaled_means.Rout ;
+
 scaled_means.Rout: scaled_means.R 
-scaling_not_weighting.Rout: scaling_not_weighting.R
+
+balance.Rout: balance.R
+
+adaptive.Rout: adaptive.R
+
+Ignore += scaled_means.debug
+scaled_means.debug: scaled_means.Rout
+	perl -ne "print " $< > $@
+
+scaled_means_other.Rout: scaled_means_other.R
+scaled_means_other.R: scaled_means.R.36cf85c9.oldfile
+	$(copy)
 
 Gods_Unbiased_Estimator.Rout: Gods_Unbiased_Estimator.R
 
