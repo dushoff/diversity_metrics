@@ -3,6 +3,7 @@
 #a couple useful diversity estimators
 
 library(tidyverse)
+library(furrr)
 
 #Now make GUE (God's Unbiased Estimator)
 GUE<-function(freqs, true_p,l){
@@ -33,37 +34,44 @@ GT1<-function(x){c1(x)-(sum(x==2))}
 # }
 
 #do reps times to test bias, store to a list
-reps<-50
-#number of true species
-S<-75
-#number of individuals in sample
-N<-300
+reps<-999
 l<-1
 
-out<-map_dfr(1:reps, function(x){
-#make a lognormal SAD with S species
-
-a<-exp(rnorm(S))
-true_p=a/sum(a)
-
-#Sample N from it to get observations
-
-obs_namelist<-sample(1:S, size=N, replace=T, prob=a)
-freqs<-unlist(lapply(1:S, function(x){length(which(obs_namelist==x))}))
-
-
-true<-GUE(true_p, true_p, l)
-gods<-GUE(freqs/sum(freqs), true_p, l)   
-naive<-GUE((freqs/sum(freqs))[freqs/sum(freqs)!=0],(freqs/sum(freqs))[freqs/sum(freqs)!=0],l) # equals sum(freqs>0) for richness
-chao1<-c1(freqs)
-simple_good1<-GT1(freqs)
-# good_plugin<-GT2(freqs)
+nc<-parallel::detectCores()-1
+plan(strategy=multiprocess, workers=nc)
+#number of true species
+s<-map_dfr(c(30,75,150), function(S){
+    map_dfr(c(100, 200, 300), function(N){
+#number of individuals in sample
 
 
 
-return(data.frame(true, gods, naive, chao1, simple_good1, l, N))
+        map_dfr(1:reps, function(x){
+            #make a lognormal SAD with S species
+            
+            a<-exp(rnorm(S))
+            true_p=a/sum(a)
+            
+            #Sample N from it to get observations
+            
+            obs_namelist<-sample(1:S, size=N, replace=T, prob=a)
+            freqs<-unlist(lapply(1:S, function(x){length(which(obs_namelist==x))}))
+            
+            
+            true<-GUE(true_p, true_p, l)
+            gods<-GUE(freqs/sum(freqs), true_p, l)   
+            naive<-GUE((freqs/sum(freqs))[freqs/sum(freqs)!=0],(freqs/sum(freqs))[freqs/sum(freqs)!=0],l) # equals sum(freqs>0) for richness
+            chao1<-c1(freqs)
+            simple_good1<-GT1(freqs)
+            # good_plugin<-GT2(freqs)
+            
+            
+            
+            return(data.frame(true, gods, naive, chao1, simple_good1, l, N))})
+        })
 })
 
+s
 
 plot_ests<-function(df, e1, e2){(df %>% ggplot(aes(x=get(e1), y=get(e2)))
     +geom_point()
