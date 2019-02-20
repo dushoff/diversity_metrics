@@ -61,12 +61,13 @@ c_list<-list(list(s=1, omega=0.01), list(prob=0.01),list(meanlog=5, sdlog=0.5), 
 nc<-parallel::detectCores()-1
 plan(strategy=multiprocess, workers=nc)
 #number of true species
-s<-map_dfr(1:reps, function(x){
+iter<-0
+s<-future_map_dfr(1:reps, function(x){
     map_dfr(c(30,75,150), function(S){
-        future_map_dfr(round(exp(seq(12,19, 0.5))),function(comsize){
+            out<-map_dfr(round(exp(seq(12,19, 0.5))),function(comsize){
         #number of individuals in sample
             #SADs with ~S species
-            map_dfr(1:length(s_type),function(saddef){
+                map_dfr(1:length(s_type),function(saddef){
                     a<-as.numeric(
                         # sim_sad(30, 100000, sad_type="powbend", sad_coef=list(s=1, omega=0.01))
                         sim_sad(
@@ -101,6 +102,8 @@ s<-map_dfr(1:reps, function(x){
                 })
             })
         })
+            iter<-iter+1
+            write.csv(out, file=paste("data/GUEsims", iter, ".csv", sep=""))
     })
 })
 
