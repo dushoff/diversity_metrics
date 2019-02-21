@@ -24,7 +24,7 @@ GUE<-function(freqs, true_p,l){
 
 
 #Good-Turing 1 chao-type estimator
-GT1<-function(x){c1(x)-(sum(x==2))}
+# GT1<-function(x){c1(x)-(sum(x==2))}
 
 #Unsmoothed Good-Turing rarity estimator; problems with infinitiy
 
@@ -66,13 +66,12 @@ c_list<-list(
 
 nc<-parallel::detectCores()-1
 plan(strategy=multiprocess, workers=nc)
-#number of true species
-iter<-0
+sz<-round(exp(seq(9,19, 0.5)))
 future_map(1:reps, function(x){
    
     map(c(30,75,150), function(S){
-        Sys.time()
-        out<-map_dfr(round(exp(seq(12,19, 1))),function(comsize){
+      
+        out<-map_dfr(sz,function(comsize){
         #number of individuals in sample
             #SADs with ~S species
             map_dfr(1:length(s_type),function(saddef){
@@ -93,7 +92,7 @@ future_map(1:reps, function(x){
                     
                         #Sample N from it to get observations
                     map_dfr(c(100, 200, 300), function(N){
-                        obs_namelist<-sample(1:S, size=N, replace=T, prob=true_p)
+                        obs_namelist<-sample(1:S, size=N, replace=F, prob=true_p)
                         freqs<-unlist(lapply(1:S, function(x){length(which(obs_namelist==x))}))
                         # for each ell value
                         map_dfr(seq(-1,1,1), function(l){
@@ -113,10 +112,8 @@ future_map(1:reps, function(x){
             })
                 
         })
-        iter<-iter+1
-        write.csv(out, file=paste("data/GUEsims", iter, ".csv", sep=""))
-        Sys.time()
-        return(out)
+       
+        write.csv(out, file=paste("data/GUEsims", S, "no", x, ".csv", sep=""))
            
     })
 })
