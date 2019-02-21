@@ -54,20 +54,29 @@ reps<-99
 
 
 #make some different sads with different distributions, eveness, etc. for functions that can take S, N as arguments
-s_type<-rep(c("powbend", "geom", "lnorm", "poilog"), 3)
-c_list<-list(list(s=1, omega=0.01), list(prob=0.01),list(meanlog=5, sdlog=0.5), list(mu=5, sig=0.5),list(s=1, omega=0.02), list(prob=0.02),list(meanlog=5, sdlog=3), list(mu=5, sig=3), list(s=1, omega=0.04), list(prob=0.04),list(meanlog=5, sdlog=5), list(mu=5, sig=5))
+s_type<-rep(c("powbend", "geom", "lnorm"), 4)
+
+c_list<-list(
+      list(s=1, omega=0.01), list(prob=0.01), list(meanlog=5, sdlog=.5)
+     , list(s=1, omega=0.02), list(prob=0.02), list(meanlog=5, sdlog=3)
+     , list(s=1, omega=0.04), list(prob=0.04), list(meanlog=5, sdlog=5)
+     , list(s=1, omega=0.03), list(prob=0.03), list(meanlog=5, sdlog=1)
+    )
 
 
 nc<-parallel::detectCores()-1
 plan(strategy=multiprocess, workers=nc)
 #number of true species
 iter<-0
-s<-future_map_dfr(1:reps, function(x){
-    map_dfr(c(30,75,150), function(S){
-            out<-map_dfr(round(exp(seq(12,19, 0.5))),function(comsize){
+future_map(1:reps, function(x){
+   
+    map(c(30,75,150), function(S){
+        Sys.time()
+        out<-map_dfr(round(exp(seq(12,19, 1))),function(comsize){
         #number of individuals in sample
             #SADs with ~S species
-                map_dfr(1:length(s_type),function(saddef){
+            map_dfr(1:length(s_type),function(saddef){
+                    
                     a<-as.numeric(
                         # sim_sad(30, 100000, sad_type="powbend", sad_coef=list(s=1, omega=0.01))
                         sim_sad(
@@ -100,10 +109,15 @@ s<-future_map_dfr(1:reps, function(x){
                             return(data.frame(true, gods, naive, chao, l, N,S, comsize, saddef))
                     })
                 })
+                    
             })
+                
         })
-            iter<-iter+1
-            write.csv(out, file=paste("data/GUEsims", iter, ".csv", sep=""))
+        iter<-iter+1
+        write.csv(out, file=paste("data/GUEsims", iter, ".csv", sep=""))
+        Sys.time()
+        return(out)
+           
     })
 })
 
