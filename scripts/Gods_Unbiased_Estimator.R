@@ -67,6 +67,7 @@ c_list<-list(
 nc<-parallel::detectCores()-1
 plan(strategy=multiprocess, workers=nc)
 sz<-round(exp(seq(9,19, 0.5)))
+
 future_map(1:reps, function(x){
    
     map(c(30,75,150), function(S){
@@ -92,7 +93,7 @@ future_map(1:reps, function(x){
                     
                         #Sample N from it to get observations
                     map_dfr(c(100, 200, 300), function(N){
-                        obs_namelist<-sample(1:S, size=N, replace=F, prob=true_p)
+                        obs_namelist<-sample(1:S, size=N, replace=T, prob=true_p)
                         freqs<-unlist(lapply(1:S, function(x){length(which(obs_namelist==x))}))
                         # for each ell value
                         map_dfr(seq(-1,1,1), function(l){
