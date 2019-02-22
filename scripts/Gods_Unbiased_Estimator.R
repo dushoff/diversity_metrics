@@ -36,8 +36,8 @@ GUE<-function(freqs, true_p,l){
 #     }))/sum(x))
 # }
 
-#do reps times to test bias, store to a list
-reps<-99
+begin<-1
+end<-99
 
  
 # sim_sad(30, 100000, sad_type="gamma", sad_coef=list(shape=3,scale=3))
@@ -67,8 +67,7 @@ c_list<-list(
 nc<-parallel::detectCores()-1
 plan(strategy=multiprocess, workers=nc)
 sz<-round(exp(seq(9,19, 0.5)))
-
-future_map(1:reps, function(x){
+future_map(begin:end, function(x){
    
     map(c(30,75,150), function(S){
       
@@ -92,7 +91,7 @@ future_map(1:reps, function(x){
                     true_p=a/sum(a)
                     
                         #Sample N from it to get observations
-                    map_dfr(c(100, 200, 300), function(N){
+                    map_dfr(c(100, 200, 300, 500), function(N){
                         obs_namelist<-sample(1:S, size=N, replace=T, prob=true_p)
                         freqs<-unlist(lapply(1:S, function(x){length(which(obs_namelist==x))}))
                         # for each ell value
