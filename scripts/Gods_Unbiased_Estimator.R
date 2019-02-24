@@ -122,7 +122,7 @@ errs<-guesims %>% group_by(l,S,N,comsize,saddef) %>% mutate(ge=gods-true, ne=nai
     +geom_jitter(width=40, alpha=0.2)
     +theme_classic()
     +facet_wrap(~S+l)
-    +scale_y_log10()
+    +scale_y_log10(limits=c(1, 50))
     
 )
 
