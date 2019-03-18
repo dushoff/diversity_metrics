@@ -138,7 +138,9 @@ Bt_prob_abu = function(x){
     n = sum(x)
     f1 = sum(x==1)
     f2 = sum(x==2)
+    #compute the coverage here
     C = 1 - f1/n*ifelse(f2>0,(n-1)*f1/((n-1)*f1+2*f2),ifelse(f1>0,(n-1)*(f1-1)/((n-1)*(f1-1)+2),0))
+    
     W = (1-C)/sum(x/n*(1-x/n)^n)
     
     p.new = x/n*(1-W*(1-x/n)^n)
