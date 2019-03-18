@@ -6,7 +6,10 @@ p <- 0.72
 #iterations
 reps <- 5000
 
+
+#to what extent is this the right question here... aren't problems with the Clopper-Pearson method pretty well known? https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval
 dtest <- function(x, n, p){
+    #get p for both one-sided tests
     p1 <- binom.test(x, n, p = p
                      , alternative = c("less")
     )$p.value
@@ -30,13 +33,16 @@ checkplot <- function(plist, main="checkplot"
     abline(h=1, lty=2, lwd=lwd)
 }
 
+
 bvec <- replicate(reps, {
+    #generate a bunch of random numbers of success for size n, prob p
     x <- rbinom(1, size=n, prob=p)
+    #use a pearson chi-squared test to see chance that x is less than expected given n, p
     prop.test(x, n, p = p
               , alternative = c("less")
     )$p.value
 })
-
+ #using same n and p, use the two sided test above with
 dvec <- replicate(reps, {
     x <- rbinom(1, size=n, prob=p)
     dtest(x, n, p)
