@@ -480,7 +480,8 @@ checkchao<-function(x, B, l, truediv){
     #Chao estimator
     # chaoest<-Chao_Hill_abu(x, 1-l)
     pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,1-l))
-    chaotile<-sum(pro-mean(pro)+Chao_Hill_abu(x, -1)<=truediv)/(B/100)
+    pro<-pro-mean(pro)+Chao_Hill_abu(x, 1-l)
+    chaotile<-sum(pro<=truediv)/(B/100)
     # mletile<-sum(mle>=truediv)/(B/100)
     return(chaotile)
 }

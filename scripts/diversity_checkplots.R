@@ -65,3 +65,4 @@ firstout<-do1000(asab(o2), 1000, -1, dfun(com2,-1))
 pdf(file="figures/first_Simpson_checkplots.pdf")
 hist(firstout$chaotile, xlab="true value as percentile of Chao boot", xlim=c(0,100), main="skewed community with Simpson-Hill=4")
 dev.off()
+
