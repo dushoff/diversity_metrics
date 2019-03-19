@@ -111,6 +111,9 @@ Chao_Hill_abu = function(x,q){
 #-----------------------
 # The empirical profile 
 #-----------------------
+
+#This function probably not necessary since we have dfun, but this has incidence stuff which we could possibly care about.
+
 #' Hill(x, q, datatype) is a function of obtaining the empirical Hill numbers of order q based on abundance data or incidence data.
 #' @param x a vector of species sample frequencies (for abundance data), or incidence-based sample frequencies (1st entry must be the number of sampling unit).
 #' @param q a numeric or a vector of diversity order.
@@ -157,6 +160,26 @@ Bt_prob_abu = function(x){
     p.new=c(p.new,rep(p0,f0))
     return(p.new)
 }
+################################################################
+#MR function to take abundance vector and "l" and return the quantile of B bootstrap iterations of Chao technique that true value falls on. Could be extended to include sample Hill as Chao seems to have
+checkchao<-function(x, B, l, truediv){
+    n<-sum(x)
+    #columns of this matrix are replicate boostraps
+    data.bt = rmultinom(B,n,Bt_prob_abu(x))
+    #for sample diversity
+    obs<-dfun(x,l)
+    # mle = apply(data.bt,2,function(boot)dfun(boot, l))
+    #Chao estimator
+    chaoest<-Chao_Hill_abu(x, 1-l)
+    pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,1-l))
+    chaotile<-sum(pro>=truediv)/(B/100)
+    # mletile<-sum(mle>=truediv)/(B/100)
+    return(chaotile)
+}
+    
+    
+    
+
 
 #' Bt_prob_inc(x) is a function of estimating the species incidence probabilities in the bootstrap assemblage based on incidence data.
 #' @param x a vector of incidence-based sample frequencies (1st entry must be the number of sampling unit).
