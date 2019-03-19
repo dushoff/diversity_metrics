@@ -56,11 +56,12 @@ pdf(file="figures/first_naturalistic_Simpson_checkplot.pdf")
 hist(firstout$chaotile, xlab="true value as percentile of Chao boot", xlim=c(0,100), main=paste("naturalistic lognormal community with Simpson-Hill=", round(truediv,2)))
 dev.off()
 
-
+firstout<-do1000(asab(o1), 1000, -1, dfun(com1,-1))
 pdf(file="figures/first_even_Simpson_checkplot.pdf")
 hist(firstout$chaotile, xlab="true value as percentile of Chao boot", xlim=c(0,100), main="even community with Simpson-Hill=4")
 dev.off()
 
+firstout<-do1000(asab(o2), 1000, -1, dfun(com2,-1))
 pdf(file="figures/first_Simpson_checkplots.pdf")
 hist(firstout$chaotile, xlab="true value as percentile of Chao boot", xlim=c(0,100), main="skewed community with Simpson-Hill=4")
 dev.off()
