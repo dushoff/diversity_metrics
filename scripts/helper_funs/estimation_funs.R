@@ -474,10 +474,11 @@ checkchao<-function(x, B, l, truediv){
     #columns of this matrix are replicate boostraps
     data.bt = rmultinom(B,n,Bt_prob_abu(x))
     #for sample diversity
-    obs<-dfun(x,l)
+    # obs<-dfun(x,l)
     # mle = apply(data.bt,2,function(boot)dfun(boot, l))
+    
     #Chao estimator
-    chaoest<-Chao_Hill_abu(x, 1-l)
+    # chaoest<-Chao_Hill_abu(x, 1-l)
     pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,1-l))
     chaotile<-sum(pro>=truediv)/(B/100)
     # mletile<-sum(mle>=truediv)/(B/100)
