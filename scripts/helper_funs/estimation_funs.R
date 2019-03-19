@@ -160,24 +160,7 @@ Bt_prob_abu = function(x){
     p.new=c(p.new,rep(p0,f0))
     return(p.new)
 }
-################################################################
-#MR function to take abundance vector and "l" and return the quantile of B bootstrap iterations of Chao technique that true value falls on. Could be extended to include sample Hill as Chao seems to have
-checkchao<-function(x, B, l, truediv){
-    n<-sum(x)
-    #columns of this matrix are replicate boostraps
-    data.bt = rmultinom(B,n,Bt_prob_abu(x))
-    #for sample diversity
-    obs<-dfun(x,l)
-    # mle = apply(data.bt,2,function(boot)dfun(boot, l))
-    #Chao estimator
-    chaoest<-Chao_Hill_abu(x, 1-l)
-    pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,1-l))
-    chaotile<-sum(pro>=truediv)/(B/100)
-    # mletile<-sum(mle>=truediv)/(B/100)
-    return(chaotile)
-}
-    
-    
+
     
 
 
@@ -475,4 +458,30 @@ fsd<-function(ab, l){
     if(l==0) {return(exp(sum(rp*log(1/fs))))}
     return(sign(l)*ipfun(sign(l)*sum(rp*pfun(1/fs, l)),l))
 }
+
+# JD's function: takes vector of sample abundances and returns Simpson's estimator of Simpson's Diversity
+sApp <- function(samp){
+    n <- sum(samp)
+    return(1/(
+        sum((samp/n)*((samp-1)/(n-1)))
+    ))
+}
+
+################################################################
+#MR function to take abundance vector and "l" and return the quantile of B bootstrap iterations of Chao technique that true value falls on. Could be extended to include sample Hill as Chao seems to have
+checkchao<-function(x, B, l, truediv){
+    n<-sum(x)
+    #columns of this matrix are replicate boostraps
+    data.bt = rmultinom(B,n,Bt_prob_abu(x))
+    #for sample diversity
+    obs<-dfun(x,l)
+    # mle = apply(data.bt,2,function(boot)dfun(boot, l))
+    #Chao estimator
+    chaoest<-Chao_Hill_abu(x, 1-l)
+    pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,1-l))
+    chaotile<-sum(pro>=truediv)/(B/100)
+    # mletile<-sum(mle>=truediv)/(B/100)
+    return(chaotile)
+}
+
 
