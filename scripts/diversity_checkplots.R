@@ -51,6 +51,12 @@ do1000<-function(abs, B, l, truediv){future_map_dfr(1:1000,function(x){
 
 
 
+
+try1000times<-map_dfr(1:1000, function(x){
+    o3<-subsam(com3, size=inds)
+    return(do1000(o3, 1000, -1, dfun(com3, -1)))
+})
+
 firstout<-do1000(o3, 1000, -1, dfun(com3,-1))
 pdf(file="figures/first_naturalistic_Simpson_checkplot.pdf")
 hist(firstout$chaotile, xlab="true value as percentile of Chao boot", xlim=c(0,100), main=paste("naturalistic lognormal community with Simpson-Hill=", round(truediv,2)))
