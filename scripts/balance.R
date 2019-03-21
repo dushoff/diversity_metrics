@@ -72,7 +72,7 @@ base_plot <- function(abundance, pointScale
                       ){
     #0.0353 is approximate points to cm conversion (a little less than 3 pts per mm)
     #11.25 is empirically derived scaling factor. Seems like stuff below axis is about 2.5* height of 1 line of text
-    pointScale<-(11.25*(min(dev.size("cm"))/noco-(2.5*0.0353*base_size)))
+    pointScale<-(12.5*(min(dev.size("cm"))/noco-(2.5*0.0353*base_size)))
     pointsize <- pointScale/(y_extent)
 	
     #make plotting data
@@ -236,7 +236,7 @@ omit_y<-function(p){
 ## First one overlaps on richness scale; also, I'm not following how I can 
 ## interpret stacking by viewing the graph
 # ab <- c(20, 15, 9, 3, 2, 1, 1) #includes stacking
-# ab<-c(20,8,5,4,2,1) #candidate for user's guide
+ab<-c(20,8,5,4,2,1) #candidate for user's guide
 # ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
 # ab <- c(50,30,20,0,0,0)
 # ab <- c(4,3,2)
@@ -244,13 +244,27 @@ omit_y<-function(p){
 # ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab <- floor(exp(rnorm(50, 4,1.5)))
 
-rarity_plot(ab,)
-# quartz(height=7, width=7)
+#################
+# code for figs in users guide etc.
+
+# pdf("figures/richness_scale.pdf")
+# rarity_plot(ab,1)
+# dev.off()
+# quartz(height=7/3, width=7)
+# pdf("figures/shannon_scale.pdf")
+# white_y(rarity_plot(ab,0))
+# dev.off()
+# 
+# pdf("figures/simpson_scale.pdf")
+# white_y(rarity_plot(ab,-1))
+# dev.off()
+
+
+
 # rarity_plot(ab,0, fill_col="red", base_size=24, verbose=T, noco=2)
 # 
 # p<-rarity_plot(ab, 1, fill_col="blue", x_min=1, x_max=45, noco=3, base_size=12)
 # 
 # grid.arrange(p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p))
-
 
 # rarity_series(ab=ab, 1:-1)
