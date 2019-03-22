@@ -4,13 +4,13 @@ seed <- 100
 
 set.seed(seed)
 
-#takes a vector of abundances and returns Simpson's concentration
+#takes a vector of abundances and returns Simpson's diversity
 sExact <- function (com){
 	c <- com/sum(com)
 	return(1/(sum(c^2)))
 }
 
-# takes vector of sample abundances and returns Simpson's estimator of Simpsons concentration
+# takes vector of sample abundances and returns Simpson's estimator of Simpson's Diversity
 sApp <- function(samp){
 	n <- sum(samp)
 	return(1/(
