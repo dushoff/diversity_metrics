@@ -45,13 +45,13 @@ ci <- function(l, P=0.025){
 }
 
 #sampling with replacement, so comms can be 4 individuals
+## We should either do the math here, or make a flexible uniroot thingy, or both
 com1 <- c(1, 1, 1, 1)
-com2 <- c(1, rep(1/(mini-1), mini))
+com2 <- c(1, rep(1/(mini-1), mini)) ## Mystery code
 
 #40 individuals, 1000 times
 r1 <- appRange(com1, 40, 1000)
 r2 <- appRange(com2, 40, 1000)
-
 
 print(mean(r1))
 print(mean(r2))
