@@ -19,10 +19,12 @@ com1<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=2)))
 com2<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=5)))
 com3<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=3)))
 
-plot(1:length(com1), com1)
-plot(1:length(com2), com2)
-plot(1:length(com3), com3)
-
+pdf(height=2, width=6, file="figures/simssads.pdf")
+par(mfrow=c(1,3))
+plot(1:length(com1), com1, xlab="",  ylab="species abundance", type="line", ylim=c(0,26000))
+plot(1:length(com2), com2, xlab="species rank", ylab="", type="line", ylim=c(0,26000))
+plot(1:length(com3), com3, xlab="", ylab="", type="line", ylim=c(0,26000) )
+dev.off()
 
 asab<-function(namevec){as.numeric(table(namevec))}
 
@@ -41,8 +43,12 @@ checkplot<-function(abs, B=2000, l, inds, reps){
     future_map_dfr(1:reps,function(x){
     obs<-subsam(abs, size=inds)
     chaotile<-checkchao(obs, B, l, td)
-   return(chaotile=data.frame(chaotile, l=rep(l, reps), inds=rep(inds, reps), reps=rep(reps, reps)))})
+    return(chaotile=data.frame(chaotile, l=rep(l, reps), inds=rep(inds, reps), reps=rep(reps, reps)))
+    })
    }
+
+
+show1<-checkplot(com1, l=0, inds=150, reps=1000)
 
 reps<-10
 start<-Sys.time()
