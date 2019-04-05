@@ -32,7 +32,7 @@ dfun(com3, l=-1)
 
 #gets slightly closer than obs
 
-nc<-parallel::detectCores()-1
+nc<-60#per Rob's recommendation
 plan(strategy=multiprocess, workers=nc)
 
 # make this cleaner
@@ -43,18 +43,22 @@ checkplot<-function(abs, B=2000, l, inds, reps){
     chaotile<-checkchao(obs, B, l, td)
    return(chaotile=data.frame(chaotile, l=rep(l, reps), inds=rep(inds, reps), reps=rep(reps, reps)))})
    }
-
-reps<-10
+outerreps<-84
+reps<-60
 start<-Sys.time()
-tall<-map_dfr(c(150,300,750), function(inds){
-    map_dfr(c("com1", "com2", "com3"), function(abs){
-        map_dfr(c(-1,0,0.5,1), function(l){
-            out<-checkplot(abs=get(abs), l=l, inds=inds, reps=reps)
-            return(cbind(out, comm=rep(abs, length(out[,1]))))
-        })
-    })
+map(1:outerreps, function(x){
+  tall<-map_dfr(c(150,300,750), function(inds){
+      map_dfr(c("com1", "com2", "com3"), function(abs){
+          map_dfr(c(-1,0,0.5,1), function(l){
+              out<-checkplot(abs=get(abs), l=l, inds=inds, reps=reps)
+              return(cbind(out, comm=rep(abs, length(out[,1]))))
+          })
+      })
+  })
+  write.csv(tall, paste("data/fromR/sims",x, ".csv"), row.names=F)
 })
 print(Sys.time()-start)
+
 
 
 # t100<-do1000(com1, B=2000, l=1, inds=150, reps=100)

@@ -2,8 +2,6 @@
 .RData
 .Rhistory
 .Rproj.user
-<<<<<<< HEAD
-=======
 *.Rproj
->>>>>>> bdd1c97446686f69508b46403ccbb11e17ed785f
+*.RData
 /figures
