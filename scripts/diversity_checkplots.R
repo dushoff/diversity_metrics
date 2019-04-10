@@ -33,7 +33,7 @@ dfun(com2, l=-1)
 dfun(com3, l=-1)
 
 #gets slightly closer than obs
-
+# show1<-checkplot(com1, l=0, inds=150, reps=1000)
 nc<-60#per Rob's recommendation
 plan(strategy=multiprocess, workers=nc)
 
@@ -47,13 +47,12 @@ checkplot<-function(abs, B=2000, l, inds, reps){
     })
    }
 
-outerreps<-84
-reps<-60
+outerreps<-20
+reps<-250
 
 
-show1<-checkplot(com1, l=0, inds=150, reps=1000)
 
-reps<-10
+
 
 start<-Sys.time()
 map(1:outerreps, function(x){
@@ -65,7 +64,7 @@ map(1:outerreps, function(x){
           })
       })
   })
-  write.csv(tall, paste("data/fromR/sims",x, ".csv"), row.names=F)
+  write.csv(tall, paste("data/fromR/sims",x, ".csv", sep="_"), row.names=F)
 })
 print(Sys.time()-start)
 
@@ -115,3 +114,4 @@ print(Sys.time()-start)
 # hist(firstout$chaotile, xlab="true value as percentile of Chao boot", xlim=c(0,100), main="skewed community with Simpson-Hill=4")
 # dev.off()
 # 
+top
