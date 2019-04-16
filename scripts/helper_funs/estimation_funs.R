@@ -483,7 +483,7 @@ checkchao<-function(x, B, l, truediv){
     pro<-pro-mean(pro)+Chao_Hill_abu(x, 1-l)
     chaotile<-sum(pro<=truediv)/(B/100)
     # mletile<-sum(mle>=truediv)/(B/100)
-    return(chaotile)
+    return(c("chaotile"=chaotile, "truediv"=truediv, "chaoest"=Chao_Hill_abu(x, 1-l)))
 }
 
 

@@ -43,15 +43,16 @@ checkplot<-function(abs, B=2000, l, inds, reps){
     future_map_dfr(1:reps,function(x){
     obs<-subsam(abs, size=inds)
     chaotile<-checkchao(obs, B, l, td)
-    return(chaotile=data.frame(chaotile, l=rep(l, reps), inds=rep(inds, reps), reps=rep(reps, reps)))
+    return(chaotile=data.frame(qtile=chaotile[1], truediv=chaotile[2], chaoest=chaotile[3], l=rep(l, reps), inds=rep(inds, reps), reps=rep(reps, reps)))
     })
    }
+
 
 outerreps<-20
 reps<-250
 
-
-
+str(checkchao(com1, 1000, 1, dfun(com1, 1)))
+checkplot(com1, 1000, 1, 150, 1)
 
 
 start<-Sys.time()
@@ -69,6 +70,26 @@ map(1:outerreps, function(x){
 print(Sys.time()-start)
 
 
+
+### get data from files
+
+
+
+getdat2<-map_dfr(1:outerreps, function(x){
+    read.csv(paste("data/fromR/sims", x, ".csv", sep="_"))
+})
+
+write.csv(getdat2, "data/fromR/bound_sims.csv", row.names=F)
+map(1:outerreps, function(x){
+   file.remove(list=paste("data/fromR/sims", x, ".csv", sep="_"))
+})
+
+map(1:84, function(x){
+    file.remove(list=paste("data/fromR/sims", x, ".csv"))
+})
+
+read.csv("data/fromR/sims_1_.csv")
+head(getdat1)
 
 # t100<-do1000(com1, B=2000, l=1, inds=150, reps=100)
 
@@ -113,5 +134,3 @@ print(Sys.time()-start)
 # pdf(file="figures/first_Simpson_checkplots.pdf")
 # hist(firstout$chaotile, xlab="true value as percentile of Chao boot", xlim=c(0,100), main="skewed community with Simpson-Hill=4")
 # dev.off()
-# 
-top
