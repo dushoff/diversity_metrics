@@ -17,7 +17,7 @@ library(mobsim)
 #three communities with richness ~60, and different skew
 com1<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=2)))
 com2<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=5)))
-com3<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=3)))
+com3<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=10)))
 
 pdf(height=2, width=6, file="figures/simssads.pdf")
 par(mfrow=c(1,3))
@@ -32,6 +32,7 @@ dfun(com1, l=-1)
 dfun(com2, l=-1)
 dfun(com3, l=-1)
 
+
 #gets slightly closer than obs
 # show1<-checkplot(com1, l=0, inds=150, reps=1000)
 nc<-60#per Rob's recommendation
@@ -40,19 +41,21 @@ plan(strategy=multiprocess, workers=nc)
 # make this cleaner
 checkplot<-function(abs, B=2000, l, inds, reps){
     td<-dfun(abs, l)
+    truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
     future_map_dfr(1:reps,function(x){
     obs<-subsam(abs, size=inds)
-    chaotile<-checkchao(obs, B, l, td)
-    return(chaotile=data.frame(qtile=chaotile[1], truediv=chaotile[2], chaoest=chaotile[3], l=rep(l, reps), inds=rep(inds, reps), reps=rep(reps, reps)))
+    
+    chaotile<-checkchao(obs, B, l, td, truemu_n=truemu_n)
+    return(chaotile=data.frame(qtile=chaotile[1], mletile=chaotile[2], truediv=chaotile[3], trueme_n=chaotile[4], chaoest=chaotile[5], obsD=chaotile[6], l=rep(l, reps), inds=rep(inds, reps), reps=rep(reps, reps)))
     })
    }
 
 
-outerreps<-20
-reps<-250
+outerreps<-40
+reps<-125
 
-str(checkchao(com1, 1000, 1, dfun(com1, 1)))
-checkplot(com1, 1000, 1, 150, 1)
+# str(checkchao(com1, 1000, 1, dfun(com1, 1)))
+# checkplot(com1, 1000, 1, 150, 1)
 
 
 start<-Sys.time()
@@ -88,8 +91,197 @@ map(1:84, function(x){
     file.remove(list=paste("data/fromR/sims", x, ".csv"))
 })
 
-read.csv("data/fromR/sims_1_.csv")
-head(getdat1)
+# read.csv("data/fromR/sims_1_.csv")
+
+####################################
+# data analysis
+
+bound<- read.csv("data/fromR/bound_sims.csv")
+
+brokelist<-lapply(c("com1", "com2", "com3"),function(comm){
+       lapply(c(150,300,750), function(inds){
+           lapply(c(-1,0,0.5,1), function(l){
+               bound[which(bound$comm==comm& bound$inds==inds&bound$l==l),]
+       })
+   })
+})
+
+
+plts<-vector("list", 36)
+a<-1
+
+    
+# for(x in c(1:3)){
+#     for(y in c(1:3)){
+#         for(z in c(1:4)){
+#             plts[[a]]<-(brokelist[[x]][[y]][[z]] 
+#                         %>% ggplot(aes(qtile))
+#                         + geom_histogram()
+#                         + labs(x="nominal p-value", y="frequency", title=paste(c("com1", "com2", "com3")[x],"inds=",c(150,300,750)[y], "l=", c(-1,0,0.5,1)[z])))
+#             a<-a+1
+#         }
+#     }
+# }
+for(x in c(1:3)){
+   pdf(file=paste("figures/",c("com1", "com2", "com3")[x], ".pdf", sep=""))
+    par(mfrow=c(3,4))
+    for(y in c(1:3)){
+        for(z in c(1:4)){
+        hist(brokelist[[x]][[y]][[z]]$qtile
+                            , xlab="nominal p-value", ylab="frequency", ylim=c(0,420000)
+                            , main=paste(c("com1", "com2", "com3")[x]
+                                         ,"inds=",c(150,300,750)[y]
+                                         , "l=", c(-1,0,0.5,1)[z]))
+        abline(h=62500, col="red")
+        }
+    }
+    dev.off()
+}
+
+for(x in c(1:3)){
+    pdf(file=paste("figures/",c("com1", "com2", "com3")[x],"estimates", ".pdf", sep=""))
+    par(mfrow=c(3,4))
+    for(y in c(1:3)){
+        for(z in c(1:4)){
+            hist(brokelist[[x]][[y]][[z]]$chaoest, xlab="estimated diversity", ylab="frequency", main=paste(c("com1", "com2", "com3")[x],"inds=",c(150,300,750)[y], "l=", c(-1,0,0.5,1)[z]))
+            abline(v=mean(brokelist[[x]][[y]][[z]]$truediv), col="red")
+            abline(v=quantile((brokelist[[x]][[y]][[z]]$chaoest), 0.975), col="blue")
+            abline(v=quantile((brokelist[[x]][[y]][[z]]$chaoest), 0.025), col="blue")
+
+        }
+    }
+    dev.off()
+}
+
+for(x in c(1:3)){
+    pdf(file=paste("figures/",c("com1", "com2", "com3")[x],"estimates_standardized", ".pdf",sep=""))
+    par(mfrow=c(3,4))
+    for(y in c(1:3)){
+        for(z in c(1:4)){
+            hist(scale(brokelist[[x]][[y]][[z]]$chaoest), xlab="standardized \n estimated diversity", ylab="frequency", main=paste(c("com1", "com2", "com3")[x],"inds=",c(150,300,750)[y], "l=", c(-1,0,0.5,1)[z]), xlim=c(-3,10))
+            abline(v=(mean(brokelist[[x]][[y]][[z]]$truediv)-mean(brokelist[[x]][[y]][[z]]$chaoest))/mean(brokelist[[x]][[y]][[z]]$chaoest), col="red")
+            abline(v=quantile(scale(brokelist[[x]][[y]][[z]]$chaoest), 0.975), col="blue")
+            abline(v=quantile(scale(brokelist[[x]][[y]][[z]]$chaoest), 0.025), col="blue")
+            
+        }
+    }
+    dev.off()
+}
+
+quantile(brokelist[[1]][[1]][[1]]$chaoest,0.025)
+
+
+myhist<-function(comm, inds, l, var=c("chaoest", "standard", "checkplot")){
+    x<-which(c("com1", "com2", "com3")==comm)
+    y<-which(c(150,300,750)==inds)
+    z<-which(c(-1,0,0.5,1)==l)
+    if(var=="standard"){
+        hist(scale(brokelist[[x]][[y]][[z]]$chaoest, scale=F)/mean(brokelist[[x]][[y]][[z]]$chaoest)
+             , xlab=NULL
+             , ylab=NULL
+             , main=NULL
+             , ylim=c(0,700000)
+             , xlim=c(-0.7,2.2)
+             #, xlab="standardized \n estimated diversity", ylab="frequency", main=paste(c("com1", "com2", "com3")[x],"inds=",c(150,300,750)[y], "l=", c(-1,0,0.5,1)[z])
+             )
+        abline(v=(mean(brokelist[[x]][[y]][[z]]$truediv)-mean(brokelist[[x]][[y]][[z]]$chaoest))/mean(brokelist[[x]][[y]][[z]]$chaoest), col="red")
+        abline(v=quantile(scale(brokelist[[x]][[y]][[z]]$chaoest, scale=F)/mean(brokelist[[x]][[y]][[z]]$chaoest), 0.975), col="blue")
+        abline(v=quantile(scale(brokelist[[x]][[y]][[z]]$chaoest, scale=F)/mean(brokelist[[x]][[y]][[z]]$chaoest), 0.025), col="blue")
+    }
+    if(var=="chaoest"){
+        hist(brokelist[[x]][[y]][[z]]$chaoest 
+             , xlab=NULL
+             , ylab=NULL
+             , main=NULL
+             , ylim=c(0,700000)
+             #,xlab="estimated diversity", ylab="frequency", main=paste(c("com1", "com2", "com3")[x],"inds=",c(150,300,750)[y], "l=", c(-1,0,0.5,1)[z])
+             )
+        abline(v=mean(brokelist[[x]][[y]][[z]]$truediv), col="red")
+        abline(v=quantile((brokelist[[x]][[y]][[z]]$chaoest), 0.975), col="blue")
+        abline(v=quantile((brokelist[[x]][[y]][[z]]$chaoest), 0.025), col="blue")
+    }
+    if(var=="checkplot"){
+        hist(brokelist[[x]][[y]][[z]]$qtile
+             , ylim=c(0,420000)
+             , xlab=NULL
+             , ylab=NULL
+             , main=NULL
+             # , xlab="nominal p-value", ylab="frequency"
+             # , main=paste(c("com1", "com2", "com3")[x]
+             #              ,"inds=",c(150,300,750)[y]
+             #              , "l=", c(-1,0,0.5,1)[z])
+             )
+        abline(h=62500, col="red")
+    }
+    
+}
+
+pdf(width=6,height=3, file="figures/comm3_estimates_just_150_750.pdf")
+par(mfrow=c(2,4), mar=c(2,2,2,0))
+lapply(c(150, 750), function(inds){
+    lapply(c(-1,0,0.5,1), function(l){
+        options(scipen=5)
+        myhist("com3",inds=inds,l=l, var="chaoest")
+    })
+})
+dev.off()
+
+pdf(width=6,height=3, file="figures/comm3_standardized_just_150_750.pdf")
+par(mfrow=c(2,4), mar=c(2,2,2,0))
+lapply(c(150, 750), function(inds){
+    lapply(c(-1,0,0.5,1), function(l){
+        options(scipen=5)
+        myhist("com3",inds=inds,l=l, var="standard")
+    })
+})
+dev.off()
+
+pdf(width=6,height=3, file="figures/comm3_checkplots_just_150_750.pdf")
+par(mfrow=c(2,4), mar=c(2,2,2,0))
+lapply(c(150, 750), function(inds){
+    lapply(c(-1,0,0.5,1), function(l){
+        options(scipen=5)
+        myhist("com3",inds=inds,l=l, var="checkplot")
+    })
+})
+dev.off()
+
+#Chao et al. 2014 suggestion for CI on observed/rarefied Hill numbers is to use a normal approximation of the bootstrap. I haven't yet figured out how to check this but seems reasonable to begin by checking if normal makes any sense.
+
+# obs<-replicate(5000,dfun(subsam(com3, 150), l=1))
+# meanobs<-mean(obs)
+# sigobs<-sd(obs)
+# est<-rnorm(length(obs), mean=meanobs, sd=sigobs)
+# ggable<-data.frame(obs=obs, est=est)
+# 
+# ggable %>% ggplot(aes(obs))+
+#     geom_density(fill="blue", alpha=0.3)+
+#     geom_density(aes(est), fill="red", alpha=0.3)+
+#     theme_classic()
+
+#yes, it is pretty much normal. 
+
+#OK, Now write code to generate checkplot
+
+
+
+
+
+
+
+# breakup<-map(c(150,300,750),function(inds){
+#     bound %>% filter(inds==inds)
+# })
+# 
+# brokeup<-map(breakup,function(subs){
+#     map(c("com1", "com2", "com3"), function(comm){
+#         subs %>% filter(comm==comm)
+#     })
+# })
+# 
+# rm(breakup)
+
+
 
 # t100<-do1000(com1, B=2000, l=1, inds=150, reps=100)
 
