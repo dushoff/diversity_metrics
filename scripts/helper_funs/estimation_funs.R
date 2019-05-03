@@ -212,6 +212,11 @@ Bt_prob_abu = function(x){
 #'  In each matrix, the first row gives the results for the empirical diversity, and the second row gives the results for the proposed diversity estimates.
 #'  Columns give the results for different orders of q.
 
+# x<-subsam(usersguide, 10)
+# q<-0
+# datatype<-"abundance"
+# B<-1000
+
 Bootstrap.CI = function(x,q,B = 1000,datatype = c("abundance","incidence"),conf = 0.95){
     datatype = match.arg(datatype,c("abundance","incidence"))
     p.new = Bt_prob_abu(x)
@@ -231,28 +236,35 @@ Bootstrap.CI = function(x,q,B = 1000,datatype = c("abundance","incidence"),conf 
     #making this all for just abundance
     pro = apply(data.bt,2,function(x)Chao_Hill_abu(x,q))
     
-    mle.mean = rowMeans(mle)
-    pro.mean = rowMeans(pro)
+    mle.mean = mean(mle) #rowMeans(mle) 
+    pro.mean = mean(pro) #rowMeans(pro)
     
     #confidence intervals just based on quantiles of bootstraped distribution
     
     #confidence intervals for Hill diversity of sample
-    LCI.mle =  -apply(mle,1,function(x)quantile(x,probs = (1-conf)/2)) + mle.mean
-    UCI.mle = apply(mle,1,function(x)quantile(x,probs = 1-(1-conf)/2)) - mle.mean
+    # LCI.mle =  -apply(mle,1,function(x)quantile(x,probs = (1-conf)/2)) + mle.mean
+    # UCI.mle = apply(mle,1,function(x)quantile(x,probs = 1-(1-conf)/2)) - mle.mean
+    # 
+    # #confidence intervals for Chao-estimated Hill diversity 
+    # LCI.pro =  -apply(pro,1,function(x)quantile(x,probs = (1-conf)/2)) + pro.mean
+    # UCI.pro = apply(pro,1,function(x)quantile(x,probs = 1-(1-conf)/2)) - pro.mean
+    # 
+    LCI.mle = -quantile(mle,probs = (1-conf)/2) + mle.mean
+    UCI.mle = quantile(mle,probs = 1-(1-conf)/2) - mle.mean
     
     #confidence intervals for Chao-estimated Hill diversity 
-    LCI.pro =  -apply(pro,1,function(x)quantile(x,probs = (1-conf)/2)) + pro.mean
-    UCI.pro = apply(pro,1,function(x)quantile(x,probs = 1-(1-conf)/2)) - pro.mean
+    LCI.pro =  -quantile(pro,probs = (1-conf)/2) + pro.mean
+    UCI.pro = quantile(pro,probs = 1-(1-conf)/2) - pro.mean
     
     LCI = rbind(LCI.mle,LCI.pro)
     UCI = rbind(UCI.mle,UCI.pro)
     
-    sd.mle = apply(mle,1,sd)
-    sd.pro = apply(pro,1,function(x)sd(x,na.rm = T))
-    se = rbind(sd.mle,sd.pro)
+    # sd.mle = apply(mle,1,sd)
+    # sd.pro = apply(pro,1,function(x)sd(x,na.rm = T))
+    # se = rbind(sd.mle,sd.pro)
     #consider making this an easier data structure where things aren't lists of lists. 
-    return(list(LCI=LCI,UCI=UCI,se=se))
-    
+    #return(list(LCI=LCI,UCI=UCI,se=se))
+    return(c(LCI.mle=LCI.mle, LCI.pro=LCI.pro, UCI.mle=UCI.mle, UCI.pro=UCI.pro))
 }
 
 #------------------------
@@ -472,7 +484,7 @@ sApp <- function(samp){
 
 ################################################################
 #MR function to take abundance vector and "l" and return the quantile of B bootstrap iterations of Chao technique that true value falls on. Could be extended to include sample Hill as Chao seems to have
-checkchao<-function(x, B, l, truediv, truemu_n){
+checkchao<-function(x, B, l, truediv, truemu_n){ #, ci=F
     n<-sum(x)
     #columns of this matrix are replicate boostraps
     data.bt = rmultinom(B,n,Bt_prob_abu(x))
@@ -486,6 +498,12 @@ checkchao<-function(x, B, l, truediv, truemu_n){
     pro<-pro-mean(pro)+Chao_Hill_abu(x, 1-l)
     chaotile<-sum(pro<=truediv)/(B/100)
     mletile<-sum(mleadj<=truemu_n)/(B/100)
+    # if(ci==T){  lcl<-quantile(pro, 0.025)
+    #             ucl<-quantile(pro, 0.975)
+    #             return(c("chaotile"=chaotile, "mletile"=mletile
+    #                      # , "mleprob"=mleprob
+    #                      , "truediv"=truediv, "truemu_n"=truemu_n, "chaoest"=Chao_Hill_abu(x, 1-l)
+    #                      , "obsD"=dfun(x,l)), lcl=lcl, ucl=ucl)}
     # mleprob<-t.test(mleadj, mu=truemu_n)$p.value
     return(c("chaotile"=chaotile, "mletile"=mletile
              # , "mleprob"=mleprob

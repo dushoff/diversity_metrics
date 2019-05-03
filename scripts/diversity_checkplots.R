@@ -14,6 +14,10 @@ library(mobsim)
 # o1<-sample(1:length(com1), prob=com1, size=inds, replace=T)
 # o2<-sample(1:length(com2), prob=com2, size=inds, replace=T)
 
+#make a community for User's Guide
+usersguide<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=5)))
+
+
 #three communities with richness ~60, and different skew
 com1<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=2)))
 com2<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=5)))
@@ -36,6 +40,7 @@ dfun(com3, l=-1)
 #gets slightly closer than obs
 # show1<-checkplot(com1, l=0, inds=150, reps=1000)
 nc<-60#per Rob's recommendation
+# nc<-7
 plan(strategy=multiprocess, workers=nc)
 
 # make this cleaner
@@ -50,7 +55,29 @@ checkplot<-function(abs, B=2000, l, inds, reps){
     })
    }
 
+#make a fig for users guide
 
+# ugcheck<-map_dfr(10^seq(1, 5.5, 0.5), function(inds){
+#     checkplot(usersguide,B=1000, l=1, inds=inds, reps=1000)
+# })
+
+conceptual<-future_map_dfr(1:15, function(x){
+    map_dfr(round(10^seq(1, 4, 0.25)), function(size){
+        subcom<-subsam(usersguide,size=size)
+        annoyinglist<-Bootstrap.CI(subcom, q=0, datatype = "abundance")
+        return(data.frame(size=size+runif(1,-0.15*size,0.15*size), lcl=annoyinglist["LCI.pro.2.5%"], ucl=annoyinglist["UCI.pro.97.5%"], est=Chao_Hill_abu(subcom, 0), obs=dfun(subcom, 1)))
+    })
+})
+
+pdf(file="figures/conceptual_guide_15_sample_chao1check.pdf")
+conceptual %>% ggplot(aes(size, est))+
+    geom_errorbar(aes(ymin=est-lcl, ymax=est+ucl), color="blue", alpha=0.8, width=0.02)+
+    geom_point(alpha=0.8, size=1)+
+    geom_hline(yintercept=120, color="red")+
+    scale_x_log10()+
+    theme_classic()+
+    labs(x="individuals sampled (log scale)", y="Chao1 estimated richness")
+dev.off()
 outerreps<-40
 reps<-125
 
