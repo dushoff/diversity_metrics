@@ -507,3 +507,4 @@ checkchao<-function(x, B, l, truediv, truemu_n){
 
 
 
+

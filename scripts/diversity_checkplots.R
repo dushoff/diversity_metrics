@@ -36,6 +36,7 @@ dfun(com1, l=-1)
 dfun(com2, l=-1)
 dfun(com3, l=-1)
 
+<<<<<<< HEAD
 
 #gets slightly closer than obs
 
@@ -43,19 +44,37 @@ dfun(com3, l=-1)
 nc<-60
 # nc<-7
 
+=======
+
+#gets slightly closer than obs
+# show1<-checkplot(com1, l=0, inds=150, reps=1000)
+nc<-60#per Rob's recommendation
+# nc<-7
+>>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
 plan(strategy=multiprocess, workers=nc)
 
 # make this cleaner
 checkplot<-function(abs, B=2000, l, inds, reps){
+<<<<<<< HEAD
   td<-dfun(abs, l)
   truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
   future_map_dfr(1:reps,function(x){
+=======
+    td<-dfun(abs, l)
+    truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
+    future_map_dfr(1:reps,function(x){
+>>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
     obs<-subsam(abs, size=inds)
     
     chaotile<-checkchao(obs, B, l, td, truemu_n=truemu_n)
     return(chaotile=data.frame(qtile=chaotile[1], mletile=chaotile[2], truediv=chaotile[3], trueme_n=chaotile[4], chaoest=chaotile[5], obsD=chaotile[6], l=rep(l, reps), inds=rep(inds, reps), reps=rep(reps, reps)))
+<<<<<<< HEAD
   })
 }
+=======
+    })
+   }
+>>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
 
 #make a fig for users guide
 
@@ -71,6 +90,7 @@ conceptual<-future_map_dfr(1:10000, function(x){
     })
 })
 
+<<<<<<< HEAD
 
 head(conceptual)
 w<-1
@@ -101,6 +121,8 @@ toplot %>% ggplot(aes(size))+
   geom_errorbar(aes(x=size+0.1*size,ymin=est_mean+ucl_mean-1.96*ucl_sd, ymax=est_mean+ucl_mean+1.96*ucl_sd), color="darkblue", width=0.2)+
   geom_hline(yintercept=120, color="red")
 
+=======
+>>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
 pdf(file="figures/conceptual_guide_15_sample_chao1check.pdf")
 conceptual %>% ggplot(aes(size, est))+
     geom_errorbar(aes(ymin=est-lcl, ymax=est+ucl), color="blue", alpha=0.8, width=0.02)+
@@ -138,16 +160,28 @@ print(Sys.time()-start)
 
 
 getdat2<-map_dfr(1:outerreps, function(x){
+<<<<<<< HEAD
   read.csv(paste("data/fromR/sims", x, ".csv", sep="_"))
+=======
+    read.csv(paste("data/fromR/sims", x, ".csv", sep="_"))
+>>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
 })
 
 write.csv(getdat2, "data/fromR/bound_sims.csv", row.names=F)
 map(1:outerreps, function(x){
+<<<<<<< HEAD
   file.remove(list=paste("data/fromR/sims", x, ".csv", sep="_"))
 })
 
 map(1:84, function(x){
   file.remove(list=paste("data/fromR/sims", x, ".csv"))
+=======
+   file.remove(list=paste("data/fromR/sims", x, ".csv", sep="_"))
+})
+
+map(1:84, function(x){
+    file.remove(list=paste("data/fromR/sims", x, ".csv"))
+>>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
 })
 
 # read.csv("data/fromR/sims_1_.csv")
@@ -158,18 +192,30 @@ map(1:84, function(x){
 bound<- read.csv("data/fromR/bound_sims.csv")
 
 brokelist<-lapply(c("com1", "com2", "com3"),function(comm){
+<<<<<<< HEAD
   lapply(c(150,300,750), function(inds){
     lapply(c(-1,0,0.5,1), function(l){
       bound[which(bound$comm==comm& bound$inds==inds&bound$l==l),]
     })
   })
+=======
+       lapply(c(150,300,750), function(inds){
+           lapply(c(-1,0,0.5,1), function(l){
+               bound[which(bound$comm==comm& bound$inds==inds&bound$l==l),]
+       })
+   })
+>>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
 })
 
 
 plts<-vector("list", 36)
 a<-1
 
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
 # for(x in c(1:3)){
 #     for(y in c(1:3)){
 #         for(z in c(1:4)){
@@ -182,6 +228,7 @@ a<-1
 #     }
 # }
 for(x in c(1:3)){
+<<<<<<< HEAD
   pdf(file=paste("figures/",c("com1", "com2", "com3")[x], ".pdf", sep=""))
   par(mfrow=c(3,4))
   for(y in c(1:3)){
@@ -225,12 +272,58 @@ for(x in c(1:3)){
     }
   }
   dev.off()
+=======
+   pdf(file=paste("figures/",c("com1", "com2", "com3")[x], ".pdf", sep=""))
+    par(mfrow=c(3,4))
+    for(y in c(1:3)){
+        for(z in c(1:4)){
+        hist(brokelist[[x]][[y]][[z]]$qtile
+                            , xlab="nominal p-value", ylab="frequency", ylim=c(0,420000)
+                            , main=paste(c("com1", "com2", "com3")[x]
+                                         ,"inds=",c(150,300,750)[y]
+                                         , "l=", c(-1,0,0.5,1)[z]))
+        abline(h=62500, col="red")
+        }
+    }
+    dev.off()
+}
+
+for(x in c(1:3)){
+    pdf(file=paste("figures/",c("com1", "com2", "com3")[x],"estimates", ".pdf", sep=""))
+    par(mfrow=c(3,4))
+    for(y in c(1:3)){
+        for(z in c(1:4)){
+            hist(brokelist[[x]][[y]][[z]]$chaoest, xlab="estimated diversity", ylab="frequency", main=paste(c("com1", "com2", "com3")[x],"inds=",c(150,300,750)[y], "l=", c(-1,0,0.5,1)[z]))
+            abline(v=mean(brokelist[[x]][[y]][[z]]$truediv), col="red")
+            abline(v=quantile((brokelist[[x]][[y]][[z]]$chaoest), 0.975), col="blue")
+            abline(v=quantile((brokelist[[x]][[y]][[z]]$chaoest), 0.025), col="blue")
+
+        }
+    }
+    dev.off()
+}
+
+for(x in c(1:3)){
+    pdf(file=paste("figures/",c("com1", "com2", "com3")[x],"estimates_standardized", ".pdf",sep=""))
+    par(mfrow=c(3,4))
+    for(y in c(1:3)){
+        for(z in c(1:4)){
+            hist(scale(brokelist[[x]][[y]][[z]]$chaoest), xlab="standardized \n estimated diversity", ylab="frequency", main=paste(c("com1", "com2", "com3")[x],"inds=",c(150,300,750)[y], "l=", c(-1,0,0.5,1)[z]), xlim=c(-3,10))
+            abline(v=(mean(brokelist[[x]][[y]][[z]]$truediv)-mean(brokelist[[x]][[y]][[z]]$chaoest))/mean(brokelist[[x]][[y]][[z]]$chaoest), col="red")
+            abline(v=quantile(scale(brokelist[[x]][[y]][[z]]$chaoest), 0.975), col="blue")
+            abline(v=quantile(scale(brokelist[[x]][[y]][[z]]$chaoest), 0.025), col="blue")
+            
+        }
+    }
+    dev.off()
+>>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
 }
 
 quantile(brokelist[[1]][[1]][[1]]$chaoest,0.025)
 
 
 myhist<-function(comm, inds, l, var=c("chaoest", "standard", "checkplot")){
+<<<<<<< HEAD
   x<-which(c("com1", "com2", "com3")==comm)
   y<-which(c(150,300,750)==inds)
   z<-which(c(-1,0,0.5,1)==l)
@@ -273,35 +366,100 @@ myhist<-function(comm, inds, l, var=c("chaoest", "standard", "checkplot")){
     abline(h=62500, col="red")
   }
   
+=======
+    x<-which(c("com1", "com2", "com3")==comm)
+    y<-which(c(150,300,750)==inds)
+    z<-which(c(-1,0,0.5,1)==l)
+    if(var=="standard"){
+        hist(scale(brokelist[[x]][[y]][[z]]$chaoest, scale=F)/mean(brokelist[[x]][[y]][[z]]$chaoest)
+             , xlab=NULL
+             , ylab=NULL
+             , main=NULL
+             , ylim=c(0,700000)
+             , xlim=c(-0.7,2.2)
+             #, xlab="standardized \n estimated diversity", ylab="frequency", main=paste(c("com1", "com2", "com3")[x],"inds=",c(150,300,750)[y], "l=", c(-1,0,0.5,1)[z])
+             )
+        abline(v=(mean(brokelist[[x]][[y]][[z]]$truediv)-mean(brokelist[[x]][[y]][[z]]$chaoest))/mean(brokelist[[x]][[y]][[z]]$chaoest), col="red")
+        abline(v=quantile(scale(brokelist[[x]][[y]][[z]]$chaoest, scale=F)/mean(brokelist[[x]][[y]][[z]]$chaoest), 0.975), col="blue")
+        abline(v=quantile(scale(brokelist[[x]][[y]][[z]]$chaoest, scale=F)/mean(brokelist[[x]][[y]][[z]]$chaoest), 0.025), col="blue")
+    }
+    if(var=="chaoest"){
+        hist(brokelist[[x]][[y]][[z]]$chaoest 
+             , xlab=NULL
+             , ylab=NULL
+             , main=NULL
+             , ylim=c(0,700000)
+             #,xlab="estimated diversity", ylab="frequency", main=paste(c("com1", "com2", "com3")[x],"inds=",c(150,300,750)[y], "l=", c(-1,0,0.5,1)[z])
+             )
+        abline(v=mean(brokelist[[x]][[y]][[z]]$truediv), col="red")
+        abline(v=quantile((brokelist[[x]][[y]][[z]]$chaoest), 0.975), col="blue")
+        abline(v=quantile((brokelist[[x]][[y]][[z]]$chaoest), 0.025), col="blue")
+    }
+    if(var=="checkplot"){
+        hist(brokelist[[x]][[y]][[z]]$qtile
+             , ylim=c(0,420000)
+             , xlab=NULL
+             , ylab=NULL
+             , main=NULL
+             # , xlab="nominal p-value", ylab="frequency"
+             # , main=paste(c("com1", "com2", "com3")[x]
+             #              ,"inds=",c(150,300,750)[y]
+             #              , "l=", c(-1,0,0.5,1)[z])
+             )
+        abline(h=62500, col="red")
+    }
+    
+>>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
 }
 
 pdf(width=6,height=3, file="figures/comm3_estimates_just_150_750.pdf")
 par(mfrow=c(2,4), mar=c(2,2,2,0))
 lapply(c(150, 750), function(inds){
+<<<<<<< HEAD
   lapply(c(-1,0,0.5,1), function(l){
     options(scipen=5)
     myhist("com3",inds=inds,l=l, var="chaoest")
   })
+=======
+    lapply(c(-1,0,0.5,1), function(l){
+        options(scipen=5)
+        myhist("com3",inds=inds,l=l, var="chaoest")
+    })
+>>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
 })
 dev.off()
 
 pdf(width=6,height=3, file="figures/comm3_standardized_just_150_750.pdf")
 par(mfrow=c(2,4), mar=c(2,2,2,0))
 lapply(c(150, 750), function(inds){
+<<<<<<< HEAD
   lapply(c(-1,0,0.5,1), function(l){
     options(scipen=5)
     myhist("com3",inds=inds,l=l, var="standard")
   })
+=======
+    lapply(c(-1,0,0.5,1), function(l){
+        options(scipen=5)
+        myhist("com3",inds=inds,l=l, var="standard")
+    })
+>>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
 })
 dev.off()
 
 pdf(width=6,height=3, file="figures/comm3_checkplots_just_150_750.pdf")
 par(mfrow=c(2,4), mar=c(2,2,2,0))
 lapply(c(150, 750), function(inds){
+<<<<<<< HEAD
   lapply(c(-1,0,0.5,1), function(l){
     options(scipen=5)
     myhist("com3",inds=inds,l=l, var="checkplot")
   })
+=======
+    lapply(c(-1,0,0.5,1), function(l){
+        options(scipen=5)
+        myhist("com3",inds=inds,l=l, var="checkplot")
+    })
+>>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
 })
 dev.off()
 
