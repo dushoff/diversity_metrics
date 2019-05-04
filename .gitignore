@@ -5,3 +5,5 @@
 *.Rproj
 *.RData
 /figures
+/data/GUEsims*
+/data/fromR/
