@@ -61,11 +61,11 @@ checkplot<-function(abs, B=2000, l, inds, reps){
 #     checkplot(usersguide,B=1000, l=1, inds=inds, reps=1000)
 # })
 
-conceptual<-future_map_dfr(1:15, function(x){
-    map_dfr(round(10^seq(1, 4, 0.25)), function(size){
+conceptual<-future_map_dfr(1:10000, function(x){
+    map_dfr(round(10^seq(2, 4, 0.25)), function(size){
         subcom<-subsam(usersguide,size=size)
         annoyinglist<-Bootstrap.CI(subcom, q=0, datatype = "abundance")
-        return(data.frame(size=size+runif(1,-0.15*size,0.15*size), lcl=annoyinglist["LCI.pro.2.5%"], ucl=annoyinglist["UCI.pro.97.5%"], est=Chao_Hill_abu(subcom, 0), obs=dfun(subcom, 1)))
+        return(data.frame(size=size, lcl=annoyinglist["LCI.pro.2.5%"], ucl=annoyinglist["UCI.pro.97.5%"], est=Chao_Hill_abu(subcom, 0), obs=dfun(subcom, 1)))
     })
 })
 
