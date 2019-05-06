@@ -36,45 +36,30 @@ dfun(com1, l=-1)
 dfun(com2, l=-1)
 dfun(com3, l=-1)
 
-<<<<<<< HEAD
-
-#gets slightly closer than obs
 
 
-nc<-60
-# nc<-7
-
-=======
 
 #gets slightly closer than obs
 # show1<-checkplot(com1, l=0, inds=150, reps=1000)
 nc<-60#per Rob's recommendation
 # nc<-7
->>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
+
 plan(strategy=multiprocess, workers=nc)
 
 # make this cleaner
 checkplot<-function(abs, B=2000, l, inds, reps){
-<<<<<<< HEAD
+
   td<-dfun(abs, l)
   truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
   future_map_dfr(1:reps,function(x){
-=======
-    td<-dfun(abs, l)
-    truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
-    future_map_dfr(1:reps,function(x){
->>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
     obs<-subsam(abs, size=inds)
     
     chaotile<-checkchao(obs, B, l, td, truemu_n=truemu_n)
     return(chaotile=data.frame(qtile=chaotile[1], mletile=chaotile[2], truediv=chaotile[3], trueme_n=chaotile[4], chaoest=chaotile[5], obsD=chaotile[6], l=rep(l, reps), inds=rep(inds, reps), reps=rep(reps, reps)))
-<<<<<<< HEAD
+
   })
 }
-=======
-    })
-   }
->>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
+
 
 #make a fig for users guide
 
@@ -90,49 +75,55 @@ conceptual<-future_map_dfr(1:10000, function(x){
     })
 })
 
-<<<<<<< HEAD
-
-head(conceptual)
+#write.csv(conceptual, "data/Chao1_example_for_guide.csv", row.names=F)
+conceptual<-read.csv("data/Chao1_example_for_guide.csv")
 w<-1
-conceptual %>% ggplot(aes(x=as.factor(size)))+
-  geom_hline(yintercept=120, color="red")+
-  geom_violin(aes(y=est-lcl), alpha=0.4, fill="darkblue", color="lightgrey", width=w)+
-  geom_violin(aes(y=est+lcl), alpha=0.4, fill="blue", color="lightgrey", width=w)+
-  geom_violin(aes(y=est), alpha=0.4, fill="plum4", width=w, color="lightgrey")+
-  theme_classic()+
-  ylim(c(0, 300))+
-  labs(x="individuals sampled", y="Chao1 estimated richness")
+
+pdf(width=8, height=6, file="figures/violins_for_guide.pdf")
+head(conceptual)
+names(conceptual)
+#### what is the maximum, since lines go way high but want to truncate y-axis at 200? 
+conceptual %>% 
+    mutate(ucl=est+ucl, lcl=est-lcl, mean=est) %>% 
+    group_by(size) %>% summarize(maxucl=max(ucl))
 
 
+## ok, now, what is the actual coverage of the true value with the sample sizes used
+annotatedf<-conceptual %>% 
+    mutate(ucl=est+ucl, lcl=est-lcl, mean=est) %>% 
+    group_by(size) %>% summarize(coverage=length(which(ucl>=120))/100)
 
-write.csv(conceptual, "data/Chao1_example_for_guide.csv", row.names=F)
 
-toplot<-conceptual %>% group_by(size) %>% summarize_all(.fun=c(mean, sd))
-View(toplot)
-names(toplot)<-c("size", "lcl_mean", "ucl_mean", "est_mean", "obs_mean", "lcl_sd", "ucl_sd", "est_sd", "obs_sd")
-
-toplot %>% ggplot(aes(size))+
-  scale_x_log10()+
-  geom_point(aes(y=est_mean), color="blue", size=3)+
-  geom_errorbar(aes(ymin=est_mean-1.96*est_sd, ymax=est_mean+1.96*est_sd), color="blue", size=1.5)+
-  geom_line(aes(x=size-0.1*size,y=est_mean-lcl_mean), color="lightblue")+
-  geom_errorbar(aes(x=size-0.1*size,ymin=est_mean-lcl_mean-1.96*lcl_sd, ymax=est_mean-lcl_mean+1.96*lcl_sd), color="lightblue", width=0.2)+
-  geom_line(aes(x=size+0.1*size,y=est_mean+ucl_mean), color="darkblue")+
-  geom_errorbar(aes(x=size+0.1*size,ymin=est_mean+ucl_mean-1.96*ucl_sd, ymax=est_mean+ucl_mean+1.96*ucl_sd), color="darkblue", width=0.2)+
-  geom_hline(yintercept=120, color="red")
-
-=======
->>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
-pdf(file="figures/conceptual_guide_15_sample_chao1check.pdf")
-conceptual %>% ggplot(aes(size, est))+
-    geom_errorbar(aes(ymin=est-lcl, ymax=est+ucl), color="blue", alpha=0.8, width=0.02)+
-    geom_point(alpha=0.8, size=1)+
+# quartz(height=6,width=8)
+conceptual %>%
+    mutate(ucl=est+ucl, lcl=est-lcl, mean=est) %>%
+    gather(key="estimate", value="pointrange", mean, lcl, ucl) %>% 
+    ggplot(aes(x=as.factor(size), y=pointrange, fill=estimate))+
     geom_hline(yintercept=120, color="red")+
-    scale_x_log10()+
+    geom_violin(alpha=0.5, color="lightgrey", position="identity", width=1.4, size=0.2)+
+    scale_fill_manual(values=c("maroon4","steelblue2", "blue"))+
+      # geom_violin(aes(y=est-lcl), alpha=0.4, fill="darkblue", color="lightgrey", width=w)+
+      # geom_violin(aes(y=est+lcl), alpha=0.4, fill="blue", color="lightgrey", width=w)+
+      # geom_violin(aes(y=est), alpha=0.4, fill="plum4", width=w, color="lightgrey")+
     theme_classic()+
-    labs(x="individuals sampled (log scale)", y="Chao1 estimated richness")
-dev.off()
-outerreps<-40
+    ylim(c(0, 200))+
+    geom_text(data=annotatedf, aes(x=as.factor(size), y=15, label=paste(round(coverage,1), "%", sep="")), inherit.aes = F)+
+    labs(x="individuals sampled", y="Chao1 estimated richness")
+
+
+# dev.off()
+
+conceptual %>% 
+    mutate(ucl=est+ucl, lcl=est-lcl, mean=est) %>% 
+    group_by(size) %>% summarize(maxucl=max(ucl))
+
+
+
+
+
+
+
+
 reps<-125
 
 # str(checkchao(com1, 1000, 1, dfun(com1, 1)))
