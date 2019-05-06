@@ -79,35 +79,30 @@ conceptual<-future_map_dfr(1:10000, function(x){
 conceptual<-read.csv("data/Chao1_example_for_guide.csv")
 w<-1
 
-pdf(width=8, height=6, file="figures/violins_for_guide.pdf")
-head(conceptual)
-names(conceptual)
 #### what is the maximum, since lines go way high but want to truncate y-axis at 200? 
-conceptual %>% 
-    mutate(ucl=est+ucl, lcl=est-lcl, mean=est) %>% 
-    group_by(size) %>% summarize(maxucl=max(ucl))
-
 
 ## ok, now, what is the actual coverage of the true value with the sample sizes used
 annotatedf<-conceptual %>% 
     mutate(ucl=est+ucl, lcl=est-lcl, mean=est) %>% 
-    group_by(size) %>% summarize(coverage=length(which(ucl>=120))/100)
+    group_by(size) %>% summarize(coverage=length(which(ucl>=120))/100, uclucl=quantile(ucl, 0.975),maxucl=max(ucl))
+labeldf<-data.frame(x="1000", y=5, lab="chance that estimator CI intersects true richness value (nominally 95%)")
 
-
-# quartz(height=6,width=8)
+annotatedf
+# pdf(width=8, height=6, file="figures/violins_for_guide.pdf")
+quartz(height=6,width=8)
 conceptual %>%
     mutate(ucl=est+ucl, lcl=est-lcl, mean=est) %>%
-    gather(key="estimate", value="pointrange", mean, lcl, ucl) %>% 
+    gather(key="estimate", value="pointrange", mean, lcl, ucl) %>%
+    mutate(estimate=factor(estimate, levels=c("ucl", "mean", "lcl"))) %>% 
     ggplot(aes(x=as.factor(size), y=pointrange, fill=estimate))+
     geom_hline(yintercept=120, color="red")+
-    geom_violin(alpha=0.5, color="lightgrey", position="identity", width=1.4, size=0.2)+
-    scale_fill_manual(values=c("maroon4","steelblue2", "blue"))+
-      # geom_violin(aes(y=est-lcl), alpha=0.4, fill="darkblue", color="lightgrey", width=w)+
-      # geom_violin(aes(y=est+lcl), alpha=0.4, fill="blue", color="lightgrey", width=w)+
-      # geom_violin(aes(y=est), alpha=0.4, fill="plum4", width=w, color="lightgrey")+
+    geom_violin(alpha=0.7, color="lightgrey", position="identity", width=1.4, size=0.2)+
+    scale_fill_manual(values=c("blue","steelblue2", "lightseagreen"))+
     theme_classic()+
     ylim(c(0, 200))+
-    geom_text(data=annotatedf, aes(x=as.factor(size), y=15, label=paste(round(coverage,1), "%", sep="")), inherit.aes = F)+
+    geom_text(data=annotatedf, aes(x=as.factor(size), y=15, label=paste(round(coverage,1), "%", sep=""), color=coverage),fontface="bold", inherit.aes = F)+
+    scale_color_gradient2(low="red", mid="maroon", high="slateblue", limits=c(41, 100),guide="none")+
+    geom_text(aes(x=x, y=y, label=lab), data=labeldf, inherit.aes = F)+
     labs(x="individuals sampled", y="Chao1 estimated richness")
 
 
