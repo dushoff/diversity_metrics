@@ -88,8 +88,9 @@ annotatedf<-conceptual %>%
 labeldf<-data.frame(x="1000", y=5, lab="chance that estimator CI intersects true richness value (nominally 95%)")
 
 annotatedf
-# pdf(width=8, height=6, file="figures/violins_for_guide.pdf")
-quartz(height=6,width=8)
+pdf(width=8, height=6, file="figures/violins_for_guide.pdf")
+# quartz(height=6,width=8)
+textsize<-5
 conceptual %>%
     mutate(ucl=est+ucl, lcl=est-lcl, mean=est) %>%
     gather(key="estimate", value="pointrange", mean, lcl, ucl) %>%
@@ -100,13 +101,14 @@ conceptual %>%
     scale_fill_manual(values=c("blue","steelblue2", "lightseagreen"))+
     theme_classic()+
     ylim(c(0, 200))+
-    geom_text(data=annotatedf, aes(x=as.factor(size), y=15, label=paste(round(coverage,1), "%", sep=""), color=coverage),fontface="bold", inherit.aes = F)+
+    geom_text(data=annotatedf, aes(x=as.factor(size), y=15, label=paste(round(coverage,1), "%", sep=""), color=coverage),fontface="bold", inherit.aes = F, size=textsize)+
     scale_color_gradient2(low="red", mid="maroon", high="slateblue", limits=c(41, 100),guide="none")+
-    geom_text(aes(x=x, y=y, label=lab), data=labeldf, inherit.aes = F)+
-    labs(x="individuals sampled", y="Chao1 estimated richness")
+    geom_text(aes(x=x, y=y, label=lab), data=labeldf, inherit.aes = F, size=textsize)+
+    labs(x="individuals sampled", y="Chao1 estimated richness")+
+    theme(text=element_text(size=14))
 
 
-# dev.off()
+dev.off()
 
 conceptual %>% 
     mutate(ucl=est+ucl, lcl=est-lcl, mean=est) %>% 
