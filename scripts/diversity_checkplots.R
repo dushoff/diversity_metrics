@@ -177,29 +177,20 @@ print(Sys.time()-start)
 
 
 getdat2<-map_dfr(1:outerreps, function(x){
-<<<<<<< HEAD
+
   read.csv(paste("data/fromR/sims", x, ".csv", sep="_"))
-=======
-    read.csv(paste("data/fromR/sims", x, ".csv", sep="_"))
->>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
+
 })
 
 write.csv(getdat2, "data/fromR/bound_sims.csv", row.names=F)
 map(1:outerreps, function(x){
-<<<<<<< HEAD
   file.remove(list=paste("data/fromR/sims", x, ".csv", sep="_"))
 })
 
 map(1:84, function(x){
-  file.remove(list=paste("data/fromR/sims", x, ".csv"))
-=======
    file.remove(list=paste("data/fromR/sims", x, ".csv", sep="_"))
 })
 
-map(1:84, function(x){
-    file.remove(list=paste("data/fromR/sims", x, ".csv"))
->>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
-})
 
 # read.csv("data/fromR/sims_1_.csv")
 
@@ -209,19 +200,13 @@ map(1:84, function(x){
 bound<- read.csv("data/fromR/bound_sims.csv")
 
 brokelist<-lapply(c("com1", "com2", "com3"),function(comm){
-<<<<<<< HEAD
-  lapply(c(150,300,750), function(inds){
-    lapply(c(-1,0,0.5,1), function(l){
-      bound[which(bound$comm==comm& bound$inds==inds&bound$l==l),]
-    })
-  })
-=======
+
        lapply(c(150,300,750), function(inds){
            lapply(c(-1,0,0.5,1), function(l){
                bound[which(bound$comm==comm& bound$inds==inds&bound$l==l),]
        })
    })
->>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
+
 })
 
 
