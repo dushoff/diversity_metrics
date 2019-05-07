@@ -1,4 +1,4 @@
-# script to make checkplots for Chao's variance estimators for diversity estimates. Will start with Simpsons
+# script to make checkplots for Chao's variance estimators for diversity estimates. Also creates non-checkplot figure of CI coverage for Chao1 for the conceptual guide. 
 library(tidyverse)
 library(furrr)
 source("scripts/helper_funs/estimation_funs.R")
@@ -41,8 +41,8 @@ dfun(com3, l=-1)
 
 #gets slightly closer than obs
 # show1<-checkplot(com1, l=0, inds=150, reps=1000)
-nc<-60#per Rob's recommendation
-# nc<-7
+# nc<-60#per Rob's recommendation
+nc<-7
 
 plan(strategy=multiprocess, workers=nc)
 
@@ -118,8 +118,37 @@ conceptual %>%
 
 
 
+####### 
+#get a checkplot for obs. 
+comm<-usersguide
+truemu<-function(comm, size, reps, l){
+    sam<-replicate(reps, subsam(comm, size))
+    return(mean(apply(
+        sam,2, function(x){dfun(x, l)}
+    )
+        ))}
 
 
+reps<-1000
+B<-2000
+l<-1
+
+obscp<-function(reps){
+    sam<-subsam(usersguide, size)
+    data.bt = rmultinom(B,size,Bt_prob_abu(sam))
+    obs<-dfun(sam,l)
+    pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,1-l))
+    pro<-pro-mean(pro)+obs
+    chaotile<-sum(pro<=truemun)/(B/100)
+    return(data.frame("chaotile"=chaotile, "truemu"=truemun,  "obsD"=obs))
+}
+
+trycheckingobs<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
+    map_dfr(c(-1,0,1), function(l){
+        truemun<-truemu(usersguide, size=size, reps=reps, l=l)
+          future_map_dfr(1:reps, obscp)
+    })
+})
 
 reps<-125
 
