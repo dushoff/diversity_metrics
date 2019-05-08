@@ -121,19 +121,28 @@ conceptual %>%
 ####### 
 #get a checkplot for obs. 
 comm<-usersguide
-truemu<-function(comm, size, reps, l){
+
+comm<-usersguide
+size<-100
+reps<-10
+l<-0
+truemu<-function(comm, size, reps, l,...){
     sam<-replicate(reps, subsam(comm, size))
     return(mean(apply(
         sam,2, function(x){dfun(x, l)}
     )
-        ))}
+    )
+    )
+    }
+
+truemu(usersguide, 100, 1000, -1)
 
 
 reps<-1000
-B<-2000
-l<-1
 
-obscp<-function(l=l, size=size, dat=usersguide, B=2000,...){
+
+
+obscp<-function(l=l, size=size, dat=usersguide, B=2000, truemun=truemun...){
     sam<-subsam(usersguide, size)
     data.bt = rmultinom(B,size,Bt_prob_abu(sam))
     obs<-dfun(sam,l)
@@ -146,16 +155,16 @@ obscp<-function(l=l, size=size, dat=usersguide, B=2000,...){
 trycheckingobs<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
     map_dfr(c(-1,0,1), function(l){
         truemun<-truemu(usersguide, size=size, reps=reps, l=l)
-          future_map_dfr(1:reps, function(reps){obscp(l, size, usersguide)})
+          future_map_dfr(1:reps, function(reps){obscp(l, size, usersguide, truemun=truemun)})
     })
 })
-#Check code, b/c if this is right, it's a nightmare. 
+pdf(file="figures/empirical_checkplot1.pdf")
 map(c(-1,0,1), function(ell){
     trycheckingobs %>% filter(l==ell) %>% 
         ggplot(aes(chaotile))+
         geom_histogram()+
         theme_classic()+
-        facet_wrap(~size)
+        facet_wrap(~size+l)
 })
 
 dev.off()
@@ -164,6 +173,10 @@ reps<-125
 # str(checkchao(com1, 1000, 1, dfun(com1, 1)))
 # checkplot(com1, 1000, 1, 150, 1)
 
+
+checktruemu<-trycheckingobs %>% group_by(l, size) %>% summarize(tm=mean(truemu), om=mean(obsD))
+
+View(checktruemu)
 
 start<-Sys.time()
 map(1:outerreps, function(x){
