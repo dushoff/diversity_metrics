@@ -133,23 +133,32 @@ reps<-1000
 B<-2000
 l<-1
 
-obscp<-function(reps){
+obscp<-function(l=l, size=size, dat=usersguide, B=2000,...){
     sam<-subsam(usersguide, size)
     data.bt = rmultinom(B,size,Bt_prob_abu(sam))
     obs<-dfun(sam,l)
     pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,1-l))
     pro<-pro-mean(pro)+obs
     chaotile<-sum(pro<=truemun)/(B/100)
-    return(data.frame("chaotile"=chaotile, "truemu"=truemun,  "obsD"=obs))
+    return(data.frame("chaotile"=chaotile, "truemu"=truemun,  "obsD"=obs, "l"=l, "size"=size ))
 }
 
 trycheckingobs<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
     map_dfr(c(-1,0,1), function(l){
         truemun<-truemu(usersguide, size=size, reps=reps, l=l)
-          future_map_dfr(1:reps, obscp)
+          future_map_dfr(1:reps, function(reps){obscp(l, size, usersguide)})
     })
 })
+#Check code, b/c if this is right, it's a nightmare. 
+map(c(-1,0,1), function(ell){
+    trycheckingobs %>% filter(l==ell) %>% 
+        ggplot(aes(chaotile))+
+        geom_histogram()+
+        theme_classic()+
+        facet_wrap(~size)
+})
 
+dev.off()
 reps<-125
 
 # str(checkchao(com1, 1000, 1, dfun(com1, 1)))
