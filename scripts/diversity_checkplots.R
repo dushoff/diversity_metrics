@@ -110,6 +110,7 @@ conceptual %>%
 
 dev.off()
 
+annotatedf %>% ggplot(aes(size, coverage))+geom_point()+theme_classic()+geom_hline(yintercept=95)
 conceptual %>% 
     mutate(ucl=est+ucl, lcl=est-lcl, mean=est) %>% 
     group_by(size) %>% summarize(maxucl=max(ucl))
@@ -120,12 +121,11 @@ conceptual %>%
 
 ####### 
 #get a checkplot for obs. 
-comm<-usersguide
 
-comm<-usersguide
-size<-100
-reps<-10
-l<-0
+# comm<-usersguide
+# size<-100
+# reps<-10
+# l<-0
 truemu<-function(comm, size, reps, l,...){
     sam<-replicate(reps, subsam(comm, size))
     return(mean(apply(
@@ -135,10 +135,9 @@ truemu<-function(comm, size, reps, l,...){
     )
     }
 
-truemu(usersguide, 100, 1000, -1)
 
 
-reps<-1000
+reps<-5000
 
 
 
@@ -158,6 +157,8 @@ trycheckingobs<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
           future_map_dfr(1:reps, function(reps){obscp(l, size, usersguide, truemun=truemun)})
     })
 })
+write.csv(trycheckingobs, file="data/fromR/trycheckingobs.csv", row.names=F)
+
 pdf(file="figures/empirical_checkplot1.pdf")
 map(c(-1,0,1), function(ell){
     trycheckingobs %>% filter(l==ell) %>% 
@@ -235,11 +236,6 @@ brokelist<-lapply(c("com1", "com2", "com3"),function(comm){
 plts<-vector("list", 36)
 a<-1
 
-<<<<<<< HEAD
-
-=======
-    
->>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
 # for(x in c(1:3)){
 #     for(y in c(1:3)){
 #         for(z in c(1:4)){
@@ -252,7 +248,7 @@ a<-1
 #     }
 # }
 for(x in c(1:3)){
-<<<<<<< HEAD
+
   pdf(file=paste("figures/",c("com1", "com2", "com3")[x], ".pdf", sep=""))
   par(mfrow=c(3,4))
   for(y in c(1:3)){
@@ -296,7 +292,7 @@ for(x in c(1:3)){
     }
   }
   dev.off()
-=======
+  
    pdf(file=paste("figures/",c("com1", "com2", "com3")[x], ".pdf", sep=""))
     par(mfrow=c(3,4))
     for(y in c(1:3)){
@@ -340,7 +336,6 @@ for(x in c(1:3)){
         }
     }
     dev.off()
->>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
 }
 
 quantile(brokelist[[1]][[1]][[1]]$chaoest,0.025)
