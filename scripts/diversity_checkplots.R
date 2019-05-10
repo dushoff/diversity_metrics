@@ -160,6 +160,8 @@ trycheckingobs<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
 })
 write.csv(trycheckingobs, file="data/fromR/trycheckingobs.csv", row.names=F)
 
+trycheckingobs<-read.csv("data/fromR/trycheckingobs.csv")
+
 pdf(file="figures/empirical_checkplot1.pdf")
 map(c(-1,0,1), function(ell){
     trycheckingobs %>% filter(l==ell) %>% 
