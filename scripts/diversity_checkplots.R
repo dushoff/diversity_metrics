@@ -3,7 +3,7 @@ library(tidyverse)
 library(furrr)
 source("scripts/helper_funs/estimation_funs.R")
 library(mobsim)
-library(scales) #for function muted
+# library(scales) #for function muted
 
 # #start with JD comms
 # mini<-100
@@ -43,7 +43,7 @@ dfun(com3, l=-1)
 #gets slightly closer than obs
 # show1<-checkplot(com1, l=0, inds=150, reps=1000)
 # nc<-60#per Rob's recommendation
-nc<-7
+nc<-50
 
 plan(strategy=multiprocess, workers=nc)
 
@@ -204,11 +204,16 @@ checktruemu<-trycheckingobs %>% group_by(l, size) %>% summarize(tm=mean(truemu),
 
 
 # redo checkplot code but now only for usersguide
-reps<-5000
-ug_asy<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
-    map_dfr(c(-1,0,1), function(l){
-        out<-checkplot(abs=usersguide, l=l, inds=size, reps=reps)
-    })
+reps<-500
+outerreps<-10
+
+map(1:outerreps, function(x){
+  ug_asy<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
+      map_dfr(c(-1,0,1), function(l){
+          out<-checkplot(abs=usersguide, l=l, inds=size, reps=reps)
+      })
+  })
+  write.csv(ug_asy, paste("data/fromR/ug_asy",x, ".csv", sep="_"), row.names=F)
 })
 
 start<-Sys.time()
