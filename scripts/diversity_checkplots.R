@@ -3,6 +3,7 @@ library(tidyverse)
 library(furrr)
 source("scripts/helper_funs/estimation_funs.R")
 library(mobsim)
+library(scales) #for function muted
 
 # #start with JD comms
 # mini<-100
@@ -50,12 +51,12 @@ plan(strategy=multiprocess, workers=nc)
 checkplot<-function(abs, B=2000, l, inds, reps){
 
   td<-dfun(abs, l)
-  truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
+  #truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
   future_map_dfr(1:reps,function(x){
     obs<-subsam(abs, size=inds)
     
-    chaotile<-checkchao(obs, B, l, td, truemu_n=truemu_n)
-    return(chaotile=data.frame(qtile=chaotile[1], mletile=chaotile[2], truediv=chaotile[3], trueme_n=chaotile[4], chaoest=chaotile[5], obsD=chaotile[6], l=rep(l, reps), inds=rep(inds, reps), reps=rep(reps, reps)))
+    chaotile<-checkchao(obs, B, l, td)
+    return(chaotile=data.frame(qtile=chaotile[1], truediv=chaotile[2], chaoest=chaotile[3], obsD=chaotile[4], l=rep(l, reps), inds=rep(inds, reps), reps=rep(reps, reps)))
 
   })
 }
@@ -174,10 +175,39 @@ reps<-125
 # str(checkchao(com1, 1000, 1, dfun(com1, 1)))
 # checkplot(com1, 1000, 1, 150, 1)
 
+#df with true coverage of 95% CI
+tvcov <-trycheckingobs %>% group_by(l, size) %>% summarize(outside=1-(sum(chaotile>97.5)+sum(chaotile<2.5))/5000)
 
+#relable facets by creating new factor in df
+inds<-data.frame("l"=c(1,0,-1), divind=factor(c("richness", "Hill-Shannon", "Hill-Simpson"), levels=c("richness", "Hill-Shannon", "Hill-Simpson")))
+
+tc<-left_join(tvcov, inds)
+
+tc %>%mutate(conserv=(1-outside)*10) %>% 
+    ggplot(aes(size, outside, color=conserv))+
+    geom_point()+
+    geom_hline(yintercept=0.95)+
+    facet_wrap(~divind)+
+    theme_classic()+
+    scale_color_gradient2(low="blue",mid="grey", high="red", limits=c(0,1), midpoint=0.5, breaks=c(0,0.5,1), labels=c("  conservative", "", "  over-confident"))+
+    scale_y_continuous(trans="logit", limits=c(0.5, .999), breaks=c(0.5,0.6,0.8,0.8,0.9,0.95,0.97,0.98,0.99))+
+    scale_x_log10()+
+    labs(x="individuals sampled (log scale)", y="chance that 95% CI contains true mean under resampling \n (log-odds scale)")+
+    theme(legend.title = element_blank())
+ 
 checktruemu<-trycheckingobs %>% group_by(l, size) %>% summarize(tm=mean(truemu), om=mean(obsD))
 
-View(checktruemu)
+
+
+
+
+# redo checkplot code but now only for usersguide
+reps<-5000
+ug_asy<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
+    map_dfr(c(-1,0,1), function(l){
+        out<-checkplot(abs=usersguide, l=l, inds=size, reps=reps)
+    })
+})
 
 start<-Sys.time()
 map(1:outerreps, function(x){

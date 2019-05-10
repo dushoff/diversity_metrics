@@ -484,24 +484,29 @@ sApp <- function(samp){
 
 ################################################################
 #MR function to take abundance vector and "l" and return the quantile of B bootstrap iterations of Chao technique that true value falls on. Could be extended to include sample Hill as Chao seems to have
-checkchao<-function(x, B, l, truediv, truemu_n){
+checkchao<-function(x, B, l, truediv){ #, truemu_n
   n<-sum(x)
   #columns of this matrix are replicate boostraps
   data.bt = rmultinom(B,n,Bt_prob_abu(x))
   #for sample diversity
   # obs<-dfun(x,l)
-  mle = apply(data.bt,2,function(boot)dfun(boot, l))
-  mleadj =mle-mean(mle)+dfun(x, l)
-  #Chao estimator
+  # mle = apply(data.bt,2,function(boot)dfun(boot, l))
+  # mleadj =mle-mean(mle)+dfun(x, l)
+  # #Chao estimator
   # chaoest<-Chao_Hill_abu(x, 1-l)
   pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,1-l))
   pro<-pro-mean(pro)+Chao_Hill_abu(x, 1-l)
   chaotile<-sum(pro<=truediv)/(B/100)
-  mletile<-sum(mleadj<=truemu_n)/(B/100)
+  # mletile<-sum(mleadj<=truemu_n)/(B/100)
   # mleprob<-t.test(mleadj, mu=truemu_n)$p.value
-  return(c("chaotile"=chaotile, "mletile"=mletile
+  return(c("chaotile"=chaotile 
+           # , "mletile"=mletile
            # , "mleprob"=mleprob
-           , "truediv"=truediv, "truemu_n"=truemu_n, "chaoest"=Chao_Hill_abu(x, 1-l), "obsD"=dfun(x,l)))}
+           , "truediv"=truediv
+           # , "truemu_n"=truemu_n
+           , "chaoest"=Chao_Hill_abu(x, 1-l)
+           , "obsD"=dfun(x,l))
+         )}
 
 
 
