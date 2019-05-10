@@ -110,8 +110,9 @@ conceptual %>%
 
 
 dev.off()
-
+pdf(file="figures/chao1fornow.pdf")
 annotatedf %>% ggplot(aes(size, coverage))+geom_point()+theme_classic()+geom_hline(yintercept=95)
+dev.off()
 conceptual %>% 
     mutate(ucl=est+ucl, lcl=est-lcl, mean=est) %>% 
     group_by(size) %>% summarize(maxucl=max(ucl))
@@ -184,6 +185,7 @@ tvcov <-trycheckingobs %>% group_by(l, size) %>% summarize(outside=1-(sum(chaoti
 inds<-data.frame("l"=c(1,0,-1), divind=factor(c("richness", "Hill-Shannon", "Hill-Simpson"), levels=c("richness", "Hill-Shannon", "Hill-Simpson")))
 
 tc<-left_join(tvcov, inds)
+pdf(file="figures/observed_CI_performance.pdf",width=6, height=4 )
 
 tc %>%mutate(conserv=(1-outside)*10) %>% 
     ggplot(aes(size, outside, color=conserv))+
@@ -197,6 +199,7 @@ tc %>%mutate(conserv=(1-outside)*10) %>%
     labs(x="individuals sampled (log scale)", y="chance that 95% CI contains true mean under resampling \n (log-odds scale)")+
     theme(legend.title = element_blank())
  
+dev.off()
 checktruemu<-trycheckingobs %>% group_by(l, size) %>% summarize(tm=mean(truemu), om=mean(obsD))
 
 
