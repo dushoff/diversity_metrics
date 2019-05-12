@@ -43,7 +43,9 @@ dfun(com3, l=-1)
 #gets slightly closer than obs
 # show1<-checkplot(com1, l=0, inds=150, reps=1000)
 # nc<-60#per Rob's recommendation
+
 nc<-65
+
 
 plan(strategy=multiprocess, workers=nc)
 
@@ -110,8 +112,9 @@ conceptual %>%
 
 
 dev.off()
-
+pdf(file="figures/chao1fornow.pdf")
 annotatedf %>% ggplot(aes(size, coverage))+geom_point()+theme_classic()+geom_hline(yintercept=95)
+dev.off()
 conceptual %>% 
     mutate(ucl=est+ucl, lcl=est-lcl, mean=est) %>% 
     group_by(size) %>% summarize(maxucl=max(ucl))
@@ -184,19 +187,28 @@ tvcov <-trycheckingobs %>% group_by(l, size) %>% summarize(outside=1-(sum(chaoti
 inds<-data.frame("l"=c(1,0,-1), divind=factor(c("richness", "Hill-Shannon", "Hill-Simpson"), levels=c("richness", "Hill-Shannon", "Hill-Simpson")))
 
 tc<-left_join(tvcov, inds)
+otherdf<-data.frame(size=round(10^seq(2, 4, 0.25)), outside=rep(1,9 ), divind=rep("richness",9))
 
-tc %>%mutate(conserv=(1-outside)*10) %>% 
+#####################
+# code for CI coverage for sample diversity
+
+pdf(file="figures/observed_CI_performance.pdf",width=6, height=4 )
+
+tc %>%mutate(conserv=log(outside/(1-outside))) %>% 
     ggplot(aes(size, outside, color=conserv))+
     geom_point()+
+    geom_point(data=otherdf, color="blue")+
     geom_hline(yintercept=0.95)+
     facet_wrap(~divind)+
     theme_classic()+
-    scale_color_gradient2(low="blue",mid="grey", high="red", limits=c(0,1), midpoint=0.5, breaks=c(0,0.5,1), labels=c("  conservative", "", "  over-confident"))+
+    scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(0,5), midpoint=2.944, breaks=c(0,2.944,5), labels=c("  over-confident", "", "  conservative"))+
     scale_y_continuous(trans="logit", limits=c(0.5, .999), breaks=c(0.5,0.6,0.8,0.8,0.9,0.95,0.97,0.98,0.99))+
     scale_x_log10()+
     labs(x="individuals sampled (log scale)", y="chance that 95% CI contains true mean under resampling \n (log-odds scale)")+
-    theme(legend.title = element_blank())
+    theme(legend.title = element_blank(), panel.margin.x=unit(2, "lines"))
+
  
+dev.off()
 checktruemu<-trycheckingobs %>% group_by(l, size) %>% summarize(tm=mean(truemu), om=mean(obsD))
 
 
@@ -207,6 +219,9 @@ checktruemu<-trycheckingobs %>% group_by(l, size) %>% summarize(tm=mean(truemu),
 reps<-500
 outerreps<-10
 
+whatisthis<-checkplot(usersguide, l=-1, inds=100, reps=500)
+
+
 map(1:outerreps, function(x){
   ug_asy<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
       map_dfr(c(-1,0,1), function(l){
@@ -215,6 +230,42 @@ map(1:outerreps, function(x){
   })
   write.csv(ug_asy, paste("data/ug_asy",x, ".csv", sep="_"), row.names=F)
 })
+
+
+getug<-map_dfr(1:outerreps, function(x){
+    
+    read.csv(paste("data/fromR/ug_asy", x, ".csv", sep="_"))
+    
+})
+
+correct<-getug[seq(500, length(getug$l), by=500),]
+
+asycov<-correct%>% 
+    group_by(l, inds) %>% 
+    summarize(outside=1-(sum(qtile>97.5)+sum(qtile<2.5))/(5000)) %>% left_join(inds)
+
+
+#######################
+# code for CI coverage for asymptotic diversity
+
+asycov %>%mutate(conserv=log(outside/(1-outside))) %>% 
+    ggplot(aes(inds, outside, color=conserv))+
+    geom_point()+
+    geom_hline(yintercept=0.95)+
+    facet_wrap(~divind)+
+    theme_classic()+
+    scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(0,5), midpoint=2.944, breaks=c(0,3,5), labels=c("  over-confident", "", "  conservative"))+
+    scale_y_continuous(trans="logit", limits=c(.5, .999), breaks=c(0.5,0.6,0.8,0.8,0.9,0.95,0.97,0.98,0.99))+
+    scale_x_log10()+
+    labs(x="individuals sampled (log scale)", y="chance that 95% CI contains true diversity \n (log-odds scale)")+
+    theme(legend.title = element_blank(), panel.margin.x=unit(2, "lines"))
+
+
+
+
+
+##################################
+# CODE FOR CHECKPLOT PAPER
 
 start<-Sys.time()
 map(1:outerreps, function(x){
