@@ -43,7 +43,7 @@ dfun(com3, l=-1)
 #gets slightly closer than obs
 # show1<-checkplot(com1, l=0, inds=150, reps=1000)
 # nc<-60#per Rob's recommendation
-nc<-50
+nc<-65
 
 plan(strategy=multiprocess, workers=nc)
 
@@ -56,7 +56,7 @@ checkplot<-function(abs, B=2000, l, inds, reps){
     obs<-subsam(abs, size=inds)
     
     chaotile<-checkchao(obs, B, l, td)
-    return(chaotile=data.frame(qtile=chaotile[1], truediv=chaotile[2], chaoest=chaotile[3], obsD=chaotile[4], l=rep(l, reps), inds=rep(inds, reps), reps=rep(reps, reps)))
+    return(chaotile=data.frame(qtile=chaotile[1], truediv=chaotile[2], chaoest=chaotile[3], obsD=chaotile[4], l=l, inds=inds, reps=reps))
 
   })
 }
@@ -213,7 +213,7 @@ map(1:outerreps, function(x){
           out<-checkplot(abs=usersguide, l=l, inds=size, reps=reps)
       })
   })
-  write.csv(ug_asy, paste("data/fromR/ug_asy",x, ".csv", sep="_"), row.names=F)
+  write.csv(ug_asy, paste("data/ug_asy",x, ".csv", sep="_"), row.names=F)
 })
 
 start<-Sys.time()
