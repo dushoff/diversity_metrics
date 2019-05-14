@@ -191,7 +191,7 @@ otherdf<-data.frame(size=round(10^seq(2, 4, 0.25)), outside=rep(1,9 ), divind=re
 # code for CI coverage for sample diversity
 
 pdf(file="figures/observed_CI_performance.pdf",width=6, height=4 )
-
+quartz(width=6, height=3)
 tc %>%mutate(conserv=log(outside/(1-outside))) %>% 
     ggplot(aes(size, outside, color=conserv))+
     geom_point()+
@@ -229,7 +229,7 @@ map(1:outerreps, function(x){
   write.csv(ug_asy, paste("data/fromR/ug_asy",x, ".csv", sep="_"), row.names=F)
 })
 
-
+outerreps<-10
 getug<-map_dfr(1:outerreps, function(x){
     
     read.csv(paste("data/fromR/ug_asy", x, ".csv", sep="_"))
@@ -245,7 +245,7 @@ asycov<-correct%>%
 
 #######################
 # code for CI coverage for asymptotic diversity
-
+quartz(width=6, height=3)
 asycov %>%mutate(conserv=log(outside/(1-outside))) %>% 
     ggplot(aes(inds, outside, color=conserv))+
     geom_point()+
