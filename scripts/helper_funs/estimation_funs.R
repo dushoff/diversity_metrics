@@ -506,7 +506,18 @@ checkchao<-function(x, B, l, truediv){ #, truemu_n
            # , "truemu_n"=truemu_n
            , "chaoest"=Chao_Hill_abu(x, 1-l)
            , "obsD"=dfun(x,l))
-         )}
+  )}
+
+################
+#truemu computes the emprical average sample diveristy under sampling without replacement
+truemu<-function(comm, size, reps, l,...){
+    sam<-replicate(reps, subsam(comm, size))
+    return(
+        mean(
+            apply(sam,2, function(x){dfun(x, l)})
+        )
+    )
+}
 
 
 

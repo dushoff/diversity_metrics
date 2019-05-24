@@ -3,9 +3,12 @@
 #############
 #load functions and packages
 library(tidyverse)
-library(furrr)
+library(furrr)#parallelization
 source("scripts/helper_funs/estimation_funs.R")
-library(mobsim)
+source("scripts/helper_funs/prettify.R")
+library(scales)#trans_breaks
+library(mobsim)#simulate communities
+invlogit<-arm::invlogit
 # library(scales) #for function muted
 
 
@@ -73,91 +76,12 @@ checkplot<-function(abs, B=2000, l, inds, reps){
   })
 }
 
+#########################
+#This uses two functions to generate the CI and the true average sample diversity for different sample sizes for a single community
 
-#make a fig for users guide
-
-# ugcheck<-map_dfr(10^seq(1, 5.5, 0.5), function(inds){
-#     checkplot(usersguide,B=1000, l=1, inds=inds, reps=1000)
-# })
-##########################################
-# I think this is no longer used in the user's guide. It's 10K reps which seems like too many, and it looks like it's just richness. 
-conceptual<-future_map_dfr(1:10000, function(x){
-    map_dfr(round(10^seq(2, 4, 0.25)), function(size){
-        subcom<-subsam(usersguide,size=size)
-        annoyinglist<-Bootstrap.CI(subcom, q=0, datatype = "abundance")
-        return(data.frame(size=size, lcl=annoyinglist["LCI.pro.2.5%"], ucl=annoyinglist["UCI.pro.97.5%"], est=Chao_Hill_abu(subcom, 0), obs=dfun(subcom, 1)))
-    })
-})
-
-#write.csv(conceptual, "data/Chao1_example_for_guide.csv", row.names=F)
-conceptual<-read.csv("data/Chao1_example_for_guide.csv")
-w<-1
-
-#### what is the maximum, since lines go way high but want to truncate y-axis at 200? 
-
-## ok, now, what is the actual coverage of the true value with the sample sizes used
-annotatedf<-conceptual %>% 
-    mutate(ucl=est+ucl, lcl=est-lcl, mean=est) %>% 
-    group_by(size) %>% summarize(coverage=length(which(ucl>=120))/100, uclucl=quantile(ucl, 0.975),maxucl=max(ucl))
-labeldf<-data.frame(x="1000", y=5, lab="chance that estimator CI intersects true richness value (nominally 95%)")
-
-annotatedf
-pdf(width=8, height=6, file="figures/violins_for_guide.pdf")
-# quartz(height=6,width=8)
-textsize<-5
-conceptual %>%
-    mutate(ucl=est+ucl, lcl=est-lcl, mean=est) %>%
-    gather(key="estimate", value="pointrange", mean, lcl, ucl) %>%
-    mutate(estimate=factor(estimate, levels=c("ucl", "mean", "lcl"))) %>% 
-    ggplot(aes(x=as.factor(size), y=pointrange, fill=estimate))+
-    geom_hline(yintercept=120, color="red")+
-    geom_violin(alpha=0.7, color="lightgrey", position="identity", width=1.4, size=0.2)+
-    scale_fill_manual(values=c("blue","steelblue2", "lightseagreen"))+
-    theme_classic()+
-    ylim(c(0, 200))+
-    geom_text(data=annotatedf, aes(x=as.factor(size), y=15, label=paste(round(coverage,1), "%", sep=""), color=coverage),fontface="bold", inherit.aes = F, size=textsize)+
-    scale_color_gradient2(low="red", mid="maroon", high="slateblue", limits=c(41, 100),guide="none")+
-    geom_text(aes(x=x, y=y, label=lab), data=labeldf, inherit.aes = F, size=textsize)+
-    labs(x="individuals sampled", y="Chao1 estimated richness")+
-    theme(text=element_text(size=14))
-
-
-dev.off()
-pdf(file="figures/chao1fornow.pdf")
-annotatedf %>% ggplot(aes(size, coverage))+geom_point()+theme_classic()+geom_hline(yintercept=95)
-dev.off()
-conceptual %>% 
-    mutate(ucl=est+ucl, lcl=est-lcl, mean=est) %>% 
-    group_by(size) %>% summarize(maxucl=max(ucl))
-
-
-
-
-
-####### 
-#get a checkplot for obs. 
-
-# comm<-usersguide
-# size<-100
-# reps<-10
-# l<-0
-truemu<-function(comm, size, reps, l,...){
-    sam<-replicate(reps, subsam(comm, size))
-    return(mean(apply(
-        sam,2, function(x){dfun(x, l)}
-    )
-    )
-    )
-    }
-
-
-
-reps<-5000
-
-
-
+#Generates quantiles of bootstrap distribution given true diveristy, sample size, l, and true average
 obscp<-function(l=l, size=size, dat=usersguide, B=2000, truemun=truemun...){
-    sam<-subsam(usersguide, size)
+    sam<-subsam(dat, size)
     data.bt = rmultinom(B,size,Bt_prob_abu(sam))
     obs<-dfun(sam,l)
     pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,1-l))
@@ -166,16 +90,27 @@ obscp<-function(l=l, size=size, dat=usersguide, B=2000, truemun=truemun...){
     return(data.frame("chaotile"=chaotile, "truemu"=truemun,  "obsD"=obs, "l"=l, "size"=size ))
 }
 
+#set number of reps
+reps<-5000
+
+####################
+#run this whole thing to get sample diversity checkplot-type info for sample diversity for a single community
 trycheckingobs<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
     map_dfr(c(-1,0,1), function(l){
         truemun<-truemu(usersguide, size=size, reps=reps, l=l)
           future_map_dfr(1:reps, function(reps){obscp(l, size, usersguide, truemun=truemun)})
     })
 })
+##### apparently this was streamlined enough to store to a single .csv while running in parallel
 write.csv(trycheckingobs, file="data/fromR/trycheckingobs.csv", row.names=F)
 
+
+##################################
+# read in data and make checkplot for sample diveristy
 trycheckingobs<-read.csv("data/fromR/trycheckingobs.csv")
 
+#####################
+#checkplot figure, not used in users guide
 pdf(file="figures/empirical_checkplot1.pdf")
 map(c(-1,0,1), function(ell){
     trycheckingobs %>% filter(l==ell) %>% 
@@ -186,13 +121,13 @@ map(c(-1,0,1), function(ell){
 })
 
 dev.off()
-reps<-125
 
-# str(checkchao(com1, 1000, 1, dfun(com1, 1)))
-# checkplot(com1, 1000, 1, 150, 1)
+####################################
+# set up data for users guide figures
+nreps<-5000 #this should be 5000 for now
 
 #df with true coverage of 95% CI
-tvcov <-trycheckingobs %>% group_by(l, size) %>% summarize(outside=1-(sum(chaotile>97.5)+sum(chaotile<2.5))/5000)
+tvcov <-trycheckingobs %>% group_by(l, size) %>% summarize(outside=1-(sum(chaotile>97.5)+sum(chaotile<2.5))/nreps)
 
 #relable facets by creating new factor in df
 inds<-data.frame("l"=c(1,0,-1), divind=factor(c("richness", "Hill-Shannon", "Hill-Simpson"), levels=c("richness", "Hill-Shannon", "Hill-Simpson")))
@@ -201,10 +136,9 @@ tc<-left_join(tvcov, inds)
 otherdf<-data.frame(size=round(10^seq(2, 4, 0.25)), outside=rep(1,9 ), divind=rep("richness",9))
 
 #####################
-# code for CI coverage for sample diversity
-
-pdf(file="figures/observed_CI_performance.pdf",width=6, height=4 )
-quartz(width=6, height=3)
+# Graph of 95% CI coverage for sample diversity graph to be used in guide
+#to figure out y-axis breaks:  prettify(trans_breaks(arm::logit, invlogit, n=15)(c(0.5,0.9999999)))
+pdf(file="figures/observed_CI_performance.pdf",width=8, height=4 )
 tc %>%mutate(conserv=log(outside/(1-outside))) %>% 
     ggplot(aes(size, outside, color=conserv))+
     geom_point()+
@@ -213,25 +147,24 @@ tc %>%mutate(conserv=log(outside/(1-outside))) %>%
     facet_wrap(~divind)+
     theme_classic()+
     scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(0,5), midpoint=2.944, breaks=c(0,2.944,5), labels=c("  over-confident", "", "  conservative"))+
-    scale_y_continuous(trans="logit", limits=c(0.5, .999), breaks=c(0.5,0.6,0.8,0.8,0.9,0.95,0.97,0.98,0.99))+
-    scale_x_log10()+
-    labs(x="individuals sampled (log scale)", y="chance that 95% CI contains true mean under resampling \n (log-odds scale)")+
+    scale_y_continuous(trans="logit", limits=c(0.5, .999), breaks=c(0.5, 0.73, 0.88, 0.95, 0.98,0.99, .997,.999), labels=c(50, 73, 88, 95, 98, 99, 99.7, 99.9))+
+    scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
+    labs(x="individuals sampled (log scale)", y="% chance 95% CI contains true mean under resampling \n (log-odds scale)")+
     theme(legend.title = element_blank(), panel.margin.x=unit(2, "lines"))
 
  
 dev.off()
+
+###############################################
+# confirm enough reps to get observed mean and true mean to be the same here
 checktruemu<-trycheckingobs %>% group_by(l, size) %>% summarize(tm=mean(truemu), om=mean(obsD))
+checktruemu %>% ggplot(aes(tm, om))+geom_point()
+#################################################
+# this is asymptotic diversity for users guide
 
-
-
-
-
-# redo checkplot code but now only for usersguide
+#set reps to 500 but outerreps to 10 for efficient use of anotate
 reps<-500
 outerreps<-10
-
-whatisthis<-checkplot(usersguide, l=-1, inds=100, reps=500)
-
 
 map(1:outerreps, function(x){
   ug_asy<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
@@ -242,7 +175,8 @@ map(1:outerreps, function(x){
   write.csv(ug_asy, paste("data/ug_asy",x, ".csv", sep="_"), row.names=F)
 })
 
-
+#######################################
+# extract data from files for use
 
 outerreps<-10
 getug<-map_dfr(1:outerreps, function(x){
@@ -268,8 +202,8 @@ asycov %>%mutate(conserv=log(outside/(1-outside))) %>%
     facet_wrap(~divind)+
     theme_classic()+
     scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(0,5), midpoint=2.944, breaks=c(0,3,5), labels=c("  over-confident", "", "  conservative"))+
-    scale_y_continuous(trans="logit", limits=c(.5, .999), breaks=c(0.5,0.6,0.8,0.8,0.9,0.95,0.97,0.98,0.99))+
-    scale_x_log10()+
+    scale_y_continuous(trans="logit", limits=c(0.5, .999), breaks=c(0.5, 0.73, 0.88, 0.95, 0.98,0.99, .997,.999), labels=c(50, 73, 88, 95, 98, 99, 99.7, 99.9))+
+    scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
     labs(x="individuals sampled (log scale)", y="chance that 95% CI contains true diversity \n (log-odds scale)")+
     theme(legend.title = element_blank(), panel.margin.x=unit(2, "lines"))
 
