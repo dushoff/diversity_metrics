@@ -140,23 +140,24 @@ otherdf<-data.frame(size=round(10^seq(2, 4, 0.25)), outside=rep(1,9 ), divind=re
 # Graph of 95% CI coverage for sample diversity graph to be used in guide
 #to figure out y-axis breaks:  prettify(trans_breaks(arm::logit, invlogit, n=15)(c(0.5,0.9999999)))
 pdf(file="figures/observed_CI_performance.pdf",width=8, height=4 )
-tc<-tc %>%mutate(conserv=log(outside/(1-outside))) %>% 
+toc<-tc %>% mutate(conserv=log(outside/(1-outside))) %>% 
     ggplot(aes(size, outside, color=conserv))+
     geom_point()+
     geom_point(data=otherdf, color="blue")+
     geom_hline(yintercept=0.95)+
-    facet_wrap(~divind)+
+    facet_wrap(~divind, strip.position=NULL)+
     theme_classic()+
     scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(0,5), midpoint=2.944, breaks=c(0,2.944,5), labels=c("  over-confident", "", "  conservative"))+
     scale_y_continuous(trans="logit", limits=c(0.5, .999), breaks=c(0.5, 0.73, 0.88, 0.95, 0.98,0.99, .997,.999), labels=c(50, 73, 88, 95, 98, 99, 99.7, 99.9))+
     scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
-    labs(x="individuals sampled (log scale)", y="% chance 95% CI contains true mean under resampling \n (log-odds scale)")+
-    theme(legend.title = element_blank(), panel.margin.x=unit(2, "lines"))
+    labs(y="% chance 95% CI contains true mean \n (log-odds scale)")+
+    theme(legend.title = element_blank(), panel.margin.x=unit(2, "lines")
+         , axis.title.x=element_blank()
+         )
 
  
 dev.off()
 
-plot_grid(tc, asyc, nrow=2)
 
 ###############################################
 # confirm enough reps to get observed mean and true mean to be the same here
@@ -208,12 +209,14 @@ asyc<-asycov %>%mutate(conserv=log(outside/(1-outside))) %>%
     scale_y_continuous(trans="logit", limits=c(0.5, .999), breaks=c(0.5, 0.73, 0.88, 0.95, 0.98,0.99, .997,.999), labels=c(50, 73, 88, 95, 98, 99, 99.7, 99.9))+
     scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
     labs(x="individuals sampled (log scale)", y="% chance 95% CI contains true diversity \n (log-odds scale)")+
-    theme(legend.title = element_blank(), panel.margin.x=unit(2, "lines"))
+    theme(legend.title = element_blank(), panel.margin.x=unit(2, "lines") , strip.background = element_blank()
+          , strip.text.x = element_blank())
 
 
 dev.off()
 
-
+quartz()
+plot_grid(toc, asyc, nrow=2, labels="auto", label_x=0.75, label_y=0.3)
 
 
 ##################################
