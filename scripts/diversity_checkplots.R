@@ -8,6 +8,7 @@ source("scripts/helper_funs/estimation_funs.R")
 source("scripts/helper_funs/prettify.R")
 library(scales)#trans_breaks
 library(mobsim)#simulate communities
+library(cowplot)
 invlogit<-arm::invlogit
 # library(scales) #for function muted
 
@@ -139,7 +140,7 @@ otherdf<-data.frame(size=round(10^seq(2, 4, 0.25)), outside=rep(1,9 ), divind=re
 # Graph of 95% CI coverage for sample diversity graph to be used in guide
 #to figure out y-axis breaks:  prettify(trans_breaks(arm::logit, invlogit, n=15)(c(0.5,0.9999999)))
 pdf(file="figures/observed_CI_performance.pdf",width=8, height=4 )
-tc %>%mutate(conserv=log(outside/(1-outside))) %>% 
+tc<-tc %>%mutate(conserv=log(outside/(1-outside))) %>% 
     ggplot(aes(size, outside, color=conserv))+
     geom_point()+
     geom_point(data=otherdf, color="blue")+
@@ -154,6 +155,8 @@ tc %>%mutate(conserv=log(outside/(1-outside))) %>%
 
  
 dev.off()
+
+plot_grid(tc, asyc, nrow=2)
 
 ###############################################
 # confirm enough reps to get observed mean and true mean to be the same here
@@ -195,7 +198,7 @@ asycov<-correct%>%
 #######################
 # code for CI coverage for asymptotic diversity
 pdf(file="figures/asymptotic_CI_for_guide.pdf", width=8, height=4)
-asycov %>%mutate(conserv=log(outside/(1-outside))) %>% 
+asyc<-asycov %>%mutate(conserv=log(outside/(1-outside))) %>% 
     ggplot(aes(inds, outside, color=conserv))+
     geom_point()+
     geom_hline(yintercept=0.95)+
@@ -209,6 +212,8 @@ asycov %>%mutate(conserv=log(outside/(1-outside))) %>%
 
 
 dev.off()
+
+
 
 
 ##################################
