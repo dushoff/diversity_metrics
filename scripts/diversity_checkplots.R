@@ -79,7 +79,8 @@ checkplot<-function(abs, B=2000, l, inds, reps){
 # ugcheck<-map_dfr(10^seq(1, 5.5, 0.5), function(inds){
 #     checkplot(usersguide,B=1000, l=1, inds=inds, reps=1000)
 # })
-
+##########################################
+# I think this is no longer used in the user's guide. It's 10K reps which seems like too many, and it looks like it's just richness. 
 conceptual<-future_map_dfr(1:10000, function(x){
     map_dfr(round(10^seq(2, 4, 0.25)), function(size){
         subcom<-subsam(usersguide,size=size)
