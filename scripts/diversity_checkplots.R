@@ -1,10 +1,16 @@
-# script to make checkplots for Chao's variance estimators for diversity estimates. Also creates non-checkplot figure of CI coverage for Chao1 for the conceptual guide. 
+# script to make checkplots for Chao's variance estimators for diversity estimates. Also creates non-checkplot figure of CI coverage for Chao1 for the conceptual guide.
+
+#############
+#load functions and packages
 library(tidyverse)
 library(furrr)
 source("scripts/helper_funs/estimation_funs.R")
 library(mobsim)
 # library(scales) #for function muted
 
+
+########################################
+#simulate communities 
 # #start with JD comms
 # mini<-100
 # com1 <- c(1, 1, 1, 1)
@@ -14,6 +20,8 @@ library(mobsim)
 # #this is supersampling
 # o1<-sample(1:length(com1), prob=com1, size=inds, replace=T)
 # o2<-sample(1:length(com2), prob=com2, size=inds, replace=T)
+
+
 
 #make a community for User's Guide
 usersguide<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=5)))
@@ -42,22 +50,24 @@ dfun(com3, l=-1)
 
 #gets slightly closer than obs
 # show1<-checkplot(com1, l=0, inds=150, reps=1000)
-# nc<-60#per Rob's recommendation
 
+####################################
+#set up parallelization for large computations
+
+#set # cores... ways to do this 
+# nc<-60#per Rob's recommendation
 nc<-65
 
+plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 
-plan(strategy=multiprocess, workers=nc)
-
-# make this cleaner
+########################
+# function to generate data for chekcplots
 checkplot<-function(abs, B=2000, l, inds, reps){
-
-  td<-dfun(abs, l)
+  td<-dfun(abs, l) #compute true diversity
   #truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
   future_map_dfr(1:reps,function(x){
-    obs<-subsam(abs, size=inds)
-    
-    chaotile<-checkchao(obs, B, l, td)
+    obs<-subsam(abs, size=inds) #subsample true community within each replicate
+    chaotile<-checkchao(obs, B, l, td) #then do B bootstrap samples for the augmented community based on that sample
     return(chaotile=data.frame(qtile=chaotile[1], truediv=chaotile[2], chaoest=chaotile[3], obsD=chaotile[4], l=l, inds=inds, reps=reps))
 
   })
@@ -230,6 +240,8 @@ map(1:outerreps, function(x){
   })
   write.csv(ug_asy, paste("data/ug_asy",x, ".csv", sep="_"), row.names=F)
 })
+
+
 
 outerreps<-10
 getug<-map_dfr(1:outerreps, function(x){
