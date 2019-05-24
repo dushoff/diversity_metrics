@@ -194,7 +194,7 @@ asycov<-correct%>%
 
 #######################
 # code for CI coverage for asymptotic diversity
-quartz(width=6, height=3)
+pdf(file="figures/asymptotic_CI_for_guide.pdf", width=8, height=4)
 asycov %>%mutate(conserv=log(outside/(1-outside))) %>% 
     ggplot(aes(inds, outside, color=conserv))+
     geom_point()+
@@ -204,11 +204,11 @@ asycov %>%mutate(conserv=log(outside/(1-outside))) %>%
     scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(0,5), midpoint=2.944, breaks=c(0,3,5), labels=c("  over-confident", "", "  conservative"))+
     scale_y_continuous(trans="logit", limits=c(0.5, .999), breaks=c(0.5, 0.73, 0.88, 0.95, 0.98,0.99, .997,.999), labels=c(50, 73, 88, 95, 98, 99, 99.7, 99.9))+
     scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
-    labs(x="individuals sampled (log scale)", y="chance that 95% CI contains true diversity \n (log-odds scale)")+
+    labs(x="individuals sampled (log scale)", y="% chance 95% CI contains true diversity \n (log-odds scale)")+
     theme(legend.title = element_blank(), panel.margin.x=unit(2, "lines"))
 
 
-
+dev.off()
 
 
 ##################################
