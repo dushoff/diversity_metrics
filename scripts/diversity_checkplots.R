@@ -134,35 +134,15 @@ tvcov <-trycheckingobs %>% group_by(l, size) %>% summarize(outside=1-(sum(chaoti
 inds<-data.frame("l"=c(1,0,-1), divind=factor(c("richness", "Hill-Shannon", "Hill-Simpson"), levels=c("richness", "Hill-Shannon", "Hill-Simpson")))
 
 tc<-left_join(tvcov, inds)
-otherdf<-data.frame(size=round(10^seq(2, 4, 0.25)), outside=rep(1,9 ), divind=rep("richness",9))
 
-#####################
-# Graph of 95% CI coverage for sample diversity graph to be used in guide
-#to figure out y-axis breaks:  prettify(trans_breaks(arm::logit, invlogit, n=15)(c(0.5,0.9999999)))
-pdf(file="figures/observed_CI_performance.pdf",width=8, height=4 )
-toc<-tc %>% mutate(conserv=log(outside/(1-outside))) %>% 
-    ggplot(aes(size, outside, color=conserv))+
-    geom_point()+
-    geom_point(data=otherdf, color="blue")+
-    geom_hline(yintercept=0.95)+
-    facet_wrap(~divind, strip.position=NULL)+
-    theme_classic()+
-    scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(0,5), midpoint=2.944, breaks=c(0,2.944,5), labels=c("  over-confident", "", "  conservative"))+
-    scale_y_continuous(trans="logit", limits=c(0.5, .999), breaks=c(0.5, 0.73, 0.88, 0.95, 0.98,0.99, .997,.999), labels=c(50, 73, 88, 95, 98, 99, 99.7, 99.9))+
-    scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
-    labs(y="% chance 95% CI contains true mean \n (log-odds scale)")+
-    theme(legend.title = element_blank(), panel.margin.x=unit(2, "lines")
-         , axis.title.x=element_blank()
-         )
 
- 
-dev.off()
+
 
 
 ###############################################
 # confirm enough reps to get observed mean and true mean to be the same here
-checktruemu<-trycheckingobs %>% group_by(l, size) %>% summarize(tm=mean(truemu), om=mean(obsD))
-checktruemu %>% ggplot(aes(tm, om))+geom_point()
+# checktruemu<-trycheckingobs %>% group_by(l, size) %>% summarize(tm=mean(truemu), om=mean(obsD))
+# checktruemu %>% ggplot(aes(tm, om))+geom_point()
 #################################################
 # this is asymptotic diversity for users guide
 
@@ -196,29 +176,38 @@ asycov<-correct%>%
     summarize(outside=1-(sum(qtile>97.5)+sum(qtile<2.5))/(5000)) %>% left_join(inds)
 
 
-#######################
-# code for CI coverage for asymptotic diversity
-pdf(file="figures/asymptotic_CI_for_guide.pdf", width=8, height=4)
-asyc<-asycov %>%mutate(conserv=log(outside/(1-outside))) %>% 
-    ggplot(aes(inds, outside, color=conserv))+
+###############################
+#add a dataframe to get points where value="inf" with transformation, hack
+otherdf<-data.frame(inds=round(10^seq(2, 4, 0.25)), outside=rep(1,9), divind=rep("richness",9), esttype=rep("sample diversity", 9))
+
+# combine sample and saymptotic to make a single multi-panel graph 
+comb_cov<-bind_rows("sample diversity"=tc %>% rename(inds=size), "asymptotic diversity"=asycov, .id="esttype" )
+#code to generate plot
+#to figure out y-axis breaks:  prettify(trans_breaks(arm::logit, invlogit, n=15)(c(0.5,0.9999999)))
+
+pdf(file="figures/CI_coverage_guide.pdf", height=5, width=5)
+comb_cov %>% mutate(conserv=log(outside/(1-outside))) %>% 
+    ggplot(aes(inds, outside, color=conserv, shape=esttype))+
     geom_point()+
+    geom_point(data=otherdf, color="blue")+
     geom_hline(yintercept=0.95)+
-    facet_wrap(~divind)+
+    facet_grid(divind~esttype, switch="y" )+#strip.position=NULL
     theme_classic()+
-    scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(0,5), midpoint=2.944, breaks=c(0,3,5), labels=c("  over-confident", "", "  conservative"))+
+    scale_shape_manual(values=c(17,15))+
+    scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(0,5), midpoint=2.944, breaks=c(0,2.944,5), labels=c("  over-confident", "", "  conservative"))+
     scale_y_continuous(trans="logit", limits=c(0.5, .999), breaks=c(0.5, 0.73, 0.88, 0.95, 0.98,0.99, .997,.999), labels=c(50, 73, 88, 95, 98, 99, 99.7, 99.9))+
     scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
-    labs(x="individuals sampled (log scale)", y="% chance 95% CI contains true diversity \n (log-odds scale)")+
-    theme(legend.title = element_blank(), panel.margin.x=unit(2, "lines") , strip.background = element_blank()
-          , strip.text.x = element_blank())
-
+    labs(y="% chance 95% CI contains true value (log-odds scale)")+
+    theme(legend.title = element_blank()
+          , panel.spacing=unit(1.3, "lines")
+          , axis.title.x=element_blank()
+          , strip.placement.y = "outside"
+          , strip.background = element_blank()
+          , strip.text=element_text(face="bold")
+          , legend.text=element_text(hjust=0.5)    )+
+    guides(shape=F)
 
 dev.off()
-
-quartz()
-plot_grid(toc, asyc, nrow=2, labels="auto", label_x=0.75, label_y=0.3)
-
-
 ##################################
 # CODE FOR CHECKPLOT PAPER
 
