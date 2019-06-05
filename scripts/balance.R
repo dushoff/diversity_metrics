@@ -247,17 +247,17 @@ ab<-c(20,8,5,4,2,1) #candidate for user's guide
 #################
 # code for figs in users guide etc.
 
-# pdf("figures/richness_scale.pdf")
-# rarity_plot(ab,1)
-# dev.off()
-# quartz(height=7/3, width=7)
-# pdf("figures/shannon_scale.pdf")
-# white_y(rarity_plot(ab,0))
-# dev.off()
-# 
-# pdf("figures/simpson_scale.pdf")
-# white_y(rarity_plot(ab,-1))
-# dev.off()
+pdf("figures/richness_scale.pdf")
+rarity_plot(ab,1)
+dev.off()
+quartz(height=7/3, width=7)
+pdf("figures/shannon_scale.pdf")
+white_y(rarity_plot(ab,0))
+dev.off()
+
+pdf("figures/simpson_scale.pdf")
+white_y(rarity_plot(ab,-1))
+dev.off()
 
 
 

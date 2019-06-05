@@ -150,14 +150,17 @@ tc<-left_join(tvcov, inds)
 reps<-500
 outerreps<-10
 
-map(1:outerreps, function(x){
-  ug_asy<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
-      map_dfr(c(-1,0,1), function(l){
-          out<-checkplot(abs=usersguide, l=l, inds=size, reps=reps)
-      })
-  })
-  write.csv(ug_asy, paste("data/ug_asy",x, ".csv", sep="_"), row.names=F)
-})
+#####################
+#uncomment to generate data for asymptotic diveristy checkplot/coverage for conceptual guide
+
+# map(1:outerreps, function(x){
+#   ug_asy<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
+#       map_dfr(c(-1,0,1), function(l){
+#           out<-checkplot(abs=usersguide, l=l, inds=size, reps=reps)
+#       })
+#   })
+#   write.csv(ug_asy, paste("data/ug_asy",x, ".csv", sep="_"), row.names=F)
+# })
 
 #######################################
 # extract data from files for use
@@ -185,19 +188,19 @@ comb_cov<-bind_rows("sample diversity"=tc %>% rename(inds=size), "asymptotic div
 #code to generate plot
 #to figure out y-axis breaks:  prettify(trans_breaks(arm::logit, invlogit, n=15)(c(0.5,0.9999999)))
 
-pdf(file="figures/CI_coverage_guide.pdf", height=5, width=5)
+pdf(file="figures/CI_coverage_guide.pdf", height=6, width=6) #
 comb_cov %>% mutate(conserv=log(outside/(1-outside))) %>% 
     ggplot(aes(inds, outside, color=conserv, shape=esttype))+
-    geom_point()+
-    geom_point(data=otherdf, color="blue")+
+    geom_point(size=2)+
+    geom_point(data=otherdf, color="blue", size=2)+
     geom_hline(yintercept=0.95)+
     facet_grid(divind~esttype, switch="y" )+#strip.position=NULL
     theme_classic()+
     scale_shape_manual(values=c(17,15))+
-    scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(0,5), midpoint=2.944, breaks=c(0,2.944,5), labels=c("  over-confident", "", "  conservative"))+
+    scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(0,5), midpoint=2.944, breaks=c(0,5), labels=c(" over-confident",  " conservative"))+
     scale_y_continuous(trans="logit", limits=c(0.5, .999), breaks=c(0.5, 0.73, 0.88, 0.95, 0.98,0.99, .997,.999), labels=c(50, 73, 88, 95, 98, 99, 99.7, 99.9))+
     scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
-    labs(y="% chance 95% CI contains true value (log-odds scale)")+
+    labs(y="% chance 95% CI contains true value")+
     theme(legend.title = element_blank()
           , panel.spacing=unit(1.3, "lines")
           , axis.title.x=element_blank()
