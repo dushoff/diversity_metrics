@@ -47,7 +47,9 @@ rarefs<-future_map_dfr(1:nreps, function(reps){
     })
 })
 
-head(rarefs)
+#write data to file
+
+write.csv(raref, file="data/coverage_vs_others.csv", row.names=F)
 ##################
 # rough plot to visualize
 rarefs %>% 
