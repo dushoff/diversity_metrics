@@ -51,15 +51,12 @@ head(rarefs)
 ##################
 # rough plot to visualize
 rarefs %>% 
-    gather(etype, est, chaoest, samp) %>% 
-    ggplot(aes(x=size, y=est, color=as.factor(paste(etype, comm)), fill=as.factor(paste(etype, comm))))+
+    gather(etype, est, chaoest, samp, cover) %>% 
+    ggplot(aes(x=size, y=est, color=as.factor( comm), fill=as.factor(comm)))+
         geom_smooth()+
         scale_y_log10()+
         scale_x_log10()+
-        facet_wrap(~l, scales="free")+
+        facet_wrap(~etype+l, scales="free")+
         theme_classic()
 
 
-estimateD(comm1)
-estimateD(list(a=1:5, aa=2:6, aaa=3:7))
-                                                        
