@@ -28,7 +28,7 @@ diffs<-map_dfr(c(-1,0,1), function(l){
     })
 diffs
 
-nc<-6
+nc<-60
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 nreps<-100
 rarefs<-future_map_dfr(1:nreps, function(reps){
@@ -60,6 +60,3 @@ rarefs %>%
         theme_classic()
 
 
-estimateD(comm1)
-estimateD(list(a=1:5, aa=2:6, aaa=3:7))
-                                                        
