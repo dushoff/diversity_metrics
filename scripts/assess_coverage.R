@@ -32,16 +32,15 @@ nc<-60
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 nreps<-100
 rarefs<-future_map_dfr(1:nreps, function(reps){
-        map_dfr(10^seq(1,5,.25), function(size){
-            rare<-lapply(1:4, function(com){subsam(get(paste("comm", com, sep="")),size )})
+       map_dfr(10^seq(1,5,.25), function(size){
+            rare<-lapply(1:4, function(com){subsam(get(paste("comm", com, sep="")), size)})
             names(rare)<-1:4
             covdivs<-estimateD(rare, base="coverage")
             map_dfr(1:4, function(com){
                 map_dfr(c(-1,0,1), function(l){
                     samp<-dfun(rare[[com]], l=l)
                     chaoest<-Chao_Hill_abu(rare[[com]], q=1-l)
-                    return(data.frame(samp=samp, chaoest=chaoest, cover=covdivs[which(covdivs$site==com&covdivs$order==1-l), "qD"], coverage=covdivs[which(covdivs$site==com&covdivs$order==1-l), "SC"], l=l, size=size, comm=com, reps=reps))
-                
+                    return(tryCatch(data.frame(samp=samp, chaoest=chaoest, cover=covdivs[which(covdivs$site==com&covdivs$order==1-l), "qD"], coverage=covdivs[which(covdivs$site==com&covdivs$order==1-l), "SC"], l=l, size=size, comm=com, reps=reps), error=function(e) data.frame(samp=samp, chaoest=chaoest, cover="err", coverage="err", l=l, size=size, comm=com, reps=reps)))
             })
         })
     })
@@ -49,7 +48,7 @@ rarefs<-future_map_dfr(1:nreps, function(reps){
 
 #write data to file
 
-write.csv(raref, file="data/coverage_vs_others.csv", row.names=F)
+write.csv(rarefs, file="data/coverage_vs_others.csv", row.names=F)
 ##################
 # rough plot to visualize
 rarefs %>% 
