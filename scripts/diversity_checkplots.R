@@ -10,8 +10,10 @@ library(scales)#trans_breaks
 library(mobsim)#simulate communities
 library(cowplot)
 invlogit<-arm::invlogit
+#library(vegan) # for fisherfit
+#library(MASS) # for fitdistr
 # library(scales) #for function muted
-
+select<-dplyr::select
 
 ########################################
 #simulate communities 
@@ -61,7 +63,6 @@ dfun(com3, l=-1)
 #set # cores... ways to do this 
 # nc<-60#per Rob's recommendation
 nc<-65
-
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 
 ########################
@@ -597,3 +598,27 @@ dev.off()
 # pdf(file="figures/first_Simpson_checkplots.pdf")
 # hist(firstout$chaotile, xlab="true value as percentile of Chao boot", xlim=c(0,100), main="skewed community with Simpson-Hill=4")
 # dev.off()
+
+########################
+# look at fisher's alpha as sampling increases
+
+plotalpha<-future_map_dfr(1:1000, function(x){
+    map_dfr(10^seq(2, 4, 0.25), function(size){
+        vec<-subsam(usersguide, size)
+        vecnoz<-vec[which(vec>0)]
+    alph<-fisherfit(vec)$estimate
+    pl<-poilogMLE(vecnoz)
+    logn<-fitdistr(vecnoz,densfun = "log-normal")
+    return(data.frame(alph=alph, plm=pl$par[1], pls=pl$par[2], lnm=logn$estimate[1], lns=logn$estimate[2], size=size))
+    })
+})
+
+plotalpha %>% ggplot(aes(size, lnm))+
+    geom_point(alpha=0.02)+
+    geom_point(aes(y=lns), color="red", alpha=0.02)+
+    geom_point(aes(y=lns/lnm), color="blue", alpha=0.02)+
+    geom_point(aes(y=pls), color="purple", alpha=0.02)
+    theme_classic()+
+    scale_x_log10()
+
+plotalpha %>% ggplot(aes(size, exp(pls)))+geom_point(alpha=0.02)+theme_classic()+scale_x_log10()+geom_smooth(method="lm")
