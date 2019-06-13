@@ -4,8 +4,8 @@ library(tidyverse)
 library(mobsim)
 library(furrr)
 library(iNEXT)
-#why isn't this loading properly?
-load("scripts/helper_funs/estimation_funs.R")
+
+source("scripts/helper_funs/estimation_funs.R")
 
 
 #make communities. 3=1+2
@@ -28,7 +28,7 @@ diffs<-map_dfr(c(-1,0,1), function(l){
     })
 diffs
 
-nc<-6
+nc<-60
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 nreps<-100
 rarefs<-future_map_dfr(1:nreps, function(reps){
@@ -47,7 +47,9 @@ rarefs<-future_map_dfr(1:nreps, function(reps){
     })
 })
 
-head(rarefs)
+#write data to file
+
+write.csv(raref, file="data/coverage_vs_others.csv", row.names=F)
 ##################
 # rough plot to visualize
 rarefs %>% 
