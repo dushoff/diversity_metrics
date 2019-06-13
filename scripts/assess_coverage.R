@@ -4,8 +4,8 @@ library(tidyverse)
 library(mobsim)
 library(furrr)
 library(iNEXT)
-#why isn't this loading properly?
-load("scripts/helper_funs/estimation_funs.R")
+
+source("scripts/helper_funs/estimation_funs.R")
 
 
 #make communities. 3=1+2
