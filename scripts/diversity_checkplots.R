@@ -60,7 +60,7 @@ dfun(com3, l=-1)
 
 #set # cores... ways to do this 
 # nc<-60#per Rob's recommendation
-nc<-65
+nc<-70
 
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 
@@ -92,17 +92,19 @@ obscp<-function(l=l, size=size, dat=usersguide, B=2000, truemun=truemun...){
 }
 
 #set number of reps
-reps<-5000
+reps<-500000
 
 ####################
 #run this whole thing to get sample diversity checkplot-type info for sample diversity for a single community
-trycheckingobs<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
-    map_dfr(c(-1,0,1), function(l){
-        truemun<-truemu(usersguide, size=size, reps=reps, l=l)
-          future_map_dfr(1:reps, function(reps){obscp(l, size, usersguide, truemun=truemun)})
+trycheckingobs_R<-map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
+        truemun<-truemu(usersguide, size=size, reps=5000, l=1)
+          future_map_dfr(1:reps, function(reps){obscp(l=1, size, usersguide, truemun=truemun)
     })
 })
 ##### apparently this was streamlined enough to store to a single .csv while running in parallel
+
+write.csv(trycheckingobs_R, file="data/big_richness_checkplot.csv", row.names=F)
+
 write.csv(trycheckingobs, file="data/fromR/trycheckingobs.csv", row.names=F)
 
 
@@ -121,6 +123,13 @@ map(c(-1,0,1), function(ell){
         facet_wrap(~size+l)
 })
 
+pdf(file="figures/do_richness_CI_ever_work.pdf")
+trycheckingobs_R %>% 
+  ggplot(aes(chaotile))+
+  geom_histogram()+
+  theme_classic()+
+  labs(x="percentile of mean sample richness in 500k bootstrap samples", y="frequency")+
+  facet_wrap(~size)
 dev.off()
 
 ####################################
@@ -128,7 +137,7 @@ dev.off()
 nreps<-5000 #this should be 5000 for now
 
 #df with true coverage of 95% CI
-tvcov <-trycheckingobs %>% group_by(l, size) %>% summarize(outside=1-(sum(chaotile>97.5)+sum(chaotile<2.5))/nreps)
+tvcov <-trycheckingobs_R %>% group_by(l, size) %>% summarize(outside=1-(sum(chaotile>97.5)+sum(chaotile<2.5))/500000)
 
 #relable facets by creating new factor in df
 inds<-data.frame("l"=c(1,0,-1), divind=factor(c("richness", "Hill-Shannon", "Hill-Simpson"), levels=c("richness", "Hill-Shannon", "Hill-Simpson")))
