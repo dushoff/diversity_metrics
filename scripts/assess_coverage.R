@@ -22,6 +22,13 @@ out<-map_dfr(1:4, function(comm){
     })
 })
 
+k<-map(c(-1,0,1), function(l){
+  dist(out %>% filter(l==l)[,"logdiv"], method="manhattan")
+})
+k
+out
+l
+
 diffs<-map_dfr(c(-1,0,1), function(l){
     dat<-out %>% filter(l==l)
     data.frame(three_1=dat[which(dat$comm==3),"logdiv"]-dat[which(dat$comm==1),"logdiv"],three_2=dat[which(dat$comm==3),"logdiv"]-dat[which(dat$comm==2),"logdiv"], two_1=dat[which(dat$comm==2),"logdiv"]-dat[which(dat$comm==1),"logdiv"], four_1=dat[which(dat$comm==4),"logdiv"]-dat[which(dat$comm==1),"logdiv"],four_2=dat[which(dat$comm==4),"logdiv"]-dat[which(dat$comm==2),"logdiv"], four_3=dat[which(dat$comm==4),"logdiv"]-dat[which(dat$comm==3),"logdiv"],l=l)
@@ -30,9 +37,9 @@ diffs
 
 nc<-60
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
-nreps<-100
+nreps<-60
 rarefs<-future_map_dfr(1:nreps, function(reps){
-       map_dfr(10^seq(1,5,.25), function(size){
+       map_dfr(10^seq(2,5,.25), function(size){
             rare<-lapply(1:4, function(com){subsam(get(paste("comm", com, sep="")), size)})
             names(rare)<-1:4
             covdivs<-estimateD(rare, base="coverage")
@@ -45,6 +52,8 @@ rarefs<-future_map_dfr(1:nreps, function(reps){
         })
     })
 })
+
+
 
 #write data to file
 
