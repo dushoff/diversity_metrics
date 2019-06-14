@@ -32,31 +32,20 @@ k<-map_dfr(c(-1,0,1), function(m){
 
 k
 
-head(rarefs)
 
-?dist
-out
-l
-
-diffs<-map_dfr(c(-1,0,1), function(l){
-    dat<-out %>% filter(l==l)
-    data.frame(three_1=dat[which(dat$comm==3),"logdiv"]-dat[which(dat$comm==1),"logdiv"],three_2=dat[which(dat$comm==3),"logdiv"]-dat[which(dat$comm==2),"logdiv"], two_1=dat[which(dat$comm==2),"logdiv"]-dat[which(dat$comm==1),"logdiv"], four_1=dat[which(dat$comm==4),"logdiv"]-dat[which(dat$comm==1),"logdiv"],four_2=dat[which(dat$comm==4),"logdiv"]-dat[which(dat$comm==2),"logdiv"], four_3=dat[which(dat$comm==4),"logdiv"]-dat[which(dat$comm==3),"logdiv"],l=l)
-    })
-diffs
-
-nc<-60
+nc<-64
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
-nreps<-60
+nreps<-64
 rarefs<-future_map_dfr(1:nreps, function(reps){
-       map_dfr(10^seq(2,5,.25), function(size){
-            rare<-lapply(1:4, function(com){subsam(get(paste("comm", com, sep="")), size)})
+       map_dfr(floor(10^seq(2,5,.25)), function(inds){
+            rare<-lapply(1:4, function(com){subsam(get(paste("comm", com, sep="")), inds)})
             names(rare)<-1:4
             covdivs<-estimateD(rare, base="coverage")
             map_dfr(1:4, function(com){
                 map_dfr(c(-1,0,1), function(m){
                     samp<-dfun(rare[[com]], l=m)
                     chaoest<-Chao_Hill_abu(rare[[com]], q=1-m)
-                    return(tryCatch(data.frame(samp=samp, chaoest=chaoest, cover=covdivs[which(covdivs$site==com&covdivs$order==1-m), "qD"], coverage=covdivs[which(covdivs$site==com&covdivs$order==1-m), "SC"], l=m, size=size, comm=com, reps=reps), error=function(e) data.frame(samp=samp, chaoest=chaoest, cover="err", coverage="err", l=m, size=size, comm=com, reps=reps)))
+                    return(tryCatch(data.frame(samp=samp, chaoest=chaoest, cover=covdivs[which(covdivs$site==com&covdivs$order==1-m), "qD"], coverage=covdivs[which(covdivs$site==com&covdivs$order==1-m), "SC"], l=m, size=inds, comm=com, reps=reps), error=function(e) data.frame(samp=samp, chaoest=chaoest, cover="err", coverage="err", l=m, size=inds, comm=com, reps=reps)))
             })
         })
     })
@@ -68,12 +57,12 @@ rarefs<-future_map_dfr(1:nreps, function(reps){
 
 write.csv(rarefs, file="data/coverage_vs_others.csv", row.names=F)
 
-# rarefsl<-rarefs %>% mutate(choaest=log(chaoest), samp=log(samp), cover=log(cover))
+rarefsl<-rarefs %>% mutate(choaest=log(chaoest), samp=log(samp), cover=log(cover))
 
 #this is an embarassing block of code
 rarediffs<-map_dfr(c(-1,0,1), function(m){
   map_dfr(1:nreps, function(rn){
-    map_dfr(10^seq(2,5,.25), function(inds){
+    map_dfr(floor(10^seq(1,5,.25)), function(inds){
       sdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(samp), method="manhattan"))
       edists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(chaoest), method="manhattan"))
       cdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(cover), method="manhattan"))
@@ -85,7 +74,6 @@ rarediffs<-map_dfr(c(-1,0,1), function(m){
     })
 })
 
-head(rarediffs)
 pdf(file="figures/eval_methods.pdf")
 rarediffs %>% 
   gather(val, diff_btwn, 1:6) %>% 
