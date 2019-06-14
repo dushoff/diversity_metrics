@@ -22,10 +22,10 @@ out<-map_dfr(1:4, function(comm){
     })
 })
 
-k<-map(c(-1,0,1), function(l){
-  dist(out %>% filter(l==l)[,"logdiv"], method="manhattan")
+k<-map(c(-1,0,1), function(m){
+  dist(out %>% filter(l==m), method="manhattan")
 })
-k
+?dist
 out
 l
 
@@ -44,10 +44,10 @@ rarefs<-future_map_dfr(1:nreps, function(reps){
             names(rare)<-1:4
             covdivs<-estimateD(rare, base="coverage")
             map_dfr(1:4, function(com){
-                map_dfr(c(-1,0,1), function(l){
-                    samp<-dfun(rare[[com]], l=l)
-                    chaoest<-Chao_Hill_abu(rare[[com]], q=1-l)
-                    return(tryCatch(data.frame(samp=samp, chaoest=chaoest, cover=covdivs[which(covdivs$site==com&covdivs$order==1-l), "qD"], coverage=covdivs[which(covdivs$site==com&covdivs$order==1-l), "SC"], l=l, size=size, comm=com, reps=reps), error=function(e) data.frame(samp=samp, chaoest=chaoest, cover="err", coverage="err", l=l, size=size, comm=com, reps=reps)))
+                map_dfr(c(-1,0,1), function(m){
+                    samp<-dfun(rare[[com]], l=m)
+                    chaoest<-Chao_Hill_abu(rare[[com]], q=1-m)
+                    return(tryCatch(data.frame(samp=samp, chaoest=chaoest, cover=covdivs[which(covdivs$site==com&covdivs$order==1-m), "qD"], coverage=covdivs[which(covdivs$site==com&covdivs$order==1-m), "SC"], l=m, size=size, comm=com, reps=reps), error=function(e) data.frame(samp=samp, chaoest=chaoest, cover="err", coverage="err", l=m, size=size, comm=com, reps=reps)))
             })
         })
     })
