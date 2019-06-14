@@ -22,9 +22,18 @@ out<-map_dfr(1:4, function(comm){
     })
 })
 
-k<-map(c(-1,0,1), function(m){
-  dist(out %>% filter(l==m), method="manhattan")
+k<-map_dfr(c(-1,0,1), function(m){
+  dists<-as.numeric(dist(out %>% filter(l==m) %>% select(logdiv), method="manhattan"))
+  names(dists)<-c("onetwo","onethree", "onefour", "twothree", "twofour", "threefour" )
+  dists
+  return(data.frame(t(dists), m=m))
+  
 })
+
+k
+
+head(rarefs)
+
 ?dist
 out
 l
@@ -58,6 +67,34 @@ rarefs<-future_map_dfr(1:nreps, function(reps){
 #write data to file
 
 write.csv(rarefs, file="data/coverage_vs_others.csv", row.names=F)
+
+# rarefsl<-rarefs %>% mutate(choaest=log(chaoest), samp=log(samp), cover=log(cover))
+
+#this is an embarassing block of code
+rarediffs<-map_dfr(c(-1,0,1), function(m){
+  map_dfr(1:nreps, function(rn){
+    map_dfr(10^seq(2,5,.25), function(inds){
+      sdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(samp), method="manhattan"))
+      edists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(chaoest), method="manhattan"))
+      cdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(cover), method="manhattan"))
+      names(cdists)<-c("onetwo","onethree", "onefour", "twothree", "twofour", "threefour")
+      names(edists)<-c("onetwo","onethree", "onefour", "twothree", "twofour", "threefour")
+      names(sdists)<-c("onetwo","onethree", "onefour", "twothree", "twofour", "threefour")
+      return(bind_rows(data.frame(t(edists), l=m, size=inds, reps=rn, meth="chao"), data.frame(t(cdists), l=m, size=m, reps=inds, meth="coverage"), data.frame(t(sdists), l=m, size=inds, reps=rn, meth="size")))
+      })
+    })
+})
+
+head(rarediffs)
+pdf(file="figures/eval_methods.pdf")
+rarediffs %>% 
+  gather(val, diff_btwn, 1:6) %>% 
+  ggplot(aes(inds, val, color=meth)) +
+  facet_wrap(~diff_btwn)+
+  geom_point(alpha=0.2)+
+  theme_classic() 
+
+dev.off()
 ##################
 # rough plot to visualize
 rarefs %>% 
