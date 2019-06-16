@@ -8,7 +8,7 @@ source("scripts/helper_funs/estimation_funs.R")
 source("scripts/helper_funs/prettify.R")
 library(scales)#trans_breaks
 library(mobsim)#simulate communities
-library(cowplot)
+library(cowplot) #sometimes nice stuff for multipanel ggplotting
 invlogit<-arm::invlogit
 #library(vegan) # for fisherfit
 #library(MASS) # for fitdistr
@@ -52,8 +52,6 @@ dfun(com2, l=-1)
 dfun(com3, l=-1)
 
 
-
-
 #gets slightly closer than obs
 # show1<-checkplot(com1, l=0, inds=150, reps=1000)
 
@@ -62,8 +60,6 @@ dfun(com3, l=-1)
 
 #set # cores... ways to do this 
 # nc<-60#per Rob's recommendation
-
-nc<-70
 
 
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
