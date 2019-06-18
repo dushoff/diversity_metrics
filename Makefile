@@ -31,6 +31,9 @@ functions.Rout: functions.R
 
 examples.Rout: functions.Rout examples.R
 
+checkplots.Rout: scripts/helper_funs/estimation_funs.R checkplots.R
+	$(run-R)
+
 ##################################################################
 
 md = $(wildcard *.md)
