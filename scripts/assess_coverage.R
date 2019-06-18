@@ -136,7 +136,7 @@ rarefs[which(rarefs$comm==4), "comm"]<-"b+b"
 pdf(file="figures/rough_rae_fig.pdf")
 rarefs %>% 
     gather(etype, est, chaoest, samp, cover) %>% 
-    ggplot(aes(x=size, y=est, color=as.factor( comm), fill=as.factor(comm)))+
+    ggplot(aes(x=size, y=est, color=comm, fill=comm))+
         geom_smooth()+
         scale_y_log10()+
         scale_x_log10()+
