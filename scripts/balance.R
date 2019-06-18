@@ -1,33 +1,32 @@
+# draft code to make plots that show mean rarity on a balanced "rarity scale." Goal is to make a flexible function that will take a vector of abundances and return a ggplot object that can be easily incorporated into figures.  
+
 library(tidyverse)
 library(ggthemes)
 library(scales) # trans_new() is in the scales library
 
 ## TODO
+
 ## OPTIONAL: color the species (so that stacking becomes clear)
 
-## might want to do get text and axis widths to scale with device/viewport. currently base_size argument can control manually
+## get text and axis widths to scale with device/viewport. currently base_size argument can control manually
 
-## think about squeezing when rarities aren't equal but are close s.t. boxes overlap... smart option that can calculate whether overlap occurs?
+## think about squeezing when rarities aren't equal but are close s.t. boxes overlap... smart option that can calculate whether overlap occurs? Currently, have the lines=T option to plot species as lines if overlap is a problem (set by user)
 
-## select colors for reference points http://colorbrewer2.org/#type=qualitative&scheme=Dark2&n=3
-
-epsPretty <- 0 # probably can delete these?
-offStart <- 0
 
 #transformation and back-transformation functions
-pfun=function(x, pow, offset=offStart){
+pfun=function(x, pow){
 	if (pow==0) return(log(x))
-	r <- sign(pow)*(x+offset)^pow
+	r <- sign(pow)*(x)^pow
 	return(r)
 }
 
-ipfun=function(x, pow, offset=offStart){
+ipfun=function(x, pow){
 	if (pow==0) return(exp(x))
 	r <- sign(pow)*(x)^(1/pow)
 	return(r)
 }
 
-# Diversity function 
+# Diversity function, takes the mean rarity  
 dfun<-function(ab, l){
     rp <- ab/sum(ab)
     if(l==0) return(exp(sum(rp*log(1/rp))))
@@ -44,19 +43,21 @@ prettify <- function(breaks){
 #function for scale transformation
 power_trans = function(pow, nb) trans_new(name="power"
    , transform = function(x) pfun(x, pow)
-	, inverse = function(x) ipfun(x, pow)
-	, breaks = function(x) prettify(
+   , inverse = function(x) ipfun(x, pow)
+   , breaks = function(x) prettify(
 		trans_breaks(
 			function(x) pfun(x, pow), function(x) ipfun(x, pow), n = nb
-		)(c(epsPretty,x)*1.1)
+		)(x*1.1)
 	)
-   , domain = c(1, 10000)
+   , domain = c(1, 10000) #this is to deal with -Inf
 )
 
 # replicate to make stacks with geom_point
 fancy_rep<-function(df){
     return(data.frame(df[rep(1:nrow(df), df$abundance),])
-           %>% group_by(abundance) %>% mutate(gr=1:length(abundance), inds=rep(length(abundance), length(abundance)))
+           %>% group_by(abundance) 
+           %>% mutate(gr=1:length(abundance), inds=rep(length(abundance)
+               , length(abundance)))
     )
 }
 
@@ -71,9 +72,10 @@ base_plot <- function(abundance, pointScale
                       , verbose=T
                       ){
     #0.0353 is approximate points to cm conversion (a little less than 3 pts per mm)
-    #11.25 is empirically derived scaling factor. Seems like stuff below axis is about 2.5* height of 1 line of text
-    pointScale<-(11.25*(min(dev.size("cm"))/noco-(2.5*0.0353*base_size)))
-    pointsize <- pointScale/(y_extent)
+    #14 is empirically derived scaling factor; but isn't quite right. 
+    # Seems like stuff below axis is about 2.5* height of 1 line of text
+    pointScale<-(14*(min(dev.size("cm"))/noco-(2.5*0.0353*base_size)))
+    pointsize <- pointScale/(y_extent*1.1)
 	
     #make plotting data
     rf <- tibble(names = as.factor(1:length(abundance))
@@ -188,7 +190,7 @@ fulcrum<-function(ab, ell, y_extent=max(max(ab), 15), x_max=1
 #construct the full plot for scale ell, with reference means=means
 rarity_plot <- function(ab, ell, means=-1:1, noco=1, lines=F, ...){
     ab<-ab[ab!=0]
-    print(cat("     rarity plot expects a square viewport and resizes points based on\n     min(dev.size() and noco (for number of columns).\n     selecting lines=T will plot stacks of individuals as a line element,\n     which tends to be more robust to window size.\n     lines=T may be the best way to deal with overplotting,\n     which results from several species with similar but not identical rarities.\n "))
+    print(cat("     rarity plot expects a square viewport and resizes points based on\n     min(dev.size() and noco (for number of columns).\n     Selecting lines=T will plot stacks of individuals as a line element,\n     which tends to be more robust to window size.\n     lines=T may be the best way to deal with overplotting,\n     which results from several species with similar but not identical rarities.\n "))
 	return(
 		scale_plot(ab, ell, noco=noco, lines=lines,...) 
 		+ mean_points(ab, means, noco=noco)
@@ -233,19 +235,19 @@ omit_y<-function(p){
 
 #some SADs to play with
 
-## First one overlaps on richness scale; also, I'm not following how I can 
-## interpret stacking by viewing the graph
+
 # ab <- c(20, 15, 9, 3, 2, 1, 1) #includes stacking
-# ab<-c(20,8,5,4,2,1) #candidate for user's guide
+ab<-c(20,8,5,4,2,1) #candidate for user's guide
 # ab <- c(100, 20, 15, 9, 3, 2, 1, 1)
 # ab <- c(50,30,20,0,0,0)
 # ab <- c(4,3,2)
-# ab <- c(20, 15, 9, 3, 2, 1, 1,0,0)
+# ab <- c(20, 15, 9, 3, 2, 1, 1, 0, 0)
 # ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
-# ab <- floor(exp(rnorm(50, 4,1.5)))
+# ab <- floor(exp(rnorm(50, 4, 1.5)))
 
-rarity_plot(ab,)
 # quartz(height=7, width=7)
+rarity_plot(ab,1)
+
 # rarity_plot(ab,0, fill_col="red", base_size=24, verbose=T, noco=2)
 # 
 # p<-rarity_plot(ab, 1, fill_col="blue", x_min=1, x_max=45, noco=3, base_size=12)
