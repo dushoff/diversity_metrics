@@ -72,10 +72,12 @@ base_plot <- function(abundance, pointScale
                       , verbose=T
                       ){
     #0.0353 is approximate points to cm conversion (a little less than 3 pts per mm)
+
     #14 is empirically derived scaling factor; but isn't quite right. 
     # Seems like stuff below axis is about 2.5* height of 1 line of text
     pointScale<-(14*(min(dev.size("cm"))/noco-(2.5*0.0353*base_size)))
     pointsize <- pointScale/(y_extent*1.1)
+
 	
     #make plotting data
     rf <- tibble(names = as.factor(1:length(abundance))
@@ -245,14 +247,15 @@ ab<-c(20,8,5,4,2,1) #candidate for user's guide
 # ab <- c(200,100, 20, 15, 9, 3, 2, 1, 1)
 # ab <- floor(exp(rnorm(50, 4, 1.5)))
 
-# quartz(height=7, width=7)
-rarity_plot(ab,1)
+
+#################
+# code for figs in users guide etc.
+
 
 # rarity_plot(ab,0, fill_col="red", base_size=24, verbose=T, noco=2)
 # 
 # p<-rarity_plot(ab, 1, fill_col="blue", x_min=1, x_max=45, noco=3, base_size=12)
 # 
 # grid.arrange(p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p))
-
 
 # rarity_series(ab=ab, 1:-1)

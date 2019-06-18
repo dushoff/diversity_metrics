@@ -6,6 +6,8 @@
 # In all functions, param q is the diversity order; the suggested range for q is [0, 3].
 # If you use the scripts for publishing papers, please cite Chao and Jost 2015 MEE paper (Appendix S8). 
 
+###########################################
+#MR note: commenting out the incidence stuff b/c easier to focus on one thing at a time.
 
 #-----------------------------------------------
 # Diversity profile estimator (abundance data)
@@ -16,99 +18,102 @@
 #' @return a numerical vector of diversity. 
 
 Chao_Hill_abu = function(x,q){
-    x = x[x>0]
-    n = sum(x)
-    f1 = sum(x==1)
-    f2 = sum(x==2)
-    p1 = ifelse(f2>0,2*f2/((n-1)*f1+2*f2),ifelse(f1>0,2/((n-1)*(f1-1)+2),1))
-    r <- 0:(n-1)
-    Sub <- function(q){
-        if(q==0){
-            sum(x>0) + (n-1)/n*ifelse(f2>0, f1^2/2/f2, f1*(f1-1)/2)
-        }
-        else if(q==1){
-            A <- sum(x/n*(digamma(n)-digamma(x)))
-            B <- ifelse(f1==0|p1==1,0,f1/n*(1-p1)^(1-n)*(-log(p1)-sum(sapply(1:(n-1), function(r)(1-p1)^r/r))))
-            exp(A+B)
-        }else if(abs(q-round(q))==0){
-            A <- sum(exp(lchoose(x,q)-lchoose(n,q)))
-            ifelse(A==0,NA,A^(1/(1-q)))
-        }else {
-            sort.data = sort(unique(x))
-            tab = table(x)
-            term = sapply(sort.data,function(z){
-                k=0:(n-z)
-                sum(choose(k-q,k)*exp(lchoose(n-k-1,z-1)-lchoose(n,z)))
-            })
-            A = sum(tab*term)
-            B = ifelse(f1==0|p1==1,0,f1/n*(1-p1)^(1-n)*(p1^(q-1)-sum(choose(q-1,r)*(p1-1)^r)))
-            (A+B)^(1/(1-q))
-        }
+  x = x[x>0]
+  n = sum(x)
+  f1 = sum(x==1)
+  f2 = sum(x==2)
+  p1 = ifelse(f2>0,2*f2/((n-1)*f1+2*f2),ifelse(f1>0,2/((n-1)*(f1-1)+2),1))
+  r <- 0:(n-1)
+  Sub <- function(q){
+    if(q==0){
+      sum(x>0) + (n-1)/n*ifelse(f2>0, f1^2/2/f2, f1*(f1-1)/2)
     }
-    sapply(q, Sub)
+    else if(q==1){
+      A <- sum(x/n*(digamma(n)-digamma(x)))
+      B <- ifelse(f1==0|p1==1,0,f1/n*(1-p1)^(1-n)*(-log(p1)-sum(sapply(1:(n-1), function(r)(1-p1)^r/r))))
+      exp(A+B)
+    }else if(abs(q-round(q))==0){
+      A <- sum(exp(lchoose(x,q)-lchoose(n,q)))
+      ifelse(A==0,NA,A^(1/(1-q)))
+    }else {
+      sort.data = sort(unique(x))
+      tab = table(x)
+      term = sapply(sort.data,function(z){
+        k=0:(n-z)
+        sum(choose(k-q,k)*exp(lchoose(n-k-1,z-1)-lchoose(n,z)))
+      })
+      A = sum(tab*term)
+      B = ifelse(f1==0|p1==1,0,f1/n*(1-p1)^(1-n)*(p1^(q-1)-sum(choose(q-1,r)*(p1-1)^r)))
+      (A+B)^(1/(1-q))
+    }
+  }
+  sapply(q, Sub)
 }
 
-#-----------------------------------------------
-# Diversity profile estimator (incidence data)
-#-----------------------------------------------
-#' Chao_Hill_inc(x, q) is a function of obtaining estimators of Hill numbers of order q based on incidence data.
-#' @param x a vector of species incidence-based sample frequencies. The first entry of x must be the number of sampling units.
-#' @param q a numeric or a vector of diversity order.
-#' @return a numerical vector.
-
-Chao_Hill_inc = function(x,q){
-    n = x[1]
-    x = x[-1];x = x[x>0]
-    U = sum(x)
-    f1 = sum(x==1)
-    f2 = sum(x==2)
-    p1 = ifelse(f2>0,2*f2/((n-1)*f1+2*f2),ifelse(f1>0,2/((n-1)*(f1-1)+2),1))
-    r <- 0:(n-1)
-    Sub <- function(q){
-        if(q==0){
-            sum(x>0) + (n-1)/n*ifelse(f2>0, f1^2/2/f2, f1*(f1-1)/2)
-        }
-        else if(q==1){
-            A <- sum(x/U*(digamma(n)-digamma(x)))
-            B <- ifelse(f1==0|p1==1,0,f1/U*(1-p1)^(1-n)*(-log(p1)-sum(sapply(1:(n-1), function(r)(1-p1)^r/r))))
-            exp(A+B)*U/n
-        }else if(abs(q-round(q))==0){
-            A <- sum(exp(lchoose(x,q)-lchoose(n,q)))
-            ifelse(A==0,NA,((n/U)^q*A)^(1/(1-q)))
-        }else {
-            sort.data = sort(unique(x))
-            tab = table(x)
-            term = sapply(sort.data,function(z){
-                k=0:(n-z)
-                sum(choose(k-q,k)*exp(lchoose(n-k-1,z-1)-lchoose(n,z)))
-            })
-            A = sum(tab*term)
-            B = ifelse(f1==0|p1==1,0,f1/n*(1-p1)^(1-n)*(p1^(q-1)-sum(choose(q-1,r)*(p1-1)^r)))
-            ((n/U)^q*(A+B))^(1/(1-q))
-        }
-    }
-    sapply(q, Sub)
-}
-
-#' Chao_Hill(x, q,datatype) combines Chao_Hill_abu and Chao_Hill_inc given a specified datatype (either abundance data or incidence data).
-#' @param x a vector of species sample frequencies (for abundance data), or incidence-based sample frequencies (1st entry must be the number of sampling unit).
-#' @param q a numeric or a vector of diversity order.
-#' @param datatype a character of data type,"abundance" or "incidence".
-#' @return a numerical vector.
-
-Chao_Hill = function(x,q,datatype = c("abundance","incidence")){
-    datatype = match.arg(datatype,c("abundance","incidence"))
-    if(datatype == "abundance"){
-        est = Chao_Hill_abu(x,q)
-    }else{
-        est = Chao_Hill_inc(x,q)
-    }
-    return(est)
-}
+#' #-----------------------------------------------
+#' # Diversity profile estimator (incidence data)
+#' #-----------------------------------------------
+#' #' Chao_Hill_inc(x, q) is a function of obtaining estimators of Hill numbers of order q based on incidence data.
+#' #' @param x a vector of species incidence-based sample frequencies. The first entry of x must be the number of sampling units.
+#' #' @param q a numeric or a vector of diversity order.
+#' #' @return a numerical vector.
+#' 
+#' Chao_Hill_inc = function(x,q){
+#'     n = x[1]
+#'     x = x[-1];x = x[x>0]
+#'     U = sum(x)
+#'     f1 = sum(x==1)
+#'     f2 = sum(x==2)
+#'     p1 = ifelse(f2>0,2*f2/((n-1)*f1+2*f2),ifelse(f1>0,2/((n-1)*(f1-1)+2),1))
+#'     r <- 0:(n-1)
+#'     Sub <- function(q){
+#'         if(q==0){
+#'             sum(x>0) + (n-1)/n*ifelse(f2>0, f1^2/2/f2, f1*(f1-1)/2)
+#'         }
+#'         else if(q==1){
+#'             A <- sum(x/U*(digamma(n)-digamma(x)))
+#'             B <- ifelse(f1==0|p1==1,0,f1/U*(1-p1)^(1-n)*(-log(p1)-sum(sapply(1:(n-1), function(r)(1-p1)^r/r))))
+#'             exp(A+B)*U/n
+#'         }else if(abs(q-round(q))==0){
+#'             A <- sum(exp(lchoose(x,q)-lchoose(n,q)))
+#'             ifelse(A==0,NA,((n/U)^q*A)^(1/(1-q)))
+#'         }else {
+#'             sort.data = sort(unique(x))
+#'             tab = table(x)
+#'             term = sapply(sort.data,function(z){
+#'                 k=0:(n-z)
+#'                 sum(choose(k-q,k)*exp(lchoose(n-k-1,z-1)-lchoose(n,z)))
+#'             })
+#'             A = sum(tab*term)
+#'             B = ifelse(f1==0|p1==1,0,f1/n*(1-p1)^(1-n)*(p1^(q-1)-sum(choose(q-1,r)*(p1-1)^r)))
+#'             ((n/U)^q*(A+B))^(1/(1-q))
+#'         }
+#'     }
+#'     sapply(q, Sub)
+#' }
+#' 
+#' #' Chao_Hill(x, q,datatype) combines Chao_Hill_abu and Chao_Hill_inc given a specified datatype (either abundance data or incidence data).
+#' #' @param x a vector of species sample frequencies (for abundance data), or incidence-based sample frequencies (1st entry must be the number of sampling unit).
+#' #' @param q a numeric or a vector of diversity order.
+#' #' @param datatype a character of data type,"abundance" or "incidence".
+#' #' @return a numerical vector.
+#' 
+#' Chao_Hill = function(x,q,datatype = c("abundance","incidence")){
+#'     datatype = match.arg(datatype,c("abundance","incidence"))
+#'     if(datatype == "abundance"){
+#'         est = Chao_Hill_abu(x,q)
+#'     }else{
+#'         est = Chao_Hill_inc(x,q)
+#'     }
+#'     return(est)
+#' }
 
 #-----------------------
 # The empirical profile 
 #-----------------------
+
+#This function probably not necessary since we have dfun, but this has incidence stuff which we could possibly care about.
+
 #' Hill(x, q, datatype) is a function of obtaining the empirical Hill numbers of order q based on abundance data or incidence data.
 #' @param x a vector of species sample frequencies (for abundance data), or incidence-based sample frequencies (1st entry must be the number of sampling unit).
 #' @param q a numeric or a vector of diversity order.
@@ -116,14 +121,14 @@ Chao_Hill = function(x,q,datatype = c("abundance","incidence")){
 #' @return a numerical vector.
 
 Hill <- function(x,q,datatype = c("abundance","incidence")){
-    if(datatype=="incidence"){x = x[-1]}
-    p <- x[x>0]/sum(x)
-    Sub <- function(q){
-        if(q==0) sum(p>0)
-        else if(q==1) exp(-sum(p*log(p)))
-        else exp(1/(1-q)*log(sum(p^q)))
-    }
-    sapply(q, Sub)
+  if(datatype=="incidence"){x = x[-1]}
+  p <- x[x>0]/sum(x)
+  Sub <- function(q){
+    if(q==0) sum(p>0)
+    else if(q==1) exp(-sum(p*log(p)))
+    else exp(1/(1-q)*log(sum(p^q)))
+  }
+  sapply(q, Sub)
 }
 
 #-----------------------------------------
@@ -134,55 +139,66 @@ Hill <- function(x,q,datatype = c("abundance","incidence")){
 #' @return a numeric vector.
 
 Bt_prob_abu = function(x){
-    x = x[x>0]
-    n = sum(x)
-    f1 = sum(x==1)
-    f2 = sum(x==2)
-    C = 1 - f1/n*ifelse(f2>0,(n-1)*f1/((n-1)*f1+2*f2),ifelse(f1>0,(n-1)*(f1-1)/((n-1)*(f1-1)+2),0))
-    W = (1-C)/sum(x/n*(1-x/n)^n)
-    
-    p.new = x/n*(1-W*(1-x/n)^n)
-    f0 = ceiling(ifelse(f2>0,(n-1)/n*f1^2/(2*f2),(n-1)/n*f1*(f1-1)/2))
-    p0 = (1-C)/f0
-    p.new=c(p.new,rep(p0,f0))
-    return(p.new)
+  x = x[x>0]
+  n = sum(x)
+  f1 = sum(x==1)
+  f2 = sum(x==2)
+  #compute the coverage here
+  C = 1 - f1/n*ifelse(f2>0,(n-1)*f1/((n-1)*f1+2*f2),ifelse(f1>0,(n-1)*(f1-1)/((n-1)*(f1-1)+2),0))
+  #use coverage to define a weighting for observed frequencies... this is lambda_hat in Chao et al. 2013 and 2014 appendices explaining this bootstrapping procedure. I haven't quite wrapped my head around this yet. 
+  #coverage deficit=p(next individual is a new species)=proportion of true community absent from sample
+  # the denominator is the expected probability of observing all x if x/n=p 
+  W = (1-C)/sum(x/n*(1-x/n)^n)
+  
+  #use that weighting here to get p.new for observed species in x
+  p.new = x/n*(1-W*(1-x/n)^n)
+  #then get number of species observed 0 times using chao1
+  f0 = ceiling(ifelse(f2>0,(n-1)/n*f1^2/(2*f2),(n-1)/n*f1*(f1-1)/2))
+  #assume that all unobserved have equal p, given by total coverage deficit divided by number of unobserved.
+  p0 = (1-C)/f0
+  #p.new includes estimated p's for the observed plus estimated p's for unobserved.
+  p.new=c(p.new,rep(p0,f0))
+  return(p.new)
 }
+
+
+
 
 #' Bt_prob_inc(x) is a function of estimating the species incidence probabilities in the bootstrap assemblage based on incidence data.
 #' @param x a vector of incidence-based sample frequencies (1st entry must be the number of sampling unit).
 #' @return a numeric vector.
 
-Bt_prob_inc = function(x){
-    n = x[1]
-    x = x[-1]
-    U = sum(x)
-    f1 = sum(x==1)
-    f2 = sum(x==2)
-    A = ifelse(f2>0,2*f2/((n-1)*f1+2*f2),ifelse(f1>0,2/((n-1)*(f1-1)+2),1))
-    C=1-f1/U*(1-A)
-    W=U/n*(1-C)/sum(x/n*(1-x/n)^n)
-    
-    p.new=x/n*(1-W*(1-x/n)^n)
-    f0 = ceiling(ifelse(f2>0,(n-1)/n*f1^2/(2*f2),(n-1)/n*f1*(f1-1)/2))
-    p0=U/n*(1-C)/f0
-    p.new=c(p.new,rep(p0,f0))
-    return(p.new)
-}
-
-#' Bt_prob(x,datatype) combines the two functions Bt_prob_abu and Bt_prob_inc for a specified datatype. 
-#' @param x a vector of species sample frequencies (for abundance data), or incidence-based sample frequencies (1st entry must be the number of sampling unit).
-#' @param datatype a character of data type,"abundance" or "incidence".
-#' @return a numeric vector.
-
-Bt_prob = function(x,datatype = c("abundance","incidence")){
-    datatype = match.arg(datatype,c("abundance","incidence"))
-    if(datatype == "abundance"){
-        prob = Bt_prob_abu(x)
-    }else{
-        prob = Bt_prob_inc(x)
-    }
-    return(prob)
-}
+#' Bt_prob_inc = function(x){
+#'     n = x[1]
+#'     x = x[-1]
+#'     U = sum(x)
+#'     f1 = sum(x==1)
+#'     f2 = sum(x==2)
+#'     A = ifelse(f2>0,2*f2/((n-1)*f1+2*f2),ifelse(f1>0,2/((n-1)*(f1-1)+2),1))
+#'     C=1-f1/U*(1-A)
+#'     W=U/n*(1-C)/sum(x/n*(1-x/n)^n)
+#'     
+#'     p.new=x/n*(1-W*(1-x/n)^n)
+#'     f0 = ceiling(ifelse(f2>0,(n-1)/n*f1^2/(2*f2),(n-1)/n*f1*(f1-1)/2))
+#'     p0=U/n*(1-C)/f0
+#'     p.new=c(p.new,rep(p0,f0))
+#'     return(p.new)
+#' }
+#' 
+#' #' Bt_prob(x,datatype) combines the two functions Bt_prob_abu and Bt_prob_inc for a specified datatype. 
+#' #' @param x a vector of species sample frequencies (for abundance data), or incidence-based sample frequencies (1st entry must be the number of sampling unit).
+#' #' @param datatype a character of data type,"abundance" or "incidence".
+#' #' @return a numeric vector.
+#' 
+#' Bt_prob = function(x,datatype = c("abundance","incidence")){
+#'     datatype = match.arg(datatype,c("abundance","incidence"))
+#'     if(datatype == "abundance"){
+#'         prob = Bt_prob_abu(x)
+#'     }else{
+#'         prob = Bt_prob_inc(x)
+#'     }
+#'     return(prob)
+#' }
 
 #' Bootstrap.CI(x,q,B,datatype,conf) is a function of calculating the bootsrapping standard error based on abundance data or incidence data.
 #' @param x a vector of species sample frequencies (for abundance data) or incidence-based sample frequencies (1st entry must be the number of sampling unit).
@@ -196,40 +212,59 @@ Bt_prob = function(x,datatype = c("abundance","incidence")){
 #'  In each matrix, the first row gives the results for the empirical diversity, and the second row gives the results for the proposed diversity estimates.
 #'  Columns give the results for different orders of q.
 
+# x<-subsam(usersguide, 10)
+# q<-0
+# datatype<-"abundance"
+# B<-1000
+
 Bootstrap.CI = function(x,q,B = 1000,datatype = c("abundance","incidence"),conf = 0.95){
     datatype = match.arg(datatype,c("abundance","incidence"))
-    p.new = Bt_prob(x,datatype)
+    p.new = Bt_prob_abu(x)
+    # p.new = Bt_prob(x,datatype)
     n = ifelse(datatype=="abundance",sum(x),x[1])
     # set.seed(456)
     if(datatype=="abundance"){
         data.bt = rmultinom(B,n,p.new)
-    }else{
-        data.bt = rbinom(length(p.new)*B,n,p.new) 
-        data.bt = matrix(data.bt,ncol=B)
-        data.bt = rbind(rep(n,B),data.bt)
     }
-    
+    # }else{
+    #     data.bt = rbinom(length(p.new)*B,n,p.new) 
+    #     data.bt = matrix(data.bt,ncol=B)
+    #     data.bt = rbind(rep(n,B),data.bt)
+    # }
+    # 
     mle = apply(data.bt,2,function(x)Hill(x,q,datatype))
-    pro = apply(data.bt,2,function(x)Chao_Hill(x,q,datatype))
+    #making this all for just abundance
+    pro = apply(data.bt,2,function(x)Chao_Hill_abu(x,q))
     
-    mle.mean = rowMeans(mle)
-    pro.mean = rowMeans(pro)
+    mle.mean = mean(mle) #rowMeans(mle) 
+    pro.mean = mean(pro) #rowMeans(pro)
     
-    LCI.mle =  -apply(mle,1,function(x)quantile(x,probs = (1-conf)/2)) + mle.mean
-    UCI.mle = apply(mle,1,function(x)quantile(x,probs = 1-(1-conf)/2)) - mle.mean
+    #confidence intervals just based on quantiles of bootstraped distribution
     
-    LCI.pro =  -apply(pro,1,function(x)quantile(x,probs = (1-conf)/2)) + pro.mean
-    UCI.pro = apply(pro,1,function(x)quantile(x,probs = 1-(1-conf)/2)) - pro.mean
+    #confidence intervals for Hill diversity of sample
+    # LCI.mle =  -apply(mle,1,function(x)quantile(x,probs = (1-conf)/2)) + mle.mean
+    # UCI.mle = apply(mle,1,function(x)quantile(x,probs = 1-(1-conf)/2)) - mle.mean
+    # 
+    # #confidence intervals for Chao-estimated Hill diversity 
+    # LCI.pro =  -apply(pro,1,function(x)quantile(x,probs = (1-conf)/2)) + pro.mean
+    # UCI.pro = apply(pro,1,function(x)quantile(x,probs = 1-(1-conf)/2)) - pro.mean
+    # 
+    LCI.mle = -quantile(mle,probs = (1-conf)/2) + mle.mean
+    UCI.mle = quantile(mle,probs = 1-(1-conf)/2) - mle.mean
+    
+    #confidence intervals for Chao-estimated Hill diversity 
+    LCI.pro =  -quantile(pro,probs = (1-conf)/2) + pro.mean
+    UCI.pro = quantile(pro,probs = 1-(1-conf)/2) - pro.mean
     
     LCI = rbind(LCI.mle,LCI.pro)
     UCI = rbind(UCI.mle,UCI.pro)
     
-    sd.mle = apply(mle,1,sd)
-    sd.pro = apply(pro,1,function(x)sd(x,na.rm = T))
-    se = rbind(sd.mle,sd.pro)
-    
-    return(list(LCI=LCI,UCI=UCI,se=se))
-    
+    # sd.mle = apply(mle,1,sd)
+    # sd.pro = apply(pro,1,function(x)sd(x,na.rm = T))
+    # se = rbind(sd.mle,sd.pro)
+    #consider making this an easier data structure where things aren't lists of lists. 
+    #return(list(LCI=LCI,UCI=UCI,se=se))
+    return(c(LCI.mle=LCI.mle, LCI.pro=LCI.pro, UCI.mle=UCI.mle, UCI.pro=UCI.pro))
 }
 
 #------------------------
@@ -250,45 +285,45 @@ Bootstrap.CI = function(x,q,B = 1000,datatype = c("abundance","incidence"),conf 
 #'  Columns give the results for different orders of q.
 
 ChaoHill <- function(dat, datatype=c("abundance", "incidence"), from=0, to=3, interval=0.1, B=1000, conf=0.95){ 
-    datatype = match.arg(datatype,c("abundance","incidence"))
-    # for real data estimation
-    
-    if (is.matrix(dat) == T || is.data.frame(dat) == T){
-        if (ncol(dat) != 1 & nrow(dat) != 1)
-            stop("Error: The data format is wrong.")
-        if (ncol(dat) == 1){
-            dat <- dat[, 1]
-        } else {
-            dat <- dat[1, ]
-        }
+  datatype = match.arg(datatype,c("abundance","incidence"))
+  # for real data estimation
+  
+  if (is.matrix(dat) == T || is.data.frame(dat) == T){
+    if (ncol(dat) != 1 & nrow(dat) != 1)
+      stop("Error: The data format is wrong.")
+    if (ncol(dat) == 1){
+      dat <- dat[, 1]
+    } else {
+      dat <- dat[1, ]
     }
-    dat <- as.numeric(dat)
-    q <- seq(from, to, by=interval)
-    
-    #-------------
-    #Estimation
-    #-------------
-    MLE=Hill(dat,q,datatype)
-    
-    qD_pro=Chao_Hill(dat,q,datatype)
-    
-    CI_bound = Bootstrap.CI(dat,q,B,datatype,conf)
-    se = CI_bound$se
-    #-------------------
-    #Confidence interval
-    #-------------------
-    tab.est=data.frame(rbind(MLE,qD_pro))
-    
-    LCI <- tab.est - CI_bound$LCI
-    UCI <- tab.est + CI_bound$UCI
-    
-    colnames(tab.est) <- colnames(se) <- colnames(LCI) <- colnames(UCI) <- paste("q = ", q, sep="")    
-    rownames(tab.est) <- rownames(se) <- rownames(LCI) <- rownames(UCI) <- c("Observed", "Chao_2013")
-    return(list(EST = tab.est, 
-                SD = se,
-                LCI = LCI,
-                UCI = UCI))
-    
+  }
+  dat <- as.numeric(dat)
+  q <- seq(from, to, by=interval)
+  
+  #-------------
+  #Estimation
+  #-------------
+  MLE=Hill(dat,q,datatype)
+  
+  qD_pro=Chao_Hill(dat,q,datatype)
+  
+  CI_bound = Bootstrap.CI(dat,q,B,datatype,conf)
+  se = CI_bound$se
+  #-------------------
+  #Confidence interval
+  #-------------------
+  tab.est=data.frame(rbind(MLE,qD_pro))
+  
+  LCI <- tab.est - CI_bound$LCI
+  UCI <- tab.est + CI_bound$UCI
+  
+  colnames(tab.est) <- colnames(se) <- colnames(LCI) <- colnames(UCI) <- paste("q = ", q, sep="")    
+  rownames(tab.est) <- rownames(se) <- rownames(LCI) <- rownames(UCI) <- c("Observed", "Chao_2013")
+  return(list(EST = tab.est, 
+              SD = se,
+              LCI = LCI,
+              UCI = UCI))
+  
 }
 
 
@@ -306,60 +341,28 @@ ChaoHill <- function(dat, datatype=c("abundance", "incidence"), from=0, to=3, in
 #' @return a polygon plot
 
 conf.reg=function(x_axis,LCL,UCL,...) {
-    x.sort <- order(x_axis)
-    x <- x_axis[x.sort]
-    LCL <- LCL[x.sort]
-    UCL <- UCL[x.sort]
-    polygon(c(x,rev(x)),c(LCL,rev(UCL)), ...)
+  x.sort <- order(x_axis)
+  x <- x_axis[x.sort]
+  LCL <- LCL[x.sort]
+  UCL <- UCL[x.sort]
+  polygon(c(x,rev(x)),c(LCL,rev(UCL)), ...)
 }
 
-#-------------------------------------------------------------
-# Example (abundance data) beetle data of Osa old-growth site
-#-------------------------------------------------------------
-# See the main text of Chao and Jost (2015) for interpreting the results.
 
-# Osa_old = rep(c(1,2,3,4,5,6,7,8,14,42),c(84,10,4,3,5,1,2,1,1,1))
-# out_abu = ChaoHill(Osa_old,"abundance")
-# 
-# q = seq(0,3,0.1)# Default
-# ymin = min(out_abu$LCI);ymax=max(out_abu$UCI)
-# plot(q,out_abu$EST[1,],type="l",xlab="Order q",ylab = "Hill numbers",lty=2,col=4,ylim = c(ymin,ymax))
-# points(q,out_abu$EST[2,],type="l",col=2)
-# conf.reg(q,out_abu$LCI[1,],out_abu$UCI[1,],border=NA,col=adjustcolor(4,0.2))
-# conf.reg(q,out_abu$LCI[2,],out_abu$UCI[2,],border=NA,col=adjustcolor(2,0.2))
-# legend("topright",c("Proposed","Empirical"),col=c(2,4),lty=c(1,2),bty="n")
-# title("Beetle data of Osa old-growth site")
-# 
-# #--------------------------------------------------------------------------
-# # Example (incidence data) soil ciliates data from Namibia, 51 soil samples
-# #--------------------------------------------------------------------------
-# # See Appendix S7 of Chao and Jost (2015) for interpreting the results.
-# 
-# Ciliates = c(51,rep(c(1:10,12:15,17,19,20,22:24,26,27,29,32,33,34,35,37,39),c(150,53,42,18,12,9,10,7,6,1,2,3,2,rep(1,16))))
-# out_inc = ChaoHill(Ciliates,"incidence")
-# 
-# q = seq(0,3,0.1)# Default
-# ymin = min(out_inc$LCI);ymax=max(out_inc$UCI)
-# plot(q,out_inc$EST[1,],type="l",xlab="Order q",ylab = "Hill numbers",lty=2,col=4,ylim = c(ymin,ymax))
-# points(q,out_inc$EST[2,],type="l",col=2)
-# conf.reg(q,out_inc$LCI[1,],out_inc$UCI[1,],border=NA,col=adjustcolor(4,0.2))
-# conf.reg(q,out_inc$LCI[2,],out_inc$UCI[2,],border=NA,col=adjustcolor(2,0.2))
-# legend("topright",c("Proposed","Empirical"),col=c(2,4),lty=c(1,2),bty="n")
-# title("Soil ciliates data of Namibia")
 
 ##############################################################################
 ### iNEXT coverage function
 ##############################################################################
 Chat.Ind <- function(x, m=sum(x)){
-    x <- x[x>0]
-    n <- sum(x)
-    f1 <- sum(x == 1)
-    f2 <- sum(x == 2)
-    A <- ifelse(f2 > 0, (n-1)*f1/((n-1)*f1+2*f2), (n-1)*f1/((n-1)*f1+2))
-    Sub <- function(m){
-        out <- 1-f1/n*A
-    }
-    sapply(m, Sub)		
+  x <- x[x>0]
+  n <- sum(x)
+  f1 <- sum(x == 1)
+  f2 <- sum(x == 2)
+  A <- ifelse(f2 > 0, (n-1)*f1/((n-1)*f1+2*f2), (n-1)*f1/((n-1)*f1+2))
+  Sub <- function(m){
+    out <- 1-f1/n*A
+  }
+  sapply(m, Sub)		
 }
 ###############################################################
 ##############################################################
@@ -367,21 +370,21 @@ Chat.Ind <- function(x, m=sum(x)){
 
 #transformation and back-transformation functions
 pfun=function(x, pow){
-    if (pow==0) return(log(x))
-    r <- sign(pow)*(x)^pow
-    return(r)
+  if (pow==0) return(log(x))
+  r <- sign(pow)*(x)^pow
+  return(r)
 }
 
 ipfun=function(x, pow){
-    if (pow==0) return(exp(x))
-    r <- sign(pow)*(x)^(1/pow)
-    return(r)
+  if (pow==0) return(exp(x))
+  r <- sign(pow)*(x)^(1/pow)
+  return(r)
 }
 dfun<-function(ab, l){
-    ab<-ab[ab!=0]
-    rp <- ab/sum(ab)
-    if(l==0) {return(exp(sum(rp*log(1/rp))))}
-    return(sign(l)*ipfun(sign(l)*sum(rp*pfun(1/rp, l)),l))
+  ab<-ab[ab!=0]
+  rp <- ab/sum(ab)
+  if(l==0) {return(exp(sum(rp*log(1/rp))))}
+  return(sign(l)*ipfun(sign(l)*sum(rp*pfun(1/rp, l)),l))
 }
 
 ### MR addition: simple communities to test doubling property
@@ -390,81 +393,134 @@ library(tidyverse)
 library(EntropyEstimation)
 #function to take an abundance vector and subsample to size
 subsam<-function(ab_vec, size=sum(ab_vec)){
-    inds<-unlist(lapply(1:length(ab_vec), function(x){
-        rep(x, ab_vec[x])
-    }))
-    sam<-sample(inds, size=size, replace=F)
-    ss<-unlist(lapply(1:length(ab_vec), function(y){
-        length(which(sam==y))
-    }))
-    return(ss)
+  inds<-unlist(lapply(1:length(ab_vec), function(x){
+    rep(x, ab_vec[x])
+  }))
+  sam<-sample(inds, size=size, replace=F)
+  ss<-unlist(lapply(1:length(ab_vec), function(y){
+    length(which(sam==y))
+  }))
+  return(ss)
 }
 #take a subset of a bunch of community vectors, each subset of equal size 
 subcom<-function(com, size){
-    t(apply(com, 1, function(x){
-        subsam(x, size)}
-    ))
+  t(apply(com, 1, function(x){
+    subsam(x, size)}
+  ))
 }
 
 Nielsen<-function(x){
- w<-sum(x)
- p<-x/sum(x)
- d<-(w-1)^2/(sum(p^2)*(w+1)*(w-2)+3-2)
- return(d)
+  w<-sum(x)
+  p<-x/sum(x)
+  d<-(w-1)^2/(sum(p^2)*(w+1)*(w-2)+3-2)
+  return(d)
 }
 
 #estimates hill with order q for each comm at each size in sequence
 raref<-function(from, to, by, comm,n=1, q){
-    # ifelse(para==T, {
-        require(furrr)
-    nc<-detectCores()-1
-    plan(strategy=multiprocess, workers=nc)
-    p<-future_map_dfr(1:n, function(z){map_dfr(lapply(seq(from, to, by), function(b){
-        o1<-apply(subcom(comm, b),1, function(x){
-            # if(q==2){
-            #     est<-Nielsen(x)
-            # }
-            # else{
-            mrest<-fsd(ab=x,l=-q+1)
-            est<-Chao_Hill_abu(x, q=q)#}
-            emp<-dfun(ab=x, l=-q+1)
-            
-            coverage<-Chat.Ind(x)
-            out<-rbind(divest=est, zhangest=mrest, divemp=emp, coverage=coverage, size=rep(b, length(est)), q=rep(1-q, length(est)))
-            return(out)
-        })
-        return(data.frame(comm=row.names(comm), divest=o1[1,], divzhang=o1[2,], divemp=o1[3,], coverage=o1[4,], inds=o1[5,], ell=o1[6,]))
-    }), rbind)}) #},
-    
-    # p<-map_dfr(1:n, function(z){map_dfr(lapply(seq(from, to, by), function(b){
-    #     o1<-apply(subcom(comm, b),1, function(x){
-    #         # if(q==2){
-    #         #     est<-Nielsen(x)
-    #         # }
-    #         # else{
-    #         est<-Chao_Hill_abu(x, q=q)#}
-    #         emp<-dfun(ab=x, l=-q+1)
-    #         coverage<-Chat.Ind(x)
-    #         out<-rbind(divest=est, divemp=emp, coverage=coverage, size=rep(b, length(est)), q=rep(1-q, length(est)))
-    #         return(out)
-    #     })
-    #     return(data.frame(comm=row.names(comm), divest=o1[1,], divemp=o1[2,], coverage=o1[3,], inds=o1[4,], ell=o1[5,]))
-    # }), rbind)})
-    return(p)
+  # ifelse(para==T, {
+  require(furrr)
+  nc<-detectCores()-1
+  plan(strategy=multiprocess, workers=nc)
+  p<-future_map_dfr(1:n, function(z){map_dfr(lapply(seq(from, to, by), function(b){
+    o1<-apply(subcom(comm, b),1, function(x){
+      # if(q==2){
+      #     est<-Nielsen(x)
+      # }
+      # else{
+      mrest<-fsd(ab=x,l=-q+1)
+      est<-Chao_Hill_abu(x, q=q)#}
+      emp<-dfun(ab=x, l=-q+1)
+      
+      coverage<-Chat.Ind(x)
+      out<-rbind(divest=est, zhangest=mrest, divemp=emp, coverage=coverage, size=rep(b, length(est)), q=rep(1-q, length(est)))
+      return(out)
+    })
+    return(data.frame(comm=row.names(comm), divest=o1[1,], divzhang=o1[2,], divemp=o1[3,], coverage=o1[4,], inds=o1[5,], ell=o1[6,]))
+  }), rbind)}) #},
+  
+  # p<-map_dfr(1:n, function(z){map_dfr(lapply(seq(from, to, by), function(b){
+  #     o1<-apply(subcom(comm, b),1, function(x){
+  #         # if(q==2){
+  #         #     est<-Nielsen(x)
+  #         # }
+  #         # else{
+  #         est<-Chao_Hill_abu(x, q=q)#}
+  #         emp<-dfun(ab=x, l=-q+1)
+  #         coverage<-Chat.Ind(x)
+  #         out<-rbind(divest=est, divemp=emp, coverage=coverage, size=rep(b, length(est)), q=rep(1-q, length(est)))
+  #         return(out)
+  #     })
+  #     return(data.frame(comm=row.names(comm), divest=o1[1,], divemp=o1[2,], coverage=o1[3,], inds=o1[4,], ell=o1[5,]))
+  # }), rbind)})
+  return(p)
 }
 
 #fudge simpson to test performance
 
 fsr<-function(x){
-        (x-0.8)/(sum(x)-0.8)
-    }
+  (x-0.8)/(sum(x)-0.8)
+}
 
 
 fsd<-function(ab, l){
-    ab<-ab[ab!=0]
-    rp <- ab/sum(ab)
-    fs<-fsr(ab)
-    if(l==0) {return(exp(sum(rp*log(1/fs))))}
-    return(sign(l)*ipfun(sign(l)*sum(rp*pfun(1/fs, l)),l))
+  ab<-ab[ab!=0]
+  rp <- ab/sum(ab)
+  fs<-fsr(ab)
+  if(l==0) {return(exp(sum(rp*log(1/fs))))}
+  return(sign(l)*ipfun(sign(l)*sum(rp*pfun(1/fs, l)),l))
 }
+
+# JD's function: takes vector of sample abundances and returns Simpson's estimator of Simpson's Diversity
+sApp <- function(samp){
+  n <- sum(samp)
+  return(1/(
+    sum((samp/n)*((samp-1)/(n-1)))
+  ))
+}
+#########################################
+# ttest
+# myt<-function(x, true){pt((mean(x)-true)/(sd(x)/sqrt(length(x))), df=length(x-1))}
+
+################################################################
+#MR function to take abundance vector and "l" and return the quantile of B bootstrap iterations of Chao technique that true value falls on. Could be extended to include sample Hill as Chao seems to have
+checkchao<-function(x, B, l, truediv){ #, truemu_n
+  n<-sum(x)
+  #columns of this matrix are replicate boostraps
+  data.bt = rmultinom(B,n,Bt_prob_abu(x))
+  #for sample diversity
+  # obs<-dfun(x,l)
+  # mle = apply(data.bt,2,function(boot)dfun(boot, l))
+  # mleadj =mle-mean(mle)+dfun(x, l)
+  # #Chao estimator
+  # chaoest<-Chao_Hill_abu(x, 1-l)
+  pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,1-l))
+  pro<-pro-mean(pro)+Chao_Hill_abu(x, 1-l)
+  chaotile<-sum(pro<=truediv)/(B/100)
+  # mletile<-sum(mleadj<=truemu_n)/(B/100)
+  # mleprob<-t.test(mleadj, mu=truemu_n)$p.value
+  return(c("chaotile"=chaotile 
+           # , "mletile"=mletile
+           # , "mleprob"=mleprob
+           , "truediv"=truediv
+           # , "truemu_n"=truemu_n
+           , "chaoest"=Chao_Hill_abu(x, 1-l)
+           , "obsD"=dfun(x,l))
+  )}
+
+################
+#truemu computes the emprical average sample diveristy under sampling without replacement
+truemu<-function(comm, size, reps, l,...){
+    sam<-replicate(reps, subsam(comm, size))
+    return(
+        mean(
+            apply(sam,2, function(x){dfun(x, l)})
+        )
+    )
+}
+
+
+
+
+
 

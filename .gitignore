@@ -3,4 +3,7 @@
 .Rhistory
 .Rproj.user
 *.Rproj
+*.RData
 /figures
+/data/GUEsims*
+/data/fromR/
