@@ -116,7 +116,7 @@ evalu
 rarefs[which(rarefs$comm==1), "comm"]<-"a"
 rarefs[which(rarefs$comm==2), "comm"]<-"b"
 rarefs[which(rarefs$comm==3), "comm"]<-"a+b"
-rarefs[which(rarefs$comm==4), "comm"]<-"a+a"
+rarefs[which(rarefs$comm==4), "comm"]<-"b+b"
 
 pdf(file="figures/rough_rae_fig.pdf")
 rarefs %>% 
