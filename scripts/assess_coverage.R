@@ -75,7 +75,7 @@ rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover
 
 rarediffs<-map_dfr(c(-1,0,1), function(m){
   map_dfr(1:nreps, function(rn){
-    map_dfr(floor(10^seq(2,5,.25)), function(inds){
+    map_dfr(floor(10^seq(2,5,.05)), function(inds){
         #compute differences for each kind of estimator
       sdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(samp), method="manhattan"))
       edists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(chaoest), method="manhattan"))
@@ -105,11 +105,26 @@ gthrd %>%
 dev.off()
 
 #compute RMSE against true differences in diversity between comms
-sqe<-gthrd %>% filter(size>400) %>% left_join(k) %>% mutate(sqdiff=(trueval-val)^2)
+rmses<-map_dfr(floor(10^seq(2,5,.05)), function(inds){
+  sqe<-gthrd %>% filter(size==inds) %>% left_join(k) %>% mutate(sqdiff=(trueval-val)^2, method=meth)
 
-evalu<-sqe %>% group_by(l, meth) %>% summarize(rmse=sqrt(mean(sqdiff)))
-evalu
+  evalu<-sqe %>% group_by(l, method) %>% summarize(rmse=sqrt(mean(sqdiff)))
+  return(data.frame(evalu, size=inds))
+})
 
+rmses<-rmses %>% left_join(data.frame(l=c(-1,0,1), hill=c("Hill-Simpson", "Hill-Shannon", "Richness")))
+
+rmses$hill<-factor(rmses$hill, levels=c("Hill-Simpson", "Hill-Shannon", "Richness"))
+
+pdf(file="figures/sample_a_lot_use_coverage.pdf")
+rmses %>% ggplot(aes(size, rmse, color=method, shape=method))+
+  geom_point(alpha=0.5, size=.75)+
+  geom_line(alpha=0.5, size=0.5)+
+  facet_wrap(~hill)+
+  scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
+  theme_classic()+
+  labs(x="sample size (individuals)", y="RMSE in predicting pairwise differences \nin log(diversity) between communities")
+dev.off()
 
 ##################
 # rough plot to visualize
@@ -121,7 +136,7 @@ rarefs[which(rarefs$comm==4), "comm"]<-"b+b"
 pdf(file="figures/rough_rae_fig.pdf")
 rarefs %>% 
     gather(etype, est, chaoest, samp, cover) %>% 
-    ggplot(aes(x=size, y=est, color=as.factor( comm), fill=as.factor(comm)))+
+    ggplot(aes(x=size, y=est, color=comm, fill=comm))+
         geom_smooth()+
         scale_y_log10()+
         scale_x_log10()+
