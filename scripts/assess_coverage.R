@@ -40,6 +40,15 @@ out<- map_dfr(c(-1,0,1), function(l){
     data.frame(logdiv=log(dfun(haegdat[,comm], l=l)), comm=comm, l=l)
   })
 })
+########
+# original for k, using simulated communities
+# k<-map_dfr(c(-1,0,1), function(m){
+#   dists<-as.numeric(dist(out %>% filter(l==m) %>% select(logdiv), method="manhattan"))
+#   names(dists)<-c("onetwo","onethree", "onefour", "twothree", "twofour", "threefour" )
+#   dists
+#   return(data.frame(t(dists), m=m))
+#   
+# })
 
 #this was modified for haegdat
 k<-map_dfr(c(-1,0,1), function(m){
