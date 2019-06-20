@@ -6,32 +6,60 @@ library(furrr) #does parallelization
 library(iNEXT) # Chao's package for doing coverage etc.
 
 source("scripts/helper_funs/estimation_funs.R")
+source("scripts/helper_funs/read_tcsv.R")
 
 
-#make communities. 3=1+2. 4=2+2. 1 more even. 
-comm1<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=5)))
-comm2<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=9)))
-comm3<-c(comm1, comm2)
-comm4<-(c(comm2, comm2))
+#load microbial data used in Haegeman 2013
+
+haegdat <- read.tcsv("data/Haegeman_data.csv") 
+
+haegdat[is.na(haegdat)]<-0
+
+
+# #make communities. 3=1+2. 4=2+2. 1 more even. 
+# comm1<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=5)))
+# comm2<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=9)))
+# comm3<-c(comm1, comm2)
+# comm4<-(c(comm2, comm2))
+
 
 # look at differences on log scale
 
-#beware of using variables this way
-out<-map_dfr(1:4, function(comm){
-    map_dfr(c(-1,0,1), function(l){
-        data.frame(logdiv=log(dfun(get(paste("comm", comm, sep="")), l=l)), comm=comm, l=l)
-    })
-})
+#beware of using variables this way.. this loop was for comms 1-4
+# out<-map_dfr(1:4, function(comm){
+#     map_dfr(c(-1,0,1), function(l){
+#         data.frame(logdiv=log(dfun(get(paste("comm", comm, sep="")), l=l)), comm=comm, l=l)
+#     })
+# })
 
+#do now for Haegeman data
+
+
+out<- map_dfr(c(-1,0,1), function(l){
+        map_dfr(names(haegdat), function(comm){
+    data.frame(logdiv=log(dfun(haegdat[,comm], l=l)), comm=comm, l=l)
+  })
+})
+########
+# original for k, using simulated communities
+# k<-map_dfr(c(-1,0,1), function(m){
+#   dists<-as.numeric(dist(out %>% filter(l==m) %>% select(logdiv), method="manhattan"))
+#   names(dists)<-c("onetwo","onethree", "onefour", "twothree", "twofour", "threefour" )
+#   dists
+#   return(data.frame(t(dists), m=m))
+#   
+# })
+
+#this was modified for haegdat
 k<-map_dfr(c(-1,0,1), function(m){
   dists<-as.numeric(dist(out %>% filter(l==m) %>% select(logdiv), method="manhattan"))
-  names(dists)<-c("onetwo","onethree", "onefour", "twothree", "twofour", "threefour" )
+  names(dists)<-unite(expand.grid(names(haegdat),names(haegdat)))
   dists
   return(data.frame(t(dists), m=m))
-  
+
 })
 
-k<-k %>% gather(diff_btwn, val, 1:6) %>% select(diff_btwn, trueval=val, l=m)
+k<-k %>% gather(diff_btwn, val, 1:length(haegdat)) %>% select(diff_btwn, trueval=val, l=m)
 
 ################################################################################################
 ###### This is a giant routine that will take a long time and tons of compute resources ########
@@ -44,30 +72,52 @@ plan(strategy=multiprocess, workers=nc) #this is telling the computer to get rea
 nreps<-500
 
 
+# rarefs<-future_map_dfr(1:nreps, function(reps){
+#        map_dfr(floor(10^seq(2,5,.05)), function(inds){ #sample sizes
+#             rare<-lapply(1:4, function(com){subsam(get(paste("comm", com, sep="")), inds)}) #rarefy each community
+#             names(rare)<-1:4
+#             covdivs<-estimateD(rare, base="coverage") #use iNEXT::estimateD to compute expected Hill diversities for equal coverage
+#             map_dfr(1:4, function(com){ #then loop over communities again, b/c going to return one row for each combination of sample size, community, hill exponent
+#                 map_dfr(c(-1,0,1), function(m){ #hill exponents
+#                     samp<-dfun(rare[[com]], l=m) #compute sample diversity
+#                     chaoest<-Chao_Hill_abu(rare[[com]], q=1-m) #compute asymptotic estimator; Chao uses q=1-l
+#                     return(tryCatch(data.frame(samp=samp, chaoest=chaoest
+#                                                , cover=covdivs[which(covdivs$site==com&covdivs$order==1-m), "qD"] #this is diversity
+#                                                , coverage=covdivs[which(covdivs$site==com&covdivs$order==1-m), "SC"] #this is coverage estimate
+#                                                , l=m, size=inds, comm=com, reps=reps) #not sure this error thing is necessary but seems conservative to keep it
+#                                     , error=function(e) data.frame(samp=samp, chaoest=chaoest, cover="err", coverage="err", l=m, size=inds, comm=com, reps=reps)))
+#             })
+#         })
+#     })
+# })
+# 
+# 
+
 rarefs<-future_map_dfr(1:nreps, function(reps){
-       map_dfr(floor(10^seq(2,5,.05)), function(inds){ #sample sizes
-            rare<-lapply(1:4, function(com){subsam(get(paste("comm", com, sep="")), inds)}) #rarefy each community
-            names(rare)<-1:4
-            covdivs<-estimateD(rare, base="coverage") #use iNEXT::estimateD to compute expected Hill diversities for equal coverage
-            map_dfr(1:4, function(com){ #then loop over communities again, b/c going to return one row for each combination of sample size, community, hill exponent
-                map_dfr(c(-1,0,1), function(m){ #hill exponents
-                    samp<-dfun(rare[[com]], l=m) #compute sample diversity
-                    chaoest<-Chao_Hill_abu(rare[[com]], q=1-m) #compute asymptotic estimator; Chao uses q=1-l
-                    return(tryCatch(data.frame(samp=samp, chaoest=chaoest
-                                               , cover=covdivs[which(covdivs$site==com&covdivs$order==1-m), "qD"] #this is diversity
-                                               , coverage=covdivs[which(covdivs$site==com&covdivs$order==1-m), "SC"] #this is coverage estimate
-                                               , l=m, size=inds, comm=com, reps=reps) #not sure this error thing is necessary but seems conservative to keep it
-                                    , error=function(e) data.frame(samp=samp, chaoest=chaoest, cover="err", coverage="err", l=m, size=inds, comm=com, reps=reps)))
-            })
-        })
+  map_dfr(floor(10^seq(2,5,.05)), function(inds){ #sample sizes
+    rare<-lapply(names(haegdat), function(com){subsam(haegdat[,com], inds)}) #rarefy each community
+    names(rare)<-names(haegdat)
+    covdivs<-estimateD(rare, base="coverage") #use iNEXT::estimateD to compute expected Hill diversities for equal coverage
+    map_dfr(names(haegdat), function(com){ #then loop over communities again, b/c going to return one row for each combination of sample size, community, hill exponent
+      map_dfr(c(-1,0,1), function(m){ #hill exponents
+        samp<-dfun(rare[[com]], l=m) #compute sample diversity
+        chaoest<-Chao_Hill_abu(rare[[com]], q=1-m) #compute asymptotic estimator; Chao uses q=1-l
+        return(tryCatch(data.frame(samp=samp, chaoest=chaoest
+                                   , cover=covdivs[which(covdivs$site==com&covdivs$order==1-m), "qD"] #this is diversity
+                                   , coverage=covdivs[which(covdivs$site==com&covdivs$order==1-m), "SC"] #this is coverage estimate
+                                   , l=m, size=inds, comm=com, reps=reps) #not sure this error thing is necessary but seems conservative to keep it
+                        , error=function(e) data.frame(samp=samp, chaoest=chaoest, cover="err", coverage="err", l=m, size=inds, comm=com, reps=reps)))
+      })
     })
+  })
 })
+
 
 
 
 #write data to file
 
-write.csv(rarefs, file="data/coverage_vs_others.csv", row.names=F)
+write.csv(rarefs, file="data/coverage_vs_others_haeg.csv", row.names=F)
 
 rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover))
 
