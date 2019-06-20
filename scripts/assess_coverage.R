@@ -12,8 +12,10 @@ source("scripts/helper_funs/read_tcsv.R")
 #load microbial data used in Haegeman 2013
 
 haegdat <- read.tcsv("data/Haegeman_data.csv") 
-
+# deal with NAs added in previous line
 haegdat[is.na(haegdat)]<-0
+#remove first sample, much smaller
+haegdat<-haegdat[,-1]
 
 
 # #make communities. 3=1+2. 4=2+2. 1 more even. 
@@ -39,6 +41,10 @@ out<- map_dfr(c(-1,0,1), function(l){
         map_dfr(names(haegdat), function(comm){
     data.frame(logdiv=log(dfun(haegdat[,comm], l=l)), comm=comm, l=l)
   })
+})
+
+map(names(haegdat), function(x){
+  sum(haegdat[,x])
 })
 ########
 # original for k, using simulated communities
@@ -94,7 +100,7 @@ nreps<-500
 # 
 
 rarefs<-future_map_dfr(1:nreps, function(reps){
-  map_dfr(floor(10^seq(2,5,.05)), function(inds){ #sample sizes
+  map_dfr(floor(10^seq(2,4.2,.05)), function(inds){ #sample sizes
     rare<-lapply(names(haegdat), function(com){subsam(haegdat[,com], inds)}) #rarefy each community
     names(rare)<-names(haegdat)
     covdivs<-estimateD(rare, base="coverage") #use iNEXT::estimateD to compute expected Hill diversities for equal coverage
@@ -122,22 +128,41 @@ write.csv(rarefs, file="data/coverage_vs_others_haeg.csv", row.names=F)
 rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover))
 
 #this is clunky code but returns a df that compares pairwise differences in log diversity for the data just generated. 
+# 
+# rarediffs<-map_dfr(c(-1,0,1), function(m){
+#   map_dfr(1:nreps, function(rn){
+#     map_dfr(floor(10^seq(2,5,.05)), function(inds){
+#         #compute differences for each kind of estimator
+#       sdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(samp), method="manhattan"))
+#       edists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(chaoest), method="manhattan"))
+#       cdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(cover), method="manhattan"))
+#       # clunkily give the vectors names
+#       names(cdists)<-unite(expand.grid(names(haegdat),names(haegdat)))
+#       names(edists)<-names(cdists)
+#       names(sdists)<-names(cdists)
+#       #return as a d.f. 
+#       return(bind_rows(data.frame(t(edists), l=m, size=inds, reps=rn, meth="chao"), data.frame(t(cdists), l=m, size=inds, reps=inds, meth="coverage"), data.frame(t(sdists), l=m, size=inds, reps=rn, meth="size")))
+#       })
+#     })
+# })
 
+#################
+# for haegeman data
 rarediffs<-map_dfr(c(-1,0,1), function(m){
   map_dfr(1:nreps, function(rn){
-    map_dfr(floor(10^seq(2,5,.05)), function(inds){
-        #compute differences for each kind of estimator
+    map_dfr(floor(10^seq(2,3.8,.05)), function(inds){
+      #compute differences for each kind of estimator
       sdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(samp), method="manhattan"))
       edists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(chaoest), method="manhattan"))
       cdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(cover), method="manhattan"))
       # clunkily give the vectors names
-      names(cdists)<-c("onetwo","onethree", "onefour", "twothree", "twofour", "threefour")
-      names(edists)<-c("onetwo","onethree", "onefour", "twothree", "twofour", "threefour")
-      names(sdists)<-c("onetwo","onethree", "onefour", "twothree", "twofour", "threefour")
+      names(cdists)<-unite(expand.grid(names(haegdat),names(haegdat)))
+      names(edists)<-names(cdists)
+      names(sdists)<-names(cdists)
       #return as a d.f. 
       return(bind_rows(data.frame(t(edists), l=m, size=inds, reps=rn, meth="chao"), data.frame(t(cdists), l=m, size=inds, reps=inds, meth="coverage"), data.frame(t(sdists), l=m, size=inds, reps=rn, meth="size")))
-      })
     })
+  })
 })
 
 #tidy up 
@@ -155,7 +180,7 @@ gthrd %>%
 dev.off()
 
 #compute RMSE against true differences in diversity between comms
-rmses<-map_dfr(floor(10^seq(2,5,.05)), function(inds){
+rmses<-map_dfr(floor(10^seq(2,4.2,.05)), function(inds){
   sqe<-gthrd %>% filter(size==inds) %>% left_join(k) %>% mutate(sqdiff=(trueval-val)^2, method=meth)
 
   evalu<-sqe %>% group_by(l, method) %>% summarize(rmse=sqrt(mean(sqdiff)))
