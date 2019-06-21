@@ -161,8 +161,30 @@ Bt_prob_abu = function(x){
   return(p.new)
 }
 
-
-
+## Sampled instead of deterministic abundance resampling
+## Various things tried, but does not help with conservative CIs
+Bt_prob_abu_samp = function(x){
+  x = x[x>0]
+  n = sum(x)
+  f1 = rpois(1, sum(x==1))
+  f2 = rpois(1, sum(x==2))
+  #Coverage
+  C = 1 - f1/n*ifelse(f2>0,(n-1)*f1/((n-1)*f1+2*f2),ifelse(f1>0,(n-1)*(f1-1)/((n-1)*(f1-1)+2),0))
+  #use coverage to define a weighting for observed frequencies... this is lambda_hat in Chao et al. 2013 and 2014 appendices explaining this bootstrapping procedure. 
+  #coverage deficit=p(next individual is a new species)=proportion of true community absent from sample
+  # the denominator is the expected probability of observing all x if x/n=p 
+  W = (1-C)/sum(x/n*(1-x/n)^n)
+  
+  #use that weighting here to get p.new for observed species in x
+  p.new = x/n*(1-W*(1-x/n)^n)
+  #then get number of species observed 0 times using chao1
+  f0 = rpois(1, ifelse(f2>0,(n-1)/n*f1^2/(2*f2),(n-1)/n*f1*(f1-1)/2))
+  #assume that all unobserved have equal p, given by total coverage deficit divided by number of unobserved.
+  p0 = (1-C)/f0
+  #p.new includes estimated p's for the observed plus estimated p's for unobserved.
+  p.new=c(p.new,rep(p0,f0))
+  return(p.new)
+}
 
 #' Bt_prob_inc(x) is a function of estimating the species incidence probabilities in the bootstrap assemblage based on incidence data.
 #' @param x a vector of incidence-based sample frequencies (1st entry must be the number of sampling unit).
