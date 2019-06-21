@@ -24,6 +24,8 @@ $(ms)/Makefile:
 ## Early examples
 ## go examples.Rout.pdf
 
+subdir += scripts
+
 Sources += $(wildcard *.R)
 
 functions.Rout: functions.R

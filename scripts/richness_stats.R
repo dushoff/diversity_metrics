@@ -63,11 +63,13 @@ truemun<-truemu(usersguide, size=sampleSize, reps=muReps, l=l)
 
 q <- 1-l
 sam<-subsam(dat, sampleSize)
-aProb <- Bt_prob_abu(sam)
-aProb[is.na(aProb)] <- 0
-data.bt = rmultinom(bootSamps,sampleSize,aProb)
 obs<-dfun(sam,l)
-pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,q)) 
+pro = replicate(bootSamps, {
+	aProb <- Bt_prob_abu_samp(sam)
+	aProb[is.na(aProb)] <- 0
+	data.bt = rmultinom(1,sampleSize,aProb)
+	return(Chao_Hill_abu(data.bt,q))
+})
 pro<-pro-mean(pro)+obs
 chaotile<-sum(pro<=truemun)/(bootSamps/100)
 

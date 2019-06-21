@@ -19,6 +19,8 @@ $(ms)/Makefile:
 
 ######################################################################
 
+subdir += helper_funs
+
 Sources += $(wildcard *.R)
 richness_stats.Rout: helper_funs/estimation_funs.Rout helper_funs/prettify.Rout richness_stats.R
 	$(run-R)
