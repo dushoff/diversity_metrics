@@ -161,6 +161,53 @@ Bt_prob_abu = function(x){
   return(p.new)
 }
 
+## Can we do a better job of making a fake_community.md?
+Bt_prob_abu_fiddle = function(x){
+	x = x[x>0]
+	n = sum(x)
+	p <- x/n
+
+	## What is the smallest number of unobserved species consistent
+	## with a postulated coverage and target value of pair probability?
+	umin <- function(p, C, pp){
+		gap <- pp-C^2*sum(p^2)
+		if (gap<=0) stop("C too large in umin (Bt_prob_abu_fiddle)")
+		return((1-C)^2/gap)
+	}
+	## What is the expected richness of a sample from a community?
+	## or pseudo-community?
+	expRich <- function(n, alpha, X=NULL, u=1){
+		return(
+			sum(1-(1-alpha)^n)
+			+ ifelse(is.null(X), 0, u*(1-(1-X/u)^n))
+		)
+	}
+	## What is the expected richness of a hypothetical pseudo-community
+	## with u=umin (not an integer) and even distribution therein?
+	## Optionally subtract a postulated richness (for uniroot)
+	uminRich <- function(C, n, p, pp, r=0){
+		u <- umin(p, C, pp)
+		return(expRich(n, C*p, 1-C, u)-r)
+	}
+
+	## Our indirect coverage estimate is a coverage that produces a 
+	## pseudo-community with expected richness equal to observed richness
+	indCov <- function(x){
+		eps <- 1e-3
+		r <- length(x)
+		n <- sum(x)
+		pp <- sum(x*(x-1))/(n*n-1)
+		Cmax <- pp/sum((x/n)^2)
+		print(r)
+		print(uminRich(eps*Cmax, n=n, p=x/n, pp=pp))
+		print(uminRich((1-eps)*Cmax, n=n, p=x/n, pp=pp))
+		return(uniroot(uminRich, lower=eps*Cmax, upper=(1-eps)*Cmax
+			, n=n, p=x/n, pp=pp, r=r
+		))
+	}
+	return(indCov(x))
+}
+
 ## Sampled instead of deterministic abundance resampling
 ## Various things tried, but does not help with conservative CIs
 Bt_prob_abu_samp = function(x){

@@ -1,5 +1,7 @@
 ### Ripping off Mike R. and trying to test statistical coverage for Chao richness
 
+set.seed(2131)
+
 lmin <- 1
 lmax <- 1
 s_pool=60 # Pool 
@@ -64,8 +66,11 @@ truemun<-truemu(usersguide, size=sampleSize, reps=muReps, l=l)
 q <- 1-l
 sam<-subsam(dat, sampleSize)
 obs<-dfun(sam,l)
+print(Chat.Ind(sam))
+print(Bt_prob_abu_fiddle(sam))
+
 pro = replicate(bootSamps, {
-	aProb <- Bt_prob_abu_samp(sam)
+	aProb <- Bt_prob_abu(sam)
 	aProb[is.na(aProb)] <- 0
 	data.bt = rmultinom(1,sampleSize,aProb)
 	return(Chao_Hill_abu(data.bt,q))
@@ -73,8 +78,10 @@ pro = replicate(bootSamps, {
 pro<-pro-mean(pro)+obs
 chaotile<-sum(pro<=truemun)/(bootSamps/100)
 
+quit()
 
 ######################################################################
+
 ## Main loop
 
 for(l in lmin:lmax){
