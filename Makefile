@@ -19,6 +19,9 @@ $(ms)/%.mk: $(ms) $(ms)/Makefile ;
 $(ms)/Makefile:
 	git submodule update -i
 
+## Not part of make path now?
+Ignore += bibdir
+
 ##################################################################
 
 ## Early examples
