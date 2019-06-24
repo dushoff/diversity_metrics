@@ -465,7 +465,7 @@ subsam<-function(ab_vec, size=sum(ab_vec)){
   inds<-unlist(lapply(1:length(ab_vec), function(x){
     rep(x, ab_vec[x])
   }))
-  sam<-sample(inds, size=size, replace=F)
+  sam<-sample(inds, size=size, replace=FALSE)
   ss<-unlist(lapply(1:length(ab_vec), function(y){
     length(which(sam==y))
   }))
@@ -587,9 +587,4 @@ truemu<-function(comm, size, reps, l,...){
         )
     )
 }
-
-
-
-
-
 
