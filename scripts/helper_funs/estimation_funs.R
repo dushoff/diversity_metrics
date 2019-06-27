@@ -134,10 +134,13 @@ Hill <- function(x,q,datatype = c("abundance","incidence")){
 #-----------------------------------------
 # The bootstrap method for obtaining s.e. 
 #-----------------------------------------
-#' Bt_prob_abu(x) is a function of estimating the species probabilities in the bootstrap assemblage based on abundance data.
+#' Bt_prob_abu(x) is a function of estimating the species probabilities in the bootstrap assemblage based on abundance data. 
 #' @param x a vector of species sample frequencies.
 #' @return a numeric vector.
 
+
+###########################
+# MR note: I had misrepresented the way that unobserved species were added to augmented sample. Slightly more nuanced than just adding unobserved as singletons. 
 Bt_prob_abu = function(x){
   x = x[x>0]
   n = sum(x)
