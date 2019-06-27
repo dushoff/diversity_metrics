@@ -82,17 +82,17 @@ checkplot<-function(abs, B=2000, l, inds, reps){
 
 #Generates quantiles of bootstrap distribution given true diveristy, sample size, l, and true average
 obscp<-function(l=l, size=size, dat=usersguide, B=2000, truemun=truemun...){
-    sam<-subsam(dat, size)
-    data.bt = rmultinom(B,size,Bt_prob_abu(sam))
-    obs<-dfun(sam,l)
-    pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,1-l))
+    sam<-subsam(dat, size) #substample the whole community with # individuals=size
+    data.bt = rmultinom(B,size,Bt_prob_abu(sam)) #this genenerates "bootstrapped" samples, using Chao's fancy method
+    obs<-dfun(sam,l) #K. here we are just taking a single sample and computing the observed diversity
+    pro = apply(data.bt,2,function(boot)dfun(boot, l)) #This had been inconsistent with intent and was doing estimator stuff where we just wanted the naive answer.
     pro<-pro-mean(pro)+obs
     chaotile<-sum(pro<=truemun)/(B/100)
     return(data.frame("chaotile"=chaotile, "truemu"=truemun,  "obsD"=obs, "l"=l, "size"=size ))
 }
 
 #set number of reps
-reps<-500000
+reps<-5000
 
 ####################
 #run this whole thing to get sample diversity checkplot-type info for sample diversity for a single community
