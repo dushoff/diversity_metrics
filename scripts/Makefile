@@ -19,9 +19,16 @@ $(ms)/Makefile:
 
 ######################################################################
 
-Sources += $(wildcard *.R)
-richness_stats.Rout: helper_funs/estimation_funs.Rout helper_funs/prettify.Rout richness_stats.R
+Sources += $(wildcard *.R helper_funs/*.R)
+richness_stats.Rout: usersguide.Rout helper_funs/estimation_funs.Rout helper_funs/prettify.Rout richness_stats.R
 	$(run-R)
+
+newboot.Rout: usersguide.Rout helper_funs/fiddle.Rout helper_funs/estimation_funs.Rout newboot.R
+	$(run-R)
+
+diversity_checkplots_richness_only.Rout: helper_funs/estimation_funs.Rout helper_funs/prettify.Rout diversity_checkplots_richness_only.R
+
+Sources += $(wildcard *.md)
 
 ######################################################################
 

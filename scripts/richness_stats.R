@@ -1,10 +1,9 @@
 ### Ripping off Mike R. and trying to test statistical coverage for Chao richness
 
+set.seed(2131)
+
 lmin <- 1
 lmax <- 1
-s_pool=60 # Pool 
-n_ind=1e3 #number of individuals to simulate
-sad_coef=list(cv_abund=5)
 
 minind<-1e2
 maxind<-3.2e2
@@ -25,11 +24,6 @@ library(cowplot) #sometimes nice stuff for multipanel ggplotting
 
 #make a community for User's Guide
 #sim_sad 
-usersguide<-as.numeric(sim_sad(s_pool=s_pool 
-	, n_sim=n_ind #number of individuals to simulate
-	, sad_coef=sad_coef
-))
-
 #.see how many cores are on the system and use one fewer. 
 # Good for a personal computer. 
 nc<-parallel::detectCores()-1
@@ -42,7 +36,10 @@ obscp<-function(l, sampleSize, dat, bootSamps, truemun){
 	aProb <- Bt_prob_abu(sam)
 	data.bt = rmultinom(bootSamps,sampleSize,aProb)
 	obs<-dfun(sam,l)
-	pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,q)) 
+	## pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,q)) 
+	pro = apply(data.bt,2,function(boot){
+		return(sum(boot>0))
+	})
 	pro<-pro-mean(pro)+obs
 	chaotile<-sum(pro<=truemun)/(bootSamps/100)
 	return(data.frame(
@@ -53,26 +50,6 @@ obscp<-function(l, sampleSize, dat, bootSamps, truemun){
 
 ######################################################################
 
-## For stepping; doesn't hurt much
-## Can be deleted when we understand things better
-l <- 1
-dat <- usersguide
-sampleSize <- 200
-
-truemun<-truemu(usersguide, size=sampleSize, reps=muReps, l=l)
-
-q <- 1-l
-sam<-subsam(dat, sampleSize)
-aProb <- Bt_prob_abu(sam)
-aProb[is.na(aProb)] <- 0
-data.bt = rmultinom(bootSamps,sampleSize,aProb)
-obs<-dfun(sam,l)
-pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,q)) 
-pro<-pro-mean(pro)+obs
-chaotile<-sum(pro<=truemun)/(bootSamps/100)
-
-
-######################################################################
 ## Main loop
 
 for(l in lmin:lmax){

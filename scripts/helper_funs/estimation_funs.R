@@ -164,8 +164,77 @@ Bt_prob_abu = function(x){
   return(p.new)
 }
 
+## Can we do a better job of making a fake_community.md?
+Bt_prob_abu_fiddle = function(x){
+	x = x[x>0]
+	n = sum(x)
+	p <- x/n
 
+	## What is the smallest number of unobserved species consistent
+	## with a postulated coverage and target value of pair probability?
+	umin <- function(p, C, pp){
+		gap <- pp-C^2*sum(p^2)
+		if (gap<=0) stop("C too large in umin (Bt_prob_abu_fiddle)")
+		return((1-C)^2/gap)
+	}
+	## What is the expected richness of a sample from a community?
+	## or pseudo-community?
+	expRich <- function(n, alpha, X=NULL, u=1){
+		return(
+			sum(1-(1-alpha)^n)
+			+ ifelse(is.null(X), 0, u*(1-(1-X/u)^n))
+		)
+	}
+	## What is the expected richness of a hypothetical pseudo-community
+	## with u=umin (not an integer) and even distribution therein?
+	## Optionally subtract a postulated richness (for uniroot)
+	uminRich <- function(C, n, p, pp, r=0){
+		u <- umin(p, C, pp)
+		return(expRich(n, C*p, 1-C, u)-r)
+	}
 
+	## Our indirect coverage estimate is a coverage that produces a 
+	## pseudo-community with expected richness equal to observed richness
+	indCov <- function(x){
+		eps <- 1e-3
+		r <- length(x)
+		n <- sum(x)
+		pp <- sum(x*(x-1))/(n*n-1)
+		Cmax <- pp/sum((x/n)^2)
+		print(r)
+		print(uminRich(eps*Cmax, n=n, p=x/n, pp=pp))
+		print(uminRich((1-eps)*Cmax, n=n, p=x/n, pp=pp))
+		return(uniroot(uminRich, lower=eps*Cmax, upper=(1-eps)*Cmax
+			, n=n, p=x/n, pp=pp, r=r
+		))
+	}
+	return(indCov(x))
+}
+
+## Sampled instead of deterministic abundance resampling
+## Various things tried, but does not help with conservative CIs
+Bt_prob_abu_samp = function(x){
+  x = x[x>0]
+  n = sum(x)
+  f1 = rpois(1, sum(x==1))
+  f2 = rpois(1, sum(x==2))
+  #Coverage
+  C = 1 - f1/n*ifelse(f2>0,(n-1)*f1/((n-1)*f1+2*f2),ifelse(f1>0,(n-1)*(f1-1)/((n-1)*(f1-1)+2),0))
+  #use coverage to define a weighting for observed frequencies... this is lambda_hat in Chao et al. 2013 and 2014 appendices explaining this bootstrapping procedure. 
+  #coverage deficit=p(next individual is a new species)=proportion of true community absent from sample
+  # the denominator is the expected probability of observing all x if x/n=p 
+  W = (1-C)/sum(x/n*(1-x/n)^n)
+  
+  #use that weighting here to get p.new for observed species in x
+  p.new = x/n*(1-W*(1-x/n)^n)
+  #then get number of species observed 0 times using chao1
+  f0 = rpois(1, ifelse(f2>0,(n-1)/n*f1^2/(2*f2),(n-1)/n*f1*(f1-1)/2))
+  #assume that all unobserved have equal p, given by total coverage deficit divided by number of unobserved.
+  p0 = (1-C)/f0
+  #p.new includes estimated p's for the observed plus estimated p's for unobserved.
+  p.new=c(p.new,rep(p0,f0))
+  return(p.new)
+}
 
 #' Bt_prob_inc(x) is a function of estimating the species incidence probabilities in the bootstrap assemblage based on incidence data.
 #' @param x a vector of incidence-based sample frequencies (1st entry must be the number of sampling unit).
@@ -399,7 +468,7 @@ subsam<-function(ab_vec, size=sum(ab_vec)){
   inds<-unlist(lapply(1:length(ab_vec), function(x){
     rep(x, ab_vec[x])
   }))
-  sam<-sample(inds, size=size, replace=F)
+  sam<-sample(inds, size=size, replace=FALSE)
   ss<-unlist(lapply(1:length(ab_vec), function(y){
     length(which(sam==y))
   }))
@@ -521,9 +590,4 @@ truemu<-function(comm, size, reps, l,...){
         )
     )
 }
-
-
-
-
-
 
