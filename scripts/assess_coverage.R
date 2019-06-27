@@ -112,7 +112,7 @@ rarefs<-future_map_dfr(1:nreps, function(reps){
                                    , cover=covdivs[which(covdivs$site==com&covdivs$order==1-m), "qD"] #this is diversity
                                    , coverage=covdivs[which(covdivs$site==com&covdivs$order==1-m), "SC"] #this is coverage estimate
                                    , l=m, size=inds, comm=com, reps=reps) #not sure this error thing is necessary but seems conservative to keep it
-                        , error=function(e) data.frame(samp=samp, chaoest=chaoest, cover="err", coverage="err", l=m, size=inds, comm=com, reps=reps)))
+                        , error=function(e) data.frame(samp=samp, chaoest=chaoest, cover=NA, coverage=NA, l=m, size=inds, comm=com, reps=reps)))
       })
     })
   })
@@ -160,7 +160,7 @@ rarediffs<-map_dfr(c(-1,0,1), function(m){
       names(edists)<-names(cdists)
       names(sdists)<-names(cdists)
       #return as a d.f. 
-      return(bind_rows(data.frame(t(edists), l=m, size=inds, reps=rn, meth="chao"), data.frame(t(cdists), l=m, size=inds, reps=inds, meth="coverage"), data.frame(t(sdists), l=m, size=inds, reps=rn, meth="size")))
+      return(bind_rows(data.frame(t(edists), l=m, size=inds, reps=rn, meth="chao"), data.frame(t(cdists), l=m, size=inds, reps=rn, meth="coverage"), data.frame(t(sdists), l=m, size=inds, reps=rn, meth="size")))
     })
   })
 })

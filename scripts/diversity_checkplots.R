@@ -38,18 +38,15 @@ com1<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=2)))
 com2<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=5)))
 com3<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=10)))
 
-pdf(height=2, width=6, file="figures/simssads.pdf")
-par(mfrow=c(1,3))
-plot(1:length(com1), com1, xlab="",  ylab="species abundance", type="line", ylim=c(0,26000))
-plot(1:length(com2), com2, xlab="species rank", ylab="", type="line", ylim=c(0,26000))
-plot(1:length(com3), com3, xlab="", ylab="", type="line", ylim=c(0,26000) )
-dev.off()
+# pdf(height=2, width=6, file="figures/simssads.pdf")
+# par(mfrow=c(1,3))
+# plot(1:length(com1), com1, xlab="",  ylab="species abundance", type="line", ylim=c(0,26000))
+# plot(1:length(com2), com2, xlab="species rank", ylab="", type="line", ylim=c(0,26000))
+# plot(1:length(com3), com3, xlab="", ylab="", type="line", ylim=c(0,26000) )
+# dev.off()
 
 asab<-function(namevec){as.numeric(table(namevec))}
 
-dfun(com1, l=-1)
-dfun(com2, l=-1)
-dfun(com3, l=-1)
 
 
 #gets slightly closer than obs
@@ -58,8 +55,8 @@ dfun(com3, l=-1)
 ####################################
 #set up parallelization for large computations
 
-#set # cores... ways to do this 
-# nc<-60#per Rob's recommendation
+#set # cores
+nc<-60#per Rob's recommendation
 
 
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
@@ -93,17 +90,20 @@ obscp<-function(l=l, size=size, dat=usersguide, B=2000, truemun=truemun...){
 
 #set number of reps
 reps<-5000
+Bnum<-400
 
 ####################
 #run this whole thing to get sample diversity checkplot-type info for sample diversity for a single community
-trycheckingobs_R<-map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
-        truemun<-truemu(usersguide, size=size, reps=5000, l=1)
-          future_map_dfr(1:reps, function(reps){obscp(l=1, size, usersguide, truemun=truemun)
+trycheckingobs<-map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
+  map_dfr(c(-1,0,1), function(ell){
+        truemun<-truemu(usersguide, size=size, reps=reps, l=ell)
+          future_map_dfr(1:reps, function(reps){obscp(l=ell, size, usersguide, truemun=truemun, B=Bnum)
+          })
     })
 })
 ##### apparently this was streamlined enough to store to a single .csv while running in parallel
 
-write.csv(trycheckingobs_R, file="data/big_richness_checkplot.csv", row.names=F)
+# write.csv(trycheckingobs_R, file="data/big_richness_checkplot.csv", row.names=F)
 
 write.csv(trycheckingobs, file="data/fromR/trycheckingobs.csv", row.names=F)
 
