@@ -122,6 +122,7 @@ map(c(-1,0,1), function(ell){
         theme_classic()+
         facet_wrap(~size+l)
 })
+dev.off()
 
 pdf(file="figures/do_richness_CI_ever_work.pdf")
 trycheckingobs_R %>% 

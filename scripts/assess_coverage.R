@@ -16,7 +16,8 @@ haegdat <- read.tcsv("data/Haegeman_data.csv")
 haegdat[is.na(haegdat)]<-0
 #remove first sample, much smaller
 haegdat<-haegdat[,-1]
-
+#try doubling haegdat values to get 100% coverage by definition
+haegdat<-haegdat*2
 
 # #make communities. 3=1+2. 4=2+2. 1 more even. 
 # comm1<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=5)))
@@ -59,8 +60,7 @@ map(names(haegdat), function(x){
 #this was modified for haegdat
 k<-map_dfr(c(-1,0,1), function(m){
   dists<-as.numeric(dist(out %>% filter(l==m) %>% select(logdiv), method="manhattan"))
-  names(dists)<-unite(expand.grid(names(haegdat),names(haegdat)))
-  dists
+  names(dists)<-unite(data.frame(t(combn(names(haegdat),2))))[,1]
   return(data.frame(t(dists), m=m))
 
 })
@@ -123,7 +123,7 @@ rarefs<-future_map_dfr(1:nreps, function(reps){
 
 #write data to file
 
-write.csv(rarefs, file="data/coverage_vs_others_haeg.csv", row.names=F)
+write.csv(rarefs, file="data/coverage_vs_others_haeg2.csv", row.names=F)
 
 rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover))
 
@@ -149,14 +149,14 @@ rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover
 #################
 # for haegeman data
 rarediffs<-map_dfr(c(-1,0,1), function(m){
-  map_dfr(1:nreps, function(rn){
+  future_map_dfr(1:nreps, function(rn){
     map_dfr(floor(10^seq(2,4.2,.05)), function(inds){
       #compute differences for each kind of estimator
       sdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(samp), method="manhattan"))
       edists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(chaoest), method="manhattan"))
       cdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(cover), method="manhattan"))
       # clunkily give the vectors names
-      names(cdists)<-(unite(expand.grid(names(haegdat),names(haegdat))))[,1]
+      names(cdists)<-unite(data.frame(t(combn(names(haegdat),2)))) #need to streamline this. Takes a long time to calculate now. Also, could all be achieved with combn probably with ease. the == evaluation seems to be the slow part in the filter command, so can definitely speed up a lot with combn!
       names(edists)<-names(cdists)
       names(sdists)<-names(cdists)
       #return as a d.f. 
