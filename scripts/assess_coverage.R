@@ -148,22 +148,31 @@ rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover
 
 #################
 # for haegeman data
-rarediffs<-map_dfr(c(-1,0,1), function(m){
-  future_map_dfr(1:nreps, function(rn){
-    map_dfr(floor(10^seq(2,4.2,.05)), function(inds){
-      #compute differences for each kind of estimator
-      sdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(samp), method="manhattan"))
-      edists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(chaoest), method="manhattan"))
-      cdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(cover), method="manhattan"))
-      # clunkily give the vectors names
-      names(cdists)<-unite(data.frame(t(combn(names(haegdat),2)))) #need to streamline this. Takes a long time to calculate now. Also, could all be achieved with combn probably with ease. the == evaluation seems to be the slow part in the filter command, so can definitely speed up a lot with combn!
-      names(edists)<-names(cdists)
-      names(sdists)<-names(cdists)
-      #return as a d.f. 
-      return(bind_rows(data.frame(t(edists), l=m, size=inds, reps=rn, meth="chao"), data.frame(t(cdists), l=m, size=inds, reps=rn, meth="coverage"), data.frame(t(sdists), l=m, size=inds, reps=rn, meth="size")))
-    })
-  })
-})
+rarediffs<-rarefsl %>% 
+  gather(meth, esti, samp, chaoest, cover) %>%   
+  group_by(l, size, reps, meth) %>% 
+  do(diffbetween=data.frame(t(combn(.$comm, m = 2))) %>% 
+       unite(scol) %>% pull(scol)
+     , diffs=combn(.$esti, m=2, diff)
+     ) %>% 
+  unnest()
+
+# rarediffs<-map_dfr(c(-1,0,1), function(m){
+#   future_map_dfr(1:nreps, function(rn){
+#     map_dfr(floor(10^seq(2,4.2,.05)), function(inds){
+#       #compute differences for each kind of estimator
+#       sdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(samp), method="manhattan"))
+#       edists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(chaoest), method="manhattan"))
+#       cdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(cover), method="manhattan"))
+#       # clunkily give the vectors names
+#       names(cdists)<-unite(data.frame(t(combn(names(haegdat),2)))) #need to streamline this. Takes a long time to calculate now. Also, could all be achieved with combn probably with ease. the == evaluation seems to be the slow part in the filter command, so can definitely speed up a lot with combn!
+#       names(edists)<-names(cdists)
+#       names(sdists)<-names(cdists)
+#       #return as a d.f. 
+#       return(bind_rows( l=m, size=inds, reps=rn, meth="coverage"), data.frame(t(sdists), l=m, size=inds, reps=rn, meth="size")))
+#     })
+#   })
+# })
 
 #tidy up 
 gthrd<-rarediffs %>% 
