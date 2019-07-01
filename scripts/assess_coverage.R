@@ -16,6 +16,8 @@ haegdat <- read.tcsv("data/Haegeman_data.csv")
 haegdat[is.na(haegdat)]<-0
 #remove first sample, much smaller
 haegdat<-haegdat[,-1]
+#repeat, last is bad too, relatively
+haegdat<-haegdat[,-8]
 #try doubling haegdat values to get 100% coverage by definition
 haegdat<-haegdat*2
 
@@ -65,7 +67,7 @@ k<-map_dfr(c(-1,0,1), function(m){
 
 })
 
-k<-k %>% gather(diff_btwn, val, 1:length(haegdat)) %>% select(diff_btwn, trueval=val, l=m)
+k<-k %>% gather(diff_btwn, val, 1:choose(length(haegdat),2)) %>% select(diff_btwn, trueval=val, l=m)
 
 ################################################################################################
 ###### This is a giant routine that will take a long time and tons of compute resources ########
@@ -99,11 +101,16 @@ nreps<-500
 # 
 # 
 
-rarefs<-future_map_dfr(1:nreps, function(reps){
+rarefs_2<-future_map_dfr(1:nreps, function(reps){
   map_dfr(floor(10^seq(2,4.2,.05)), function(inds){ #sample sizes
+    mySeed<-1000*runif(1)
+    set.seed(mySeed)
+    
+    set.seed(131.92345)
+    inds<-223
     rare<-lapply(names(haegdat), function(com){subsam(haegdat[,com], inds)}) #rarefy each community
     names(rare)<-names(haegdat)
-    covdivs<-tryCatch(estimateD(rare, base="coverage"), error=function(e) NULL) #use iNEXT::estimateD to compute expected Hill diversities for equal coverage
+    covdivs<-tryCatch(estimateD(rare, base="coverage"), error=function(e) data.frame(site=rep(names(haegdat),3), order=rep(c(-1,0,1), length(haegdat)), qD=rep(mySeed, 3*length(haegdat)), SC=rep(mySeed, 3*length(haegdat)))) #use iNEXT::estimateD to compute expected Hill diversities for equal coverage
     map_dfr(names(haegdat), function(com){ #then loop over communities again, b/c going to return one row for each combination of sample size, community, hill exponent
       map_dfr(c(-1,0,1), function(m){ #hill exponents
         samp<-dfun(rare[[com]], l=m) #compute sample diversity
@@ -123,30 +130,12 @@ rarefs<-future_map_dfr(1:nreps, function(reps){
 
 #write data to file
 
-write.csv(rarefs, file="data/coverage_vs_others_haeg2.csv", row.names=F)
+write.csv(rarefs_2, file="data/coverage_vs_others_haeg3.csv", row.names=F)
 
-rarefs<-read_csv("data/coverage_vs_others_haeg1.csv")
+# rarefs<-read_csv("data/coverage_vs_others_haeg1.csv")
 
-rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover))
+rarefsl<-rarefs_2 %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover))
 
-#this is clunky code but returns a df that compares pairwise differences in log diversity for the data just generated. 
-# 
-# rarediffs<-map_dfr(c(-1,0,1), function(m){
-#   map_dfr(1:nreps, function(rn){
-#     map_dfr(floor(10^seq(2,5,.05)), function(inds){
-#         #compute differences for each kind of estimator
-#       sdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(samp), method="manhattan"))
-#       edists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(chaoest), method="manhattan"))
-#       cdists<-as.numeric(dist(rarefsl %>% filter(l==m, size==inds, reps==rn) %>% select(cover), method="manhattan"))
-#       # clunkily give the vectors names
-#       names(cdists)<-unite(expand.grid(names(haegdat),names(haegdat)))
-#       names(edists)<-names(cdists)
-#       names(sdists)<-names(cdists)
-#       #return as a d.f. 
-#       return(bind_rows(data.frame(t(edists), l=m, size=inds, reps=rn, meth="chao"), data.frame(t(cdists), l=m, size=inds, reps=inds, meth="coverage"), data.frame(t(sdists), l=m, size=inds, reps=rn, meth="size")))
-#       })
-#     })
-# })
 
 #################
 # for haegeman data
@@ -160,21 +149,14 @@ rarediffs<-rarefsl %>%
     unnest()
 
 
-# This is probably nota helpful way to visualize how far off they are
-pdf(file="figures/eval_methods.pdf")
-gthrd %>% 
-  ggplot(aes(size, val, color=meth)) +
-  facet_wrap(~l+diff_btwn, ncol=6)+
-  scale_x_log10()+
-  geom_jitter(size=.1, alpha=0.5, height=0)+
-  theme_classic() 
-dev.off()
 
 #compute RMSE against true differences in diversity between comms
+k<-k %>% mutate(diffbetween=diff_btwn)
+rarediffs$diffs<-abs(rarediffs$diffs)
 rmses<-map_dfr(floor(10^seq(2,4.2,.05)), function(inds){
   sqe<-rarediffs %>% filter(size==inds) %>% left_join(k) %>% mutate(sqdiff=(trueval-diffs)^2, method=meth)
 
-  evalu<-sqe %>% group_by(l, method) %>% summarize(rmse=sqrt(mean(sqdiff)))
+  evalu<-sqe %>% group_by(l, method) %>% summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE)))
   return(data.frame(evalu, size=inds))
 })
 
