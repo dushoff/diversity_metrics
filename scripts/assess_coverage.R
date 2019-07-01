@@ -105,9 +105,8 @@ rarefs_2<-future_map_dfr(1:nreps, function(reps){
   map_dfr(floor(10^seq(2,4.2,.05)), function(inds){ #sample sizes
     mySeed<-1000*runif(1)
     set.seed(mySeed)
-    
-    set.seed(131.92345)
-    inds<-223
+    # set.seed(131.92345)
+    # inds<-223
     rare<-lapply(names(haegdat), function(com){subsam(haegdat[,com], inds)}) #rarefy each community
     names(rare)<-names(haegdat)
     covdivs<-tryCatch(estimateD(rare, base="coverage"), error=function(e) data.frame(site=rep(names(haegdat),3), order=rep(c(-1,0,1), length(haegdat)), qD=rep(mySeed, 3*length(haegdat)), SC=rep(mySeed, 3*length(haegdat)))) #use iNEXT::estimateD to compute expected Hill diversities for equal coverage
