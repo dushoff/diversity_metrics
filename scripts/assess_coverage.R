@@ -4,7 +4,7 @@ library(tidyverse)
 library(mobsim) #for simulating SADs with sim_sad
 library(furrr) #does parallelization
 library(iNEXT) # Chao's package for doing coverage etc.
-
+library(scales)
 source("scripts/helper_funs/estimation_funs.R")
 source("scripts/helper_funs/read_tcsv.R")
 
@@ -14,10 +14,13 @@ source("scripts/helper_funs/read_tcsv.R")
 haegdat <- read.tcsv("data/Haegeman_data.csv") 
 # deal with NAs added in previous line
 haegdat[is.na(haegdat)]<-0
-#remove first sample, much smaller
-haegdat<-haegdat[,-1]
-#repeat, last is bad too, relatively
-haegdat<-haegdat[,-8]
+# #remove first sample, much smaller
+# haegdat<-haegdat[,-1]
+# #repeat, last is bad too, relatively
+# haegdat<-haegdat[,-8]
+#seems like we get crazy stuff if we use wildly incomparable things. So stick with the four soil communities, see if it works at all. 
+
+haegdat<-haegdat[,2:5]
 #try doubling haegdat values to get 100% coverage by definition
 haegdat<-haegdat*2
 
@@ -46,9 +49,12 @@ out<- map_dfr(c(-1,0,1), function(l){
   })
 })
 
+
+#just see what total abundances are for selected comms
 map(names(haegdat), function(x){
   sum(haegdat[,x])
 })
+
 ########
 # original for k, using simulated communities
 # k<-map_dfr(c(-1,0,1), function(m){
@@ -74,10 +80,10 @@ k<-k %>% gather(diff_btwn, val, 1:choose(length(haegdat),2)) %>% select(diff_btw
 ################################################################################################
 
 #set number of cores manually. This 64 is for running on Annotate after checking that no other big users with top
-nc<-64
+nc<-36
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 # one rep takes a long time on one fast core. I think estimateD might be the slow function. 
-nreps<-500
+nreps<-64
 
 
 # rarefs<-future_map_dfr(1:nreps, function(reps){
@@ -129,7 +135,7 @@ rarefs_2<-future_map_dfr(1:nreps, function(reps){
 
 #write data to file
 
-write.csv(rarefs_2, file="data/coverage_vs_others_haeg3.csv", row.names=F)
+write.csv(rarefs_2, file="data/coverage_vs_others_haeg4.csv", row.names=F)
 
 # rarefs<-read_csv("data/coverage_vs_others_haeg1.csv")
 
@@ -149,9 +155,14 @@ rarediffs<-rarefsl %>%
 
 
 
-#compute RMSE against true differences in diversity between comms
+
+# stupid renaming, should clean up
 k<-k %>% mutate(diffbetween=diff_btwn)
+
+## set so it's always big-little, a positive number, this is what the dist thing does and it allows order not to matter, which is good. switch from positive to negative not expected between runs, but imaginable for richness at low coverage, or I guess anything, but then should be small differences and consistent with a low RMSE either way.
 rarediffs$diffs<-abs(rarediffs$diffs)
+
+##compute RMSE against true differences in diversity between comms
 rmses<-map_dfr(floor(10^seq(2,4.2,.05)), function(inds){
   sqe<-rarediffs %>% filter(size==inds) %>% left_join(k) %>% mutate(sqdiff=(trueval-diffs)^2, method=meth)
 
@@ -159,10 +170,13 @@ rmses<-map_dfr(floor(10^seq(2,4.2,.05)), function(inds){
   return(data.frame(evalu, size=inds))
 })
 
+#just rename for human legibility
 rmses<-rmses %>% left_join(data.frame(l=c(-1,0,1), hill=c("Hill-Simpson", "Hill-Shannon", "Richness")))
-
+# set factor levels for plot ordering
 rmses$hill<-factor(rmses$hill, levels=c("Hill-Simpson", "Hill-Shannon", "Richness"))
 
+
+## Show RMSE as a function of sample size for each hill number, each method with different color/point.
 pdf(file="figures/sample_a_lot_use_coverage.pdf")
 rmses %>% ggplot(aes(size, rmse, color=method, shape=method))+
   geom_point(alpha=0.5, size=.75)+

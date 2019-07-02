@@ -56,7 +56,7 @@ asab<-function(namevec){as.numeric(table(namevec))}
 #set up parallelization for large computations
 
 #set # cores
-nc<-60#per Rob's recommendation
+nc<-36#per Rob's recommendation
 
 
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
@@ -83,14 +83,15 @@ obscp<-function(l=l, size=size, dat=usersguide, B=2000, truemun=truemun...){
     data.bt = rmultinom(B,size,Bt_prob_abu(sam)) #this genenerates "bootstrapped" samples, using Chao's fancy method
     obs<-dfun(sam,l) #K. here we are just taking a single sample and computing the observed diversity
     pro = apply(data.bt,2,function(boot)dfun(boot, l)) #This had been inconsistent with intent and was doing estimator stuff where we just wanted the naive answer.
-    pro<-pro-mean(pro)+obs
+    pro_mc<-pro-mean(pro)+obs
+    chaotile_mc<-sum(pro_mc<=truemun)/(B/100)
     chaotile<-sum(pro<=truemun)/(B/100)
-    return(data.frame("chaotile"=chaotile, "truemu"=truemun,  "obsD"=obs, "l"=l, "size"=size ))
+    return(data.frame("chaotile"=chaotile, "chaotile_mc"=chaotile_mc, "truemu"=truemun,  "obsD"=obs, "l"=l, "size"=size ))
 }
 
 #set number of reps
-reps<-5000
-Bnum<-400
+reps<-2500
+Bnum<-200
 
 ####################
 #run this whole thing to get sample diversity checkplot-type info for sample diversity for a single community
@@ -105,7 +106,7 @@ trycheckingobs<-map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
 
 # write.csv(trycheckingobs_R, file="data/big_richness_checkplot.csv", row.names=F)
 
-write.csv(trycheckingobs, file="data/fromR/trycheckingobs.csv", row.names=F)
+write.csv(trycheckingobs, file="data/fromR/trycheckingobs_with_without_mc.csv", row.names=F)
 
 
 ##################################
@@ -113,8 +114,8 @@ write.csv(trycheckingobs, file="data/fromR/trycheckingobs.csv", row.names=F)
 trycheckingobs<-read.csv("data/fromR/trycheckingobs.csv")
 
 #####################
-#checkplot figure, not used in users guide
-pdf(file="figures/empirical_checkplot1.pdf")
+#checkplot figure, not used in users guide, now does checkplot without mean correction. 
+pdf(file="figures/empirical_checkplot1_nomc.pdf")
 map(c(-1,0,1), function(ell){
     trycheckingobs %>% filter(l==ell) %>% 
         ggplot(aes(chaotile))+
