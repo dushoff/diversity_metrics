@@ -117,14 +117,15 @@ rarefs_2<-future_map_dfr(1:nreps, function(reps){
     names(rare)<-names(haegdat)
     covdivs<-tryCatch(estimateD(rare, base="coverage"), error=function(e) data.frame(site=rep(names(haegdat),3), order=rep(c(-1,0,1), length(haegdat)), qD=rep(mySeed, 3*length(haegdat)), SC=rep(mySeed, 3*length(haegdat)))) #use iNEXT::estimateD to compute expected Hill diversities for equal coverage
     map_dfr(names(haegdat), function(com){ #then loop over communities again, b/c going to return one row for each combination of sample size, community, hill exponent
-      map_dfr(c(-1,0,1), function(m){ #hill exponents
-        samp<-dfun(rare[[com]], l=m) #compute sample diversity
-        chaoest<-tryCatch(Chao_Hill_abu(rare[[com]], q=1-m), error=function(e) "whoops") #compute asymptotic estimator; Chao uses q=1-l
+      map_dfr(c(-1,0,1), function(ell){ #hill exponents
+        samp<-dfun(rare[[com]], l=ell) #compute sample diversity
+        chaoest<-tryCatch(Chao_Hill_abu(rare[[com]], q=1-ell), error=function(e) "whoops") #compute asymptotic estimator; Chao uses q=1-l
         return(tryCatch(data.frame(samp=samp, chaoest=chaoest
-                                   , cover=covdivs[which(covdivs$site==com&covdivs$order==1-m), "qD"] #this is diversity
-                                   , coverage=covdivs[which(covdivs$site==com&covdivs$order==1-m), "SC"] #this is coverage estimate
+                                   , cover=covdivs[which(covdivs$site==com&covdivs$order==1-ell), "qD"] #this is diversity
+                                   , coverage=covdivs[which(covdivs$site==com&covdivs$order==1-ell), "SC"] #this is coverage estimate
+                                   , cov_size=covdivs[which(covdivs$site==com&covdivs$order==1-ell), "m"] #this is coverage estimate
                                    , l=m, size=inds, comm=com, reps=reps) #not sure this error thing is necessary but seems conservative to keep it
-                        , error=function(e) data.frame(samp=samp, chaoest=chaoest, cover=NA, coverage=NA, l=m, size=inds, comm=com, reps=reps)))
+                        , error=function(e) data.frame(samp=samp, chaoest=chaoest, cover=NA, coverage=NA, cov_size=NA, l=ell, size=inds, comm=com, reps=reps)))
       })
     })
   })
