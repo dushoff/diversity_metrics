@@ -106,7 +106,7 @@ rarefs_mikedat<-future_map_dfr(1:nreps, function(reps){
                                    , cover=covdivs[which(covdivs$site==com&covdivs$order==1-ell), "qD"] #this is diversity
                                    , coverage=covdivs[which(covdivs$site==com&covdivs$order==1-ell), "SC"] #this is coverage estimate
                                    , cov_size=covdivs[which(covdivs$site==com&covdivs$order==1-ell), "m"] #this is coverage estimate
-                                   , l=m, size=inds, comm=com, reps=reps) #not sure this error thing is necessary but seems conservative to keep it
+                                   , l=ell, size=inds, comm=com, reps=reps) #not sure this error thing is necessary but seems conservative to keep it
                         , error=function(e) data.frame(samp=samp, chaoest=chaoest, cover=NA, coverage=NA, cov_size=NA, l=ell, size=inds, comm=com, reps=reps)))
       })
     })
@@ -126,7 +126,7 @@ rarefsl<-rarefs_mikedat %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=l
 
 
 #################
-# for haegeman data
+# summarize differences
 rarediffs<-rarefsl %>% 
   gather(meth, esti, samp, chaoest, cover) %>%   
   group_by(l, size, reps, meth) %>% 
@@ -149,7 +149,7 @@ rarediffs$diffs<-abs(rarediffs$diffs)
 rmses<-map_dfr(floor(10^seq(2,4.2,.05)), function(inds){
   sqe<-rarediffs %>% filter(size==inds) %>% left_join(k) %>% mutate(sqdiff=(trueval-diffs)^2, method=meth)
 
-  evalu<-sqe %>% group_by(l, method) %>% summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE)))
+  evalu<-sqe %>% group_by(l, method) %>% summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE)), minm=min(cov_))
   return(data.frame(evalu, size=inds))
 })
 
