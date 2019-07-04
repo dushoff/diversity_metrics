@@ -123,7 +123,7 @@ rarefs_2<-future_map_dfr(1:nreps, function(reps){
         return(tryCatch(data.frame(samp=samp, chaoest=chaoest
                                    , cover=covdivs[which(covdivs$site==com&covdivs$order==1-ell), "qD"] #this is diversity
                                    , coverage=covdivs[which(covdivs$site==com&covdivs$order==1-ell), "SC"] #this is coverage estimate
-                                   , cov_size=covdivs[which(covdivs$site==com&covdivs$order==1-ell), "m"] #this is coverage estimate
+                                   , cov_size=covdivs[which(covdivs$site==com&covdivs$order==1-ell), "m"] #this is thes sample size implied by coverage estimate
                                    , l=m, size=inds, comm=com, reps=reps) #not sure this error thing is necessary but seems conservative to keep it
                         , error=function(e) data.frame(samp=samp, chaoest=chaoest, cover=NA, coverage=NA, cov_size=NA, l=ell, size=inds, comm=com, reps=reps)))
       })
