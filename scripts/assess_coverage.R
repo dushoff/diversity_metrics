@@ -25,11 +25,12 @@ haegdat<-haegdat[,2:5]
 haegdat<-haegdat*2
 
 # #make communities. 3=1+2. 4=2+2. 1 more even. 
-# comm1<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=5)))
-# comm2<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=9)))
-# comm3<-c(comm1, comm2)
-# comm4<-(c(comm2, comm2))
+comm1<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=5)))
+comm2<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=9)))
+comm3<-c(comm1, comm2)
+comm4<-(c(comm2, comm2))
 
+mikedat<-data.frame(comm1=c(comm1, rep(0,120)), comm2=c(comm2, rep(0,120)), comm3=comm3, comm4=comm4)
 
 # look at differences on log scale
 
@@ -40,19 +41,20 @@ haegdat<-haegdat*2
 #     })
 # })
 
-#do now for Haegeman data
 
+#name dataset
+mydat<-mikedat
 
 out<- map_dfr(c(-1,0,1), function(l){
-        map_dfr(names(haegdat), function(comm){
-    data.frame(logdiv=log(dfun(haegdat[,comm], l=l)), comm=comm, l=l)
+        map_dfr(names(mydat), function(comm){
+    data.frame(logdiv=log(dfun(mydat[,comm], l=l)), comm=comm, l=l)
   })
 })
 
 
 #just see what total abundances are for selected comms
-map(names(haegdat), function(x){
-  sum(haegdat[,x])
+map(names(mydat), function(x){
+  sum(mydat[,x])
 })
 
 ########
@@ -65,15 +67,15 @@ map(names(haegdat), function(x){
 #   
 # })
 
-#this was modified for haegdat
+#this was modified for mydat
 k<-map_dfr(c(-1,0,1), function(m){
   dists<-as.numeric(dist(out %>% filter(l==m) %>% select(logdiv), method="manhattan"))
-  names(dists)<-unite(data.frame(t(combn(names(haegdat),2))))[,1]
+  names(dists)<-unite(data.frame(t(combn(names(mydat),2))))[,1]
   return(data.frame(t(dists), m=m))
 
 })
 
-k<-k %>% gather(diff_btwn, val, 1:choose(length(haegdat),2)) %>% select(diff_btwn, trueval=val, l=m)
+k<-k %>% gather(diff_btwn, val, 1:choose(length(mydat),2)) %>% select(diff_btwn, trueval=val, l=m)
 
 ################################################################################################
 ###### This is a giant routine that will take a long time and tons of compute resources ########
@@ -83,40 +85,20 @@ k<-k %>% gather(diff_btwn, val, 1:choose(length(haegdat),2)) %>% select(diff_btw
 nc<-36
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 # one rep takes a long time on one fast core. I think estimateD might be the slow function. 
-nreps<-64
+nreps<-72
 
 
-# rarefs<-future_map_dfr(1:nreps, function(reps){
-#        map_dfr(floor(10^seq(2,5,.05)), function(inds){ #sample sizes
-#             rare<-lapply(1:4, function(com){subsam(get(paste("comm", com, sep="")), inds)}) #rarefy each community
-#             names(rare)<-1:4
-#             covdivs<-estimateD(rare, base="coverage") #use iNEXT::estimateD to compute expected Hill diversities for equal coverage
-#             map_dfr(1:4, function(com){ #then loop over communities again, b/c going to return one row for each combination of sample size, community, hill exponent
-#                 map_dfr(c(-1,0,1), function(m){ #hill exponents
-#                     samp<-dfun(rare[[com]], l=m) #compute sample diversity
-#                     chaoest<-Chao_Hill_abu(rare[[com]], q=1-m) #compute asymptotic estimator; Chao uses q=1-l
-#                     return(tryCatch(data.frame(samp=samp, chaoest=chaoest
-#                                                , cover=covdivs[which(covdivs$site==com&covdivs$order==1-m), "qD"] #this is diversity
-#                                                , coverage=covdivs[which(covdivs$site==com&covdivs$order==1-m), "SC"] #this is coverage estimate
-#                                                , l=m, size=inds, comm=com, reps=reps) #not sure this error thing is necessary but seems conservative to keep it
-#                                     , error=function(e) data.frame(samp=samp, chaoest=chaoest, cover="err", coverage="err", l=m, size=inds, comm=com, reps=reps)))
-#             })
-#         })
-#     })
-# })
-# 
-# 
 
-rarefs_2<-future_map_dfr(1:nreps, function(reps){
-  map_dfr(floor(10^seq(2,4.2,.05)), function(inds){ #sample sizes
+rarefs_mikedat<-future_map_dfr(1:nreps, function(reps){
+  map_dfr(floor(10^seq(2,3.1,.05)), function(inds){ #sample sizes
     mySeed<-1000*runif(1)
     set.seed(mySeed)
     # set.seed(131.92345)
     # inds<-223
-    rare<-lapply(names(haegdat), function(com){subsam(haegdat[,com], inds)}) #rarefy each community
-    names(rare)<-names(haegdat)
-    covdivs<-tryCatch(estimateD(rare, base="coverage"), error=function(e) data.frame(site=rep(names(haegdat),3), order=rep(c(-1,0,1), length(haegdat)), qD=rep(mySeed, 3*length(haegdat)), SC=rep(mySeed, 3*length(haegdat)))) #use iNEXT::estimateD to compute expected Hill diversities for equal coverage
-    map_dfr(names(haegdat), function(com){ #then loop over communities again, b/c going to return one row for each combination of sample size, community, hill exponent
+    rare<-lapply(names(mydat), function(com){subsam(mydat[,com], inds)}) #rarefy each community
+    names(rare)<-names(mydat)
+    covdivs<-tryCatch(estimateD(rare, base="coverage"), error=function(e) data.frame(site=rep(names(mydat),3), order=rep(c(-1,0,1), length(mydat)), qD=rep(mySeed, 3*length(mydat)), SC=rep(mySeed, 3*length(mydat)))) #use iNEXT::estimateD to compute expected Hill diversities for equal coverage
+    map_dfr(names(mydat), function(com){ #then loop over communities again, b/c going to return one row for each combination of sample size, community, hill exponent
       map_dfr(c(-1,0,1), function(ell){ #hill exponents
         samp<-dfun(rare[[com]], l=ell) #compute sample diversity
         chaoest<-tryCatch(Chao_Hill_abu(rare[[com]], q=1-ell), error=function(e) "whoops") #compute asymptotic estimator; Chao uses q=1-l
@@ -136,11 +118,11 @@ rarefs_2<-future_map_dfr(1:nreps, function(reps){
 
 #write data to file
 
-write.csv(rarefs_2, file="data/coverage_vs_others_haeg4.csv", row.names=F)
+write.csv(rarefs_mikedat, file="data/coverage_vs_others_mikedat.csv", row.names=F)
 
 # rarefs<-read_csv("data/coverage_vs_others_haeg1.csv")
 
-rarefsl<-rarefs_2 %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover))
+rarefsl<-rarefs_mikedat %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover))
 
 
 #################
