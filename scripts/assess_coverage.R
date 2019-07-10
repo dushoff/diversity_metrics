@@ -43,7 +43,7 @@ mikedat<-data.frame(comm1=c(comm1, rep(0,120)), comm2=c(comm2, rep(0,120)), comm
 
 
 #name dataset
-mydat<-mikedat
+mydat<-haegdat
 
 out<- map_dfr(c(-1,0,1), function(l){
         map_dfr(names(mydat), function(comm){
@@ -118,7 +118,7 @@ rarefs_mikedat<-future_map_dfr(1:nreps, function(reps){
 
 #write data to file
 
-write.csv(rarefs_mikedat, file="data/coverage_vs_others_mikedat.csv", row.names=F)
+write.csv(rarefs_mikedat, file="data/coverage_vs_others_haegdat_with_cov_size.csv", row.names=F)
 
 # rarefs<-read_csv("data/coverage_vs_others_haeg1.csv")
 
@@ -129,7 +129,7 @@ rarefsl<-rarefs_mikedat %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=l
 # summarize differences
 rarediffs<-rarefsl %>% 
   gather(meth, esti, samp, chaoest, cover) %>%   
-  group_by(l, size, reps, meth) %>% 
+  group_by(l, size, reps,  meth) %>% 
   do(diffbetween=data.frame(t(combn(.$comm, m = 2))) %>% 
        unite(sitio) %>% pull(sitio)
      , diffs=combn(.$esti, m=2, diff)
@@ -146,10 +146,10 @@ k<-k %>% mutate(diffbetween=diff_btwn)
 rarediffs$diffs<-abs(rarediffs$diffs)
 
 ##compute RMSE against true differences in diversity between comms
-rmses<-map_dfr(floor(10^seq(2,4.2,.05)), function(inds){
+rmses<-map_dfr(floor(10^seq(2,3.1,.05)), function(inds){
   sqe<-rarediffs %>% filter(size==inds) %>% left_join(k) %>% mutate(sqdiff=(trueval-diffs)^2, method=meth)
 
-  evalu<-sqe %>% group_by(l, method) %>% summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE)), minm=min(cov_))
+  evalu<-sqe %>% group_by(l, method) %>% summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE)))
   return(data.frame(evalu, size=inds))
 })
 
@@ -169,6 +169,17 @@ rmses %>% ggplot(aes(size, rmse, color=method, shape=method))+
   theme_classic()+
   labs(x="sample size (individuals)", y="RMSE in predicting pairwise differences \nin log(diversity) between communities")
 dev.off()
+
+
+#############
+# find intersection
+findint<-rmses %>% spread(method, rmse) %>%  group_by(hill, size) %>% mutate(chaowins=(samp-chaoest)>0) %>% filter(hill=="Richness")
+View(findint)
+#crossing around 446
+
+rarefsl %>% filter(size==251) %>% ggplot(aes(coverage))+geom_histogram()+facet_wrap(~comm)
+
+######### BASED ON THIS I HAVE NO IDEA WHAT'S GOING ON. MAYBE IT'S 90% COVERAGE THOUGH. 
 
 ##################
 # rough plot to visualize
