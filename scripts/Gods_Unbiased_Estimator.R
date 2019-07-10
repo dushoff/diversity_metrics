@@ -68,6 +68,8 @@ truth<-map_dfr(c(-1,0,1), function(L){
 })
 test_wacky<-left_join(test_wacky, truth)
 
+
+pdf("figures/Chao_rarity_estimator.pdf")
 test_wacky %>% gather(meth,esti, -c(1,2)) %>%
     ggplot(aes(size, esti, color=meth))+
     geom_point(alpha=0.2)+
@@ -75,7 +77,7 @@ test_wacky %>% gather(meth,esti, -c(1,2)) %>%
     scale_y_log10()+
     facet_wrap(~ell)+
     theme_classic()
-
+dev.off()
 # #Chao1, with her own weird thing for no doubletons
 # c1<-function(x){sum(x>0)+ifelse(
 #     sum(x==2)>0,
