@@ -54,12 +54,18 @@ test_wacky<-future_map_dfr(1:100, function(attempt){
         sam=subsam(full, INDS)
         map_dfr(c(-1,0,1), function(L){
         obs = dfun(sam, L)
-        newEst = GUE(sam, Chao_rare(sam),L)
+        newEst = GUE(sam/sum(sam), Chao_rare(sam),L)
         ChaoEst = Chao_Hill_abu(sam, 1-L)
         return(data.frame(size=INDS, ell=L, obs=obs, newEst=newEst, ChaoEst=ChaoEst))
         })
     })
 })
+
+
+# sam<-subsam(full, 100)
+# cr<-Chao_rare(sam)
+# god_simp<-GUE(sam, cr, -1)
+# god_simp
 
 truth<-map_dfr(c(-1,0,1), function(L){
     truediv=dfun(full, L)
