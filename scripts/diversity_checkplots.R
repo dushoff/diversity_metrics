@@ -90,7 +90,7 @@ obscp<-function(l=l, size=size, dat=usersguide, B=2000, truemun=truemun...){
 }
 
 #set number of reps
-reps<-2500
+reps<-5000
 Bnum<-200
 
 ####################
@@ -111,7 +111,7 @@ write.csv(trycheckingobs, file="data/fromR/trycheckingobs_with_without_mc.csv", 
 
 ##################################
 # read in data and make checkplot for sample diveristy
-trycheckingobs<-read.csv("data/fromR/trycheckingobs.csv")
+trycheckingobs<-read.csv("data/fromR/trycheckingobs_with_without_mc.csv")
 
 #####################
 #checkplot figure, not used in users guide, now does checkplot without mean correction. 
@@ -139,7 +139,7 @@ dev.off()
 nreps<-5000 #this should be 5000 for now
 
 #df with true coverage of 95% CI
-tvcov <-trycheckingobs_R %>% group_by(l, size) %>% summarize(outside=1-(sum(chaotile>97.5)+sum(chaotile<2.5))/500000)
+tvcov <-trycheckingobs %>% group_by(l, size) %>% summarize(outside=1-(sum(chaotile_mc>97.5)+sum(chaotile_mc<2.5))/(nreps*100))
 
 #relable facets by creating new factor in df
 inds<-data.frame("l"=c(1,0,-1), divind=factor(c("richness", "Hill-Shannon", "Hill-Simpson"), levels=c("richness", "Hill-Shannon", "Hill-Simpson")))
@@ -164,52 +164,51 @@ outerreps<-10
 #####################
 #uncomment to generate data for asymptotic diveristy checkplot/coverage for conceptual guide
 
-# map(1:outerreps, function(x){
-#   ug_asy<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
-#       map_dfr(c(-1,0,1), function(l){
-#           out<-checkplot(abs=usersguide, l=l, inds=size, reps=reps)
-#       })
-#   })
-#   write.csv(ug_asy, paste("data/ug_asy",x, ".csv", sep="_"), row.names=F)
-# })
+map(1:outerreps, function(x){
+  ug_asy<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
+      map_dfr(c(-1,0,1), function(l){
+          out<-checkplot(abs=usersguide, l=l, inds=size, reps=reps)
+      })
+  })
+  write.csv(ug_asy, paste("data/ug_asy",x, ".csv", sep="_"), row.names=F)
+})
 
 #######################################
 # extract data from files for use
 
 outerreps<-10
-getug<-map_dfr(1:outerreps, function(x){
+getug<-future_map_dfr(1:outerreps, function(x){
     
-    read.csv(paste("data/fromR/ug_asy", x, ".csv", sep="_"))
+    read.csv(paste("data/ug_asy", x, ".csv", sep="_"))
     
 })
 
-correct<-getug[seq(500, length(getug$l), by=500),]
+# correct<-getug[seq(500, length(getug$l), by=500),]
 
-asycov<-correct%>% 
+asycov<-getug%>% 
     group_by(l, inds) %>% 
     summarize(outside=1-(sum(qtile>97.5)+sum(qtile<2.5))/(5000)) %>% left_join(inds)
 
 
 ###############################
-#add a dataframe to get points where value="inf" with transformation, hack
-otherdf<-data.frame(inds=round(10^seq(2, 4, 0.25)), outside=rep(1,9), divind=rep("richness",9), esttype=rep("sample diversity", 9))
-
 # combine sample and saymptotic to make a single multi-panel graph 
-comb_cov<-bind_rows("sample diversity"=tc %>% rename(inds=size), "asymptotic diversity"=asycov, .id="esttype" )
+comb_cov<-bind_rows("sample diversity"=tc %>% rename(inds=size) %>% filter(inds<10^4.2), "asymptotic diversity"=asycov, .id="esttype" )
 #code to generate plot
 #to figure out y-axis breaks:  prettify(trans_breaks(arm::logit, invlogit, n=15)(c(0.5,0.9999999)))
 
+##########################################
+# figure for Users guide to show statistical coverage for asymptotic estimators and also sample diveristy CIs
 pdf(file="figures/CI_coverage_guide.pdf", height=6, width=6) #
 comb_cov %>% mutate(conserv=log(outside/(1-outside))) %>% 
     ggplot(aes(inds, outside, color=conserv, shape=esttype))+
     geom_point(size=2)+
-    geom_point(data=otherdf, color="blue", size=2)+
+
     geom_hline(yintercept=0.95)+
     facet_grid(divind~esttype, switch="y" )+#strip.position=NULL
     theme_classic()+
     scale_shape_manual(values=c(17,15))+
-    scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(0,5), midpoint=2.944, breaks=c(0,5), labels=c(" over-confident",  " conservative"))+
-    scale_y_continuous(trans="logit", limits=c(0.5, .999), breaks=c(0.5, 0.73, 0.88, 0.95, 0.98,0.99, .997,.999), labels=c(50, 73, 88, 95, 98, 99, 99.7, 99.9))+
+    scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(-1,7), midpoint=2.944, breaks=c(-1,7), labels=c(" over-confident",  " conservative"))+
+    scale_y_continuous(trans="logit", limits=c(0.3, .999), breaks=c(0.3,0.5, 0.73, 0.88, 0.95, 0.98,0.99, .997,.999), labels=c(30,50, 73, 88, 95, 98, 99, 99.7, 99.9))+
     scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
     labs(y="% chance 95% CI contains true value")+
     theme(legend.title = element_blank()
