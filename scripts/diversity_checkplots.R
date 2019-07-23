@@ -199,6 +199,7 @@ comb_cov<-bind_rows("sample diversity"=tc %>% rename(inds=size) %>% filter(inds<
 ##########################################
 # figure for Users guide to show statistical coverage for asymptotic estimators and also sample diveristy CIs
 pdf(file="figures/CI_coverage_guide.pdf", height=6, width=6) #
+
 comb_cov %>% mutate(conserv=log(outside/(1-outside))) %>% 
     ggplot(aes(inds, outside, color=conserv, shape=esttype))+
     geom_point(size=2)+
@@ -207,8 +208,8 @@ comb_cov %>% mutate(conserv=log(outside/(1-outside))) %>%
     facet_grid(divind~esttype, switch="y" )+#strip.position=NULL
     theme_classic()+
     scale_shape_manual(values=c(17,15))+
-    scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(-1,7), midpoint=2.944, breaks=c(-1,7), labels=c(" over-confident",  " conservative"))+
-    scale_y_continuous(trans="logit", limits=c(0.3, .999), breaks=c(0.3,0.5, 0.73, 0.88, 0.95, 0.98,0.99, .997,.999), labels=c(30,50, 73, 88, 95, 98, 99, 99.7, 99.9))+
+    scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(-.5,5), midpoint=2.944, breaks=c(-.5,5), labels=c(" over-confident",  " conservative"))+
+    scale_y_continuous(trans="logit", limits=c(0.3, .995), breaks=c(0.3,0.5, 0.73, 0.88, 0.95, 0.98,0.99), labels=c(30,50, 73, 88, 95, 98, 99))+ #modify this so that it doesn't go quite as high
     scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
     labs(y="% chance 95% CI contains true value")+
     theme(legend.title = element_blank()
