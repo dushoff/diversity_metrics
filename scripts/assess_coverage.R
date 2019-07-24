@@ -119,7 +119,7 @@ rarefs_mikedat<-future_map_dfr(1:nreps, function(reps){
 
 #write data to file
 
-write.csv(rarefs_mikedat, file="data/coverage_vs_others_haegdat_with_cov_size.csv", row.names=F)
+write.csv(rarefs_mikedat, file="data/coverage_vs_others_mikedat_500.csv", row.names=F)
 
 # rarefs<-read_csv("data/coverage_vs_others_haeg1.csv")
 
