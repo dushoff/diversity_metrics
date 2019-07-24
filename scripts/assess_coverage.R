@@ -139,12 +139,7 @@ rarediffs<-rarefsl %>%
 
 
 
-
-# stupid renaming, should clean up
-k<-k %>% mutate(diffbetween=diff_btwn)
-
-## set so it's always big-little, a positive number, this is what the dist thing does and it allows order not to matter, which is good. switch from positive to negative not expected between runs, but imaginable for richness at low coverage, or I guess anything, but then should be small differences and consistent with a low RMSE either way.
-rarediffs$diffs<-abs(rarediffs$diffs)
+## I think I fixed things so that k and rarediffs should have differences of the same sites in the same order for robust comparisons. 
 
 ##compute RMSE against true differences in diversity between comms
 rmses<-map_dfr(floor(10^seq(2,3.1,.05)), function(inds){
