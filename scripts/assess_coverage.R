@@ -85,7 +85,7 @@ k<-map_dfr(c(-1,0,1), function(m){
 nc<-36
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 # one rep takes a long time on one fast core. I think estimateD might be the slow function. 
-nreps<-72
+nreps<-500
 
 
 
@@ -127,11 +127,11 @@ rarefsl<-rarefs_mikedat %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=l
 
 
 #################
-# summarize differences
+# summarize differences; this is a little slow
 rarediffs<-rarefsl %>% 
   gather(meth, esti, samp, chaoest, cover) %>%   
   group_by(l, size, reps,  meth) %>% 
-  do(diffbetween=data.frame(t(combn(.$comm, m = 2))) %>% 
+  do(diff_btwn=data.frame(t(combn(.$comm, m = 2))) %>% 
        unite(sitio) %>% pull(sitio)
      , diffs=combn(.$esti, m=2, diff)
      ) %>% 
@@ -143,7 +143,7 @@ rarediffs<-rarefsl %>%
 
 ##compute RMSE against true differences in diversity between comms
 rmses<-map_dfr(floor(10^seq(2,3.1,.05)), function(inds){
-  sqe<-rarediffs %>% filter(size==inds) %>% left_join(k) %>% mutate(sqdiff=(trueval-diffs)^2, method=meth)
+  sqe<-rarediffs %>% filter(size==inds) %>% left_join(k) %>% mutate(sqdiff=(divdis-diffs)^2, method=meth)
 
   evalu<-sqe %>% group_by(l, method) %>% summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE)))
   return(data.frame(evalu, size=inds))
