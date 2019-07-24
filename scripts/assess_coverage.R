@@ -102,22 +102,20 @@ assesscov<-function(mydat){future_map_dfr(1:nreps, function(reps){
 })
 }
 
-
+# does each rarefaction using parallel set up above and writes data to disk
 map(c("mikedat", "haegdat"), function(dat){
   write.csv(assesscov(get(dat)), file=paste(dat, "500.csv", sep=""), row.names=F)
   })
 
+#creates a list for the true differences, a dataframe for each dataset
 karr<-map(c("mikedat", "haegdat"), function(dat){
   td(get(dat))
 })
 
 
-#write data to file
 
-write.csv(rarefs_mikedat, file="data/coverage_vs_others_mikedat_500.csv", row.names=F)
 
-rarefs<-read_csv("data/coverage_vs_others_haegdat_with_cov_size_500.csv")
-
+#replaces diversities with log diversities
 rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover))
 
 
