@@ -42,40 +42,26 @@ mikedat<-data.frame(comm1=c(comm1, rep(0,120)), comm2=c(comm2, rep(0,120)), comm
 # })
 
 
-#name dataset
-mydat<-haegdat
+#get true diffs
 
-out<- map_dfr(c(-1,0,1), function(l){
-        map_dfr(names(mydat), function(comm){
-    data.frame(logdiv=log(dfun(mydat[,comm], l=l)), comm=comm, l=l)
+td<-function(mydat){
+  out<- map_dfr(c(-1,0,1), function(l){
+          map_dfr(names(mydat), function(comm){
+      data.frame(logdiv=log(dfun(mydat[,comm], l=l)), comm=comm, l=l)
+    })
   })
-})
 
 
-#just see what total abundances are for selected comms
-map(names(mydat), function(x){
-  sum(mydat[,x])
-})
 
-########
-# original for k, using simulated communities
-# k<-map_dfr(c(-1,0,1), function(m){
-#   dists<-as.numeric(dist(out %>% filter(l==m) %>% select(logdiv), method="manhattan"))
-#   names(dists)<-c("onetwo","onethree", "onefour", "twothree", "twofour", "threefour" )
-#   dists
-#   return(data.frame(t(dists), m=m))
-#   
-# })
+  k<-map_dfr(c(-1,0,1), function(m){
+    dists<-out %>% filter(l==m) %>% do(data.frame(divdis=combn(.$logdiv, 2, diff)))
+    db<-unite(data.frame(t(combn(names(mydat),2))), db)[,1]
+    return(data.frame(dists, diff_btwn=db, m=m))
+  
+  })
+  return(k)
+}
 
-#this was modified for mydat
-k<-map_dfr(c(-1,0,1), function(m){
-  dists<-out %>% filter(l==m) %>% do(data.frame(divdis=combn(.$logdiv, 2, diff)))
-  db<-unite(data.frame(t(combn(names(mydat),2))), db)[,1]
-  return(data.frame(dists, diff_btwn=db, m=m))
-
-})
-
-# k<-k %>% gather(diff_btwn, val, 1:choose(length(mydat),2)) %>% select(diff_btwn, trueval=val, l=m)
 
 ################################################################################################
 ###### This is a giant routine that will take a long time and tons of compute resources ########
@@ -86,12 +72,12 @@ nc<-36
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 # one rep takes a long time on one fast core. I think estimateD might be the slow function. 
 nreps<-500
-maxi<-4
+maxi<-4 #max sample size=10^maxi
 
 
 
-rarefs_mikedat<-future_map_dfr(1:nreps, function(reps){
-  map_dfr(floor(10^seq(2,4,.05)), function(inds){ #sample sizes
+assesscov<-function(mydat){future_map_dfr(1:nreps, function(reps){
+  map_dfr(floor(10^seq(2,maxi,.05)), function(inds){ #sample sizes
     mySeed<-1000*runif(1)
     set.seed(mySeed)
     # set.seed(131.92345)
@@ -114,8 +100,16 @@ rarefs_mikedat<-future_map_dfr(1:nreps, function(reps){
     })
   })
 })
+}
 
 
+map(c("mikedat", "haegdat"), function(dat){
+  write.csv(assesscov(get(dat)), file=paste(dat, "500.csv", sep=""), row.names=F)
+  })
+
+karr<-map(c("mikedat", "haegdat"), function(dat){
+  td(get(dat))
+})
 
 
 #write data to file
@@ -143,7 +137,7 @@ rarediffs<-rarefsl %>%
 ## I think I fixed things so that k and rarediffs should have differences of the same sites in the same order for robust comparisons. 
 
 ##compute RMSE against true differences in diversity between comms
-rmses<-map_dfr(floor(10^seq(2,4,.05)), function(inds){
+rmses<-map_dfr(floor(10^seq(2,maxi,.05)), function(inds){
   sqe<-rarediffs %>% filter(size==inds) %>% left_join(k) %>% mutate(sqdiff=(divdis-diffs)^2, method=meth)
 
   evalu<-sqe %>% group_by(l, method) %>% summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE)))
