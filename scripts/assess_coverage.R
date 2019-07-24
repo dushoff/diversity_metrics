@@ -43,8 +43,7 @@ mikedat<-data.frame(comm1=c(comm1, rep(0,120)), comm2=c(comm2, rep(0,120)), comm
 
 
 #name dataset
-mydat<-haegdat
-mydat<-mikedat
+mydat<-mikedat 
 
 out<- map_dfr(c(-1,0,1), function(l){
         map_dfr(names(mydat), function(comm){
@@ -70,13 +69,13 @@ map(names(mydat), function(x){
 
 #this was modified for mydat
 k<-map_dfr(c(-1,0,1), function(m){
-  dists<-as.numeric(dist(out %>% filter(l==m) %>% select(logdiv), method="manhattan"))
-  names(dists)<-unite(data.frame(t(combn(names(mydat),2))))[,1]
-  return(data.frame(t(dists), m=m))
+  dists<-out %>% filter(l==m) %>% do(data.frame(divdis=combn(.$logdiv, 2, diff)))
+  db<-unite(data.frame(t(combn(names(mydat),2))), db)[,1]
+  return(data.frame(dists, diff_btwn=db, m=m))
 
 })
 
-k<-k %>% gather(diff_btwn, val, 1:choose(length(mydat),2)) %>% select(diff_btwn, trueval=val, l=m)
+# k<-k %>% gather(diff_btwn, val, 1:choose(length(mydat),2)) %>% select(diff_btwn, trueval=val, l=m)
 
 ################################################################################################
 ###### This is a giant routine that will take a long time and tons of compute resources ########
@@ -86,11 +85,11 @@ k<-k %>% gather(diff_btwn, val, 1:choose(length(mydat),2)) %>% select(diff_btwn,
 nc<-36
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 # one rep takes a long time on one fast core. I think estimateD might be the slow function. 
-nreps<-500
+nreps<-72
 
 
 
-rarefs_mikedat_500<-future_map_dfr(1:nreps, function(reps){
+rarefs_mikedat<-future_map_dfr(1:nreps, function(reps){
   map_dfr(floor(10^seq(2,3.1,.05)), function(inds){ #sample sizes
     mySeed<-1000*runif(1)
     set.seed(mySeed)
@@ -120,8 +119,7 @@ rarefs_mikedat_500<-future_map_dfr(1:nreps, function(reps){
 
 #write data to file
 
-write.csv(rarefs_haegdat_500, file="data/coverage_vs_others_haegdat_with_cov_size_500.csv", row.names=F)
-write.csv(rarefs_mikedat_500, file="data/coverage_vs_others_mikedat_500.csv", row.names=F)
+write.csv(rarefs_mikedat, file="data/coverage_vs_others_haegdat_with_cov_size.csv", row.names=F)
 
 # rarefs<-read_csv("data/coverage_vs_others_haeg1.csv")
 
