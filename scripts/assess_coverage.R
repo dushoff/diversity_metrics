@@ -104,7 +104,7 @@ assesscov<-function(mydat){future_map_dfr(1:nreps, function(reps){
 
 # does each rarefaction using parallel set up above and writes data to disk
 map(c("mikedat", "haegdat"), function(dat){
-  write.csv(assesscov(get(dat)), file=paste(dat, "500.csv", sep=""), row.names=F)
+  write.csv(assesscov(get(dat)), file=paste("data/",dat, "500.csv", sep=""), row.names=F)
   })
 
 #creates a list for the true differences, a dataframe for each dataset
