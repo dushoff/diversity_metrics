@@ -25,8 +25,8 @@ haegdat<-haegdat[,2:5]
 haegdat<-haegdat*2
 
 # #make communities. 3=1+2. 4=2+2. 1 more even. 
-comm1<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=5)))
-comm2<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=9)))
+comm1<-as.numeric(sim_sad(s_pool=120, n_sim=1e6, sad_coef=list(cv_abund=5)))
+comm2<-as.numeric(sim_sad(s_pool=120, n_sim=1e6, sad_coef=list(cv_abund=9)))
 comm3<-c(comm1, comm2)
 comm4<-(c(comm2, comm2))
 
@@ -72,7 +72,7 @@ nc<-36
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 # one rep takes a long time on one fast core. I think estimateD might be the slow function. 
 nreps<-500
-maxi<-4 #max sample size=10^maxi
+maxi<-5 #max sample size=10^maxi
 
 
 
