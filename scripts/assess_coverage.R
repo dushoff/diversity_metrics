@@ -79,7 +79,7 @@ maxi<-4 #max sample size=10^maxi
 assesscov<-function(mydat){future_map_dfr(1:nreps, function(reps){
   map_dfr(floor(10^seq(2,maxi,.05)), function(inds){ #sample sizes
     mySeed<-1000*runif(1)
-    set.seed(mySeed)
+    # set.seed(mySeed)
     # set.seed(131.92345)
     # inds<-223
     rare<-lapply(names(mydat), function(com){subsam(mydat[,com], inds)}) #rarefy each community
@@ -116,16 +116,18 @@ karr<-map(c("mikedat", "haegdat"), function(dat){
 
 
 #replaces diversities with log diversities
+rarefs<-read.csv("data/haegdat500.csv", stringsAsFactors = F)
+rarefs<-read.csv("data/mikedat500.csv", stringsAsFactors = F)
+
 rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover))
 
 
 #################
-# summarize differences; this is a little slow
+# summarize differences; this is a little slow, maybe parellelize with nest() and future_map rather than using do.
 rarediffs<-rarefsl %>% 
   gather(meth, esti, samp, chaoest, cover) %>%   
   group_by(l, size, reps,  meth) %>% 
-  do(diff_btwn=data.frame(t(combn(.$comm, m = 2))) %>% 
-       unite(sitio) %>% pull(sitio)
+  do(diff_btwn=data.frame(t(combn(.$comm, m = 2))) %>% unite(sitio) %>% pull(sitio)
      , diffs=combn(.$esti, m=2, diff)
      ) %>% 
     unnest()
@@ -136,8 +138,7 @@ rarediffs<-rarefsl %>%
 
 ##compute RMSE against true differences in diversity between comms
 rmses<-map_dfr(floor(10^seq(2,maxi,.05)), function(inds){
-  sqe<-rarediffs %>% filter(size==inds) %>% left_join(k) %>% mutate(sqdiff=(divdis-diffs)^2, method=meth)
-
+  sqe<-rarediffs %>% filter(size==inds) %>% left_join(karr[[1]]) %>% mutate(sqdiff=(divdis-diffs)^2, method=meth)
   evalu<-sqe %>% group_by(l, method) %>% summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE)))
   return(data.frame(evalu, size=inds))
 })
