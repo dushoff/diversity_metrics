@@ -22,7 +22,9 @@ pfun=function(x, pow){
 
 ipfun=function(x, pow){
 	if (pow==0) return(exp(x))
-	r <- sign(pow)*(x)^(1/pow)
+    x<-ifelse(sign(pow)*x<0,0,x) #added so that ggplot padding doesnt introduce negative values to scale
+	r <- (sign(pow)*(x))^(1/pow)
+	
 	return(r)
 }
 
@@ -30,14 +32,18 @@ ipfun=function(x, pow){
 dfun<-function(ab, l){
     rp <- ab/sum(ab)
     if(l==0) return(exp(sum(rp*log(1/rp))))
-    return(sign(l)*ipfun(sign(l)*sum(rp*pfun(1/rp, l)),l))
+    return(ipfun(sum(rp*pfun(1/rp, l)),l))
 }
 
 # round numbers, more aggressively the larger they are
 prettify <- function(breaks){
     digits <- -floor(log10(abs(breaks))) + 1
     digits[breaks == 0] <- 0
-    return((round(breaks, digits = digits))[round(breaks, digits = digits)!=(-Inf)]) #klugey fix to -Inf
+    raw<-round(breaks, digits = digits)
+    raw[raw==-Inf]<-1e9
+    # raw[is.na(raw)]<-1e11
+    # raw[raw==0]<-1e-11
+    return(raw) #klugey fix to -Inf
 }
 
 #function for scale transformation
