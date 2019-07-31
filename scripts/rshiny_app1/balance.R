@@ -267,3 +267,19 @@ ab<-c(20,8,5,4,2,1) #candidate for user's guide
 # grid.arrange(p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p))
 
 # rarity_series(ab=ab, 1:-1)
+
+# legend plot
+meanpoints<-data.frame(hght=c(-.1,0,.1), ell=c("l=-1", "l=0", "l=1"), meantype=c("  harmonic mean, l=-1", "  geometric mean, l=0", "  arithmetic mean, l=1") )
+
+legend_for_app<-meanpoints %>% 
+    ggplot(aes(0, hght, color=ell))+
+    geom_point(size=4)+
+    geom_text(aes(label=meantype),hjust=0, size=8 )+ 
+    # geom_point(data=data.frame(x=c(0,0), y=c(-0.3,0.3)), aes(x,y), color="white")+
+    scale_color_brewer(type="qual", palette="Dark2",guide="none")+
+    theme_void()+
+    theme(plot.margin=unit(c(-3,0,-3,0),"cm"))+
+    scale_y_continuous(expand=c(.4,.4), limits=c(-0.1, 0.1))+
+    scale_x_continuous(limits=c(0,9))
+    
+    

@@ -16,7 +16,14 @@ server <- function(input, output) {
         rarity_plot(abus, input$ell, lines=input$line)
         
     })
+    output$legend4app <- renderPlot({
+        
+        source("balance.R")
+        legend_for_app
+        
+    })
     
 }
+
 
 
