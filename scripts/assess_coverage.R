@@ -25,8 +25,8 @@ haegdat<-haegdat[,2:5]
 haegdat<-haegdat*2
 
 # #make communities. 3=1+2. 4=2+2. 1 more even. 
-comm1<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=5)))
-comm2<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=9)))
+comm1<-as.numeric(sim_sad(s_pool=120, n_sim=1e6, sad_coef=list(cv_abund=5)))
+comm2<-as.numeric(sim_sad(s_pool=120, n_sim=1e6, sad_coef=list(cv_abund=9)))
 comm3<-c(comm1, comm2)
 comm4<-(c(comm2, comm2))
 
@@ -42,40 +42,26 @@ mikedat<-data.frame(comm1=c(comm1, rep(0,120)), comm2=c(comm2, rep(0,120)), comm
 # })
 
 
-#name dataset
-mydat<-haegdat
+#get true diffs
 
-out<- map_dfr(c(-1,0,1), function(l){
-        map_dfr(names(mydat), function(comm){
-    data.frame(logdiv=log(dfun(mydat[,comm], l=l)), comm=comm, l=l)
+td<-function(mydat){
+  out<- map_dfr(c(-1,0,1), function(l){
+          map_dfr(names(mydat), function(comm){
+      data.frame(logdiv=log(dfun(mydat[,comm], l=l)), comm=comm, l=l)
+    })
   })
-})
 
 
-#just see what total abundances are for selected comms
-map(names(mydat), function(x){
-  sum(mydat[,x])
-})
 
-########
-# original for k, using simulated communities
-# k<-map_dfr(c(-1,0,1), function(m){
-#   dists<-as.numeric(dist(out %>% filter(l==m) %>% select(logdiv), method="manhattan"))
-#   names(dists)<-c("onetwo","onethree", "onefour", "twothree", "twofour", "threefour" )
-#   dists
-#   return(data.frame(t(dists), m=m))
-#   
-# })
+  k<-map_dfr(c(-1,0,1), function(m){
+    dists<-out %>% filter(l==m) %>% do(data.frame(divdis=combn(.$logdiv, 2, diff)))
+    db<-unite(data.frame(t(combn(names(mydat),2))), db)[,1]
+    return(data.frame(dists, diff_btwn=db, m=m))
+  
+  })
+  return(k)
+}
 
-#this was modified for mydat
-k<-map_dfr(c(-1,0,1), function(m){
-  dists<-out %>% filter(l==m) %>% do(data.frame(divdis=combn(.$logdiv, 2, diff)))
-  db<-unite(data.frame(t(combn(names(mydat),2))), db)[,1]
-  return(data.frame(dists, diff_btwn=db, m=m))
-
-})
-
-# k<-k %>% gather(diff_btwn, val, 1:choose(length(mydat),2)) %>% select(diff_btwn, trueval=val, l=m)
 
 ################################################################################################
 ###### This is a giant routine that will take a long time and tons of compute resources ########
@@ -86,14 +72,14 @@ nc<-36
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 # one rep takes a long time on one fast core. I think estimateD might be the slow function. 
 nreps<-500
-maxi<-4
+maxi<-5 #max sample size=10^maxi
 
 
 
-rarefs_mikedat<-future_map_dfr(1:nreps, function(reps){
-  map_dfr(floor(10^seq(2,4,.05)), function(inds){ #sample sizes
+assesscov<-function(mydat){future_map_dfr(1:nreps, function(reps){
+  map_dfr(floor(10^seq(2,maxi,.05)), function(inds){ #sample sizes
     mySeed<-1000*runif(1)
-    set.seed(mySeed)
+    # set.seed(mySeed)
     # set.seed(131.92345)
     # inds<-223
     rare<-lapply(names(mydat), function(com){subsam(mydat[,com], inds)}) #rarefy each community
@@ -114,26 +100,34 @@ rarefs_mikedat<-future_map_dfr(1:nreps, function(reps){
     })
   })
 })
+}
+
+# does each rarefaction using parallel set up above and writes data to disk
+map(c("mikedat", "haegdat"), function(dat){
+  write.csv(assesscov(get(dat)), file=paste("data/",dat, "500.csv", sep=""), row.names=F)
+  })
+
+#creates a list for the true differences, a dataframe for each dataset
+karr<-map(c("mikedat", "haegdat"), function(dat){
+  td(get(dat))
+})
 
 
 
 
-#write data to file
-
-write.csv(rarefs_mikedat, file="data/coverage_vs_others_mikedat_500.csv", row.names=F)
-
-rarefs<-read_csv("data/coverage_vs_others_haegdat_with_cov_size_500.csv")
+#replaces diversities with log diversities
+rarefs<-read.csv("data/haegdat500.csv", stringsAsFactors = F)
+rarefs<-read.csv("data/mikedat500.csv", stringsAsFactors = F)
 
 rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover))
 
 
 #################
-# summarize differences; this is a little slow
+# summarize differences; this is a little slow, maybe parellelize with nest() and future_map rather than using do.
 rarediffs<-rarefsl %>% 
   gather(meth, esti, samp, chaoest, cover) %>%   
   group_by(l, size, reps,  meth) %>% 
-  do(diff_btwn=data.frame(t(combn(.$comm, m = 2))) %>% 
-       unite(sitio) %>% pull(sitio)
+  do(diff_btwn=data.frame(t(combn(.$comm, m = 2))) %>% unite(sitio) %>% pull(sitio)
      , diffs=combn(.$esti, m=2, diff)
      ) %>% 
     unnest()
@@ -143,9 +137,8 @@ rarediffs<-rarefsl %>%
 ## I think I fixed things so that k and rarediffs should have differences of the same sites in the same order for robust comparisons. 
 
 ##compute RMSE against true differences in diversity between comms
-rmses<-map_dfr(floor(10^seq(2,4,.05)), function(inds){
-  sqe<-rarediffs %>% filter(size==inds) %>% left_join(k) %>% mutate(sqdiff=(divdis-diffs)^2, method=meth)
-
+rmses<-map_dfr(floor(10^seq(2,maxi,.05)), function(inds){
+  sqe<-rarediffs %>% filter(size==inds) %>% left_join(karr[[1]]) %>% mutate(sqdiff=(divdis-diffs)^2, method=meth)
   evalu<-sqe %>% group_by(l, method) %>% summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE)))
   return(data.frame(evalu, size=inds))
 })
