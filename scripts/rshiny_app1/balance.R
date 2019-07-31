@@ -90,7 +90,8 @@ base_plot <- function(abundance, pointScale
 		, abundance
 		, rarity = sum(abundance)/abundance
 	)
-	rfrepeated <-fancy_rep(rf) 
+	rfrepeated <-fancy_rep(rf)
+	y_extent<-max(y_extent, max(rfrepeated$inds))
 
 	#0.5; shape is centered on  x,y; offset so it rests upon x, y-1
 	goff <- 0.5
@@ -98,9 +99,10 @@ base_plot <- function(abundance, pointScale
 	#ggplot command to generate basic plot object
 	base <- (ggplot(rfrepeated, aes(x=rarity, y=abundance))
 	         +(if(lines==T){
+	             rfdull<-rf %>% group_by(rarity) %>% summarize(inds=sum(abundance))
 	   #line segments
-	             geom_segment(aes(x=rarity, xend=rarity, y=inds, yend=0)
-	                           , color=fill_col
+	             geom_segment(data=rfdull, aes(x=rarity, xend=rarity, y=inds, yend=0)
+	                           , color=rgb(0,0,0,0.4)
 	                           , size=1
 	                           )
 	         } else{

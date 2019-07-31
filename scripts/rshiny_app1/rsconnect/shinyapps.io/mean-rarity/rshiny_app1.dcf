@@ -1,0 +1,10 @@
+name: rshiny_app1
+title:
+username:
+account: mean-rarity
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1061663
+bundleId: 2281192
+url: https://mean-rarity.shinyapps.io/rshiny_app1/
+when: 1564606774.25732
