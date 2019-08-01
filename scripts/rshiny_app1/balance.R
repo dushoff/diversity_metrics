@@ -12,6 +12,8 @@ library(scales) # trans_new() is in the scales library
 
 ## think about squeezing when rarities aren't equal but are close s.t. boxes overlap... smart option that can calculate whether overlap occurs? Currently, have the lines=T option to plot species as lines if overlap is a problem (set by user)
 
+#quick function to add together identical values
+combfun<-function(x){x=x[order(x)]; y=unique(x)*as.numeric(table(x)); return (y)}
 
 #transformation and back-transformation functions
 pfun=function(x, pow){
@@ -79,10 +81,7 @@ base_plot <- function(abundance, pointScale
                       ){
     #0.0353 is approximate points to cm conversion (a little less than 3 pts per mm)
 
-    #14 is empirically derived scaling factor; but isn't quite right. 
-    # Seems like stuff below axis is about 2.5* height of 1 line of text
-    pointScale<-(14*(min(dev.size("cm"))/noco-(2.5*0.0353*base_size)))
-    pointsize <- pointScale/(y_extent*1.1)
+  
 
 	
     #make plotting data
@@ -91,7 +90,11 @@ base_plot <- function(abundance, pointScale
 		, rarity = sum(abundance)/abundance
 	)
 	rfrepeated <-fancy_rep(rf)
-	y_extent<-max(y_extent, max(rfrepeated$inds))
+	y_extent<-max(y_extent, max(combfun(abundance)))
+	#14 is empirically derived scaling factor; but isn't quite right. 
+	# Seems like stuff below axis is about 2.5* height of 1 line of text
+	pointScale<-(14*(min(dev.size("cm"))/noco-(2.5*0.0353*base_size)))
+	pointsize <- pointScale/(y_extent*1.1)
 
 	#0.5; shape is centered on  x,y; offset so it rests upon x, y-1
 	goff <- 0.5
@@ -175,7 +178,7 @@ mean_points <- function(ab, ell, noco=1){
 }
 
 #plot the fulcrum
-fulcrum<-function(ab, ell, y_extent=max(max(ab), 15), x_max=1
+fulcrum<-function(ab, ell, y_extent=max(max(combfun(ab)), 15), x_max=1
                   , x_min=1, fill_col="light_grey"
                   , base_size=24, noco=1, nbreaks=5, verbose=T){
     
@@ -269,17 +272,17 @@ ab<-c(20,8,5,4,2,1) #candidate for user's guide
 # rarity_series(ab=ab, 1:-1)
 
 # legend plot
-meanpoints<-data.frame(hght=c(-.1,0,.1), ell=c("l=-1", "l=0", "l=1"), meantype=c("  harmonic mean, l=-1", "  geometric mean, l=0", "  arithmetic mean, l=1") )
+meanpoints<-data.frame(hght=c(-1,0,1), ell=c("l=-1", "l=0", "l=1"), meantype=c(" harmonic mean \n     l=-1", " geometric mean \n      l=0", " arithmetic mean \n     l=1") )
 
 legend_for_app<-meanpoints %>% 
-    ggplot(aes(0, hght, color=ell))+
-    geom_point(size=4)+
-    geom_text(aes(label=meantype),hjust=0, size=8 )+ 
+    ggplot(aes( x=5*hght,y=c(0.5,0.5,0.5), color=ell))+
+    geom_point(size=3)+
+    geom_text(aes(label=meantype),hjust=0,vjust=1, size=6 )+ 
     # geom_point(data=data.frame(x=c(0,0), y=c(-0.3,0.3)), aes(x,y), color="white")+
     scale_color_brewer(type="qual", palette="Dark2",guide="none")+
     theme_void()+
-    theme(plot.margin=unit(c(-3,0,-3,0),"cm"))+
-    scale_y_continuous(expand=c(.4,.4), limits=c(-0.1, 0.1))+
-    scale_x_continuous(limits=c(0,9))
+    theme(plot.margin=unit(c(0,1,0,1),"cm"))+
+    scale_y_continuous(limits=c(0, 1))+
+    scale_x_continuous(limits=c(-7,10))
     
     

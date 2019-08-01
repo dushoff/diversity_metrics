@@ -10,11 +10,12 @@ ui <- fluidPage(
     sidebarLayout(
         
         # Sidebar panel for inputs ----
-        sidebarPanel(
+        sidebarPanel( 
+            uiOutput("myEqs")
             
             # Input: Slider for scaling exponent ell ----
-            sliderInput(inputId = "ell"
-                        , label = "scaling exponent \"ell\""
+            , sliderInput(inputId = "ell"
+                        , label = helpText("scaling exponent", em("l"))
                         , min = -3,
                         , max = 2
                         , value = 1
@@ -24,15 +25,16 @@ ui <- fluidPage(
                         , value= "20, 8, 5, 4, 2, 1")
             , checkboxInput(inputId="line"
                             , label="Plot stacks of individuals as a line segment. Check if difficult to distinguish columns; overplotting")
-            , plotOutput(outputId="legend4app")
             
         ),
         
         # Main panel for displaying outputs ----
         mainPanel(
-            
+            h3(textOutput(outputId="mean_rarity"))
             # Output: Balance plot ----
-            plotOutput(outputId = "rarityPlot")
+            , plotOutput(outputId = "rarityPlot")
+            #and a legend as another plot
+            , plotOutput(outputId="legend4app")
             
         )
     )
