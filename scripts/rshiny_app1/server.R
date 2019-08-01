@@ -30,7 +30,7 @@ server <- function(input, output, session) {
     })
     output$myEqs <- renderUI({
         withMathJax(
-            helpText( 'Hill diversity can be expressed as the mean species rarity: $$D=\\sum_{i=1}^S [p_i(1/p_i)^l]^\\frac{1}{l}$$')
+            helpText( 'Hill diversity can be expressed as the mean species rarity: $$D=[ \\sum_{i=1}^S p_i(1/p_i)^l]^\\frac{1}{l}$$')
             , helpText("where", em("S"),' = total number of species,')
             , helpText('$$p_i= \\frac{abundance_i}{\\sum_{i=1}^Sabundance_i}$$')
             , helpText('rarity = 1/', em("p"),",")
