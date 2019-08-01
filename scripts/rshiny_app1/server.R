@@ -31,8 +31,9 @@ server <- function(input, output, session) {
     output$myEqs <- renderUI({
         withMathJax(
             helpText( 'Hill diversity can be expressed as the mean species rarity: $$D=\\sum_{i=1}^S [p_i(1/p_i)^l]^\\frac{1}{l}$$')
-            , helpText("where", em("S"),' = total number of species')
-            , helpText('and $$p_i= \\frac{abundance_i}{\\sum_{i=1}^Sabundance_i}$$')
+            , helpText("where", em("S"),' = total number of species,')
+            , helpText('$$p_i= \\frac{abundance_i}{\\sum_{i=1}^Sabundance_i}$$')
+            , helpText('rarity = 1/', em("p"),",")
             , helpText("and", em("l"),' is the control parameter that scales the rarity axis.')
             , helpText('In this program,', em("D"),' is shown as the fulcrum of the lever. The arithmetic, geometric, and harmonic means are included as reference points for each scale.')
             )
