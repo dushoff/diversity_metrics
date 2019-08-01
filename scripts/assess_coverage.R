@@ -68,12 +68,12 @@ td<-function(mydat){
 ################################################################################################
 
 #set number of cores manually. This 64 is for running on Annotate after checking that no other big users with top
-nc<-36
+nc<-60
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 # one rep takes a long time on one fast core. I think estimateD might be the slow function. 
 nreps<-500
 maxi<-5 #max sample size=10^maxi
-
+maxi<-4.65 #good for haegdat
 
 
 assesscov<-function(mydat){future_map_dfr(1:nreps, function(reps){
@@ -107,6 +107,7 @@ map(c("mikedat", "haegdat"), function(dat){
   write.csv(assesscov(get(dat)), file=paste("data/",dat, "500.csv", sep=""), row.names=F)
   })
 
+write.csv(assesscov(haegdat), file="data/haegdat500.csv", row.names=F)
 #creates a list for the true differences, a dataframe for each dataset
 karr<-map(c("mikedat", "haegdat"), function(dat){
   td(get(dat))
