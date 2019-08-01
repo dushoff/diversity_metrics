@@ -5,8 +5,8 @@ account: mean-rarity
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 1061663
-bundleId: 2284009
+bundleId: 2284124
 url: https://mean-rarity.shinyapps.io/rshiny_app1/
-when: 1564680175.49876
+when: 1564682800.87181
 asMultiple: FALSE
 asStatic: FALSE
