@@ -10,11 +10,12 @@ ui <- fluidPage(
     sidebarLayout(
         
         # Sidebar panel for inputs ----
-        sidebarPanel(
+        sidebarPanel( 
+            uiOutput("myEqs")
             
             # Input: Slider for scaling exponent ell ----
-            sliderInput(inputId = "ell"
-                        , label = "scaling exponent \"ell\""
+            , sliderInput(inputId = "ell"
+                        , label = helpText("scaling exponent", em("l"))
                         , min = -3,
                         , max = 2
                         , value = 1
