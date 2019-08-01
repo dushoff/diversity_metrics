@@ -12,6 +12,8 @@ library(scales) # trans_new() is in the scales library
 
 ## think about squeezing when rarities aren't equal but are close s.t. boxes overlap... smart option that can calculate whether overlap occurs? Currently, have the lines=T option to plot species as lines if overlap is a problem (set by user)
 
+#quick function to add together identical values
+combfun<-function(x){x=x[order(x)]; y=unique(x)*as.numeric(table(x)); return (y)}
 
 #transformation and back-transformation functions
 pfun=function(x, pow){
@@ -79,10 +81,7 @@ base_plot <- function(abundance, pointScale
                       ){
     #0.0353 is approximate points to cm conversion (a little less than 3 pts per mm)
 
-    #14 is empirically derived scaling factor; but isn't quite right. 
-    # Seems like stuff below axis is about 2.5* height of 1 line of text
-    pointScale<-(14*(min(dev.size("cm"))/noco-(2.5*0.0353*base_size)))
-    pointsize <- pointScale/(y_extent*1.1)
+  
 
 	
     #make plotting data
@@ -91,7 +90,11 @@ base_plot <- function(abundance, pointScale
 		, rarity = sum(abundance)/abundance
 	)
 	rfrepeated <-fancy_rep(rf)
-	y_extent<-max(y_extent, max(rfrepeated$inds))
+	y_extent<-max(y_extent, max(combfun(abundance)))
+	#14 is empirically derived scaling factor; but isn't quite right. 
+	# Seems like stuff below axis is about 2.5* height of 1 line of text
+	pointScale<-(14*(min(dev.size("cm"))/noco-(2.5*0.0353*base_size)))
+	pointsize <- pointScale/(y_extent*1.1)
 
 	#0.5; shape is centered on  x,y; offset so it rests upon x, y-1
 	goff <- 0.5
@@ -175,7 +178,7 @@ mean_points <- function(ab, ell, noco=1){
 }
 
 #plot the fulcrum
-fulcrum<-function(ab, ell, y_extent=max(max(ab), 15), x_max=1
+fulcrum<-function(ab, ell, y_extent=max(max(combfun(ab)), 15), x_max=1
                   , x_min=1, fill_col="light_grey"
                   , base_size=24, noco=1, nbreaks=5, verbose=T){
     
