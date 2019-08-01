@@ -19,7 +19,7 @@ server <- function(input, output, session) {
   
     
     output$mean_rarity<-renderText({
-        paste("mean rarity = ",     dfun(as.numeric(unlist(strsplit(input$abundances,","))), input$ell), "; ell = ", input$ell, sep="")
+        paste("mean rarity = ",     signif(dfun(as.numeric(unlist(strsplit(input$abundances,","))), input$ell),3), "; ell = ", input$ell, sep="")
     })
     
     output$legend4app <- renderPlot({

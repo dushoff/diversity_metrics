@@ -25,15 +25,14 @@ ui <- fluidPage(
                         , value= "20, 8, 5, 4, 2, 1")
             , checkboxInput(inputId="line"
                             , label="Plot stacks of individuals as a line segment. Check if difficult to distinguish columns; overplotting")
-            , h3(textOutput(outputId="mean_rarity"))
             
         ),
         
         # Main panel for displaying outputs ----
         mainPanel(
-            
+            h3(textOutput(outputId="mean_rarity"))
             # Output: Balance plot ----
-            plotOutput(outputId = "rarityPlot")
+            , plotOutput(outputId = "rarityPlot")
             #and a legend as another plot
             , plotOutput(outputId="legend4app")
             
