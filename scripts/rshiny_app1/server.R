@@ -1,5 +1,7 @@
 # Define server logic required to draw a rarity plot ----
-checknumeric<-function(x){tryCatch(is.numeric(as.numeric(unlist(strsplit(x,",")))^2), error=function(e)e)}
+checknumeric<-function(x){x=ifelse(x == "", "1,a", gsub(" ","", x))
+    numtest=grepl("^[0-9]{1,}$", unlist(strsplit(x,",")))
+    return(sum(numtest)==length(numtest))}
 
 server <- function(input, output, session) {
     
@@ -21,18 +23,26 @@ server <- function(input, output, session) {
 #     input$abundances
 #     # as.numeric(unlist(strsplit(input$abundances,",")))
 #     })
+
     
     output$rarityPlot <- renderPlot({
-        # validate(checknumeric(input$ell))
+        
+        validate(
+            need(checknumeric(input$abundances), "abundances must be positive integers, separated by commas")
+        )
+        
         # validate(need((as.numeric(unlist(strsplit(input$abundances,",")))), "uhoh"))
-       
+        # validate(need(stringr::str_detect, "[^\\d]"), "check abundances are numeric"))
         rarity_plot(as.numeric(unlist(strsplit(input$abundances,","))), input$ell, lines=input$line)
         
     })
   
     
     output$mean_rarity<-renderText({
-        paste("mean rarity = ",     signif(dfun(as.numeric(unlist(strsplit(input$abundances,","))), input$ell),3), "; ell = ", input$ell, sep="")
+        validate(
+            need(checknumeric(input$abundances), "")
+        )
+        paste("mean rarity = ",     signif(dfun(as.numeric(unlist(strsplit(input$abundances,",")))[as.numeric(unlist(strsplit(input$abundances,",")))>0], input$ell),3), "; ell = ", input$ell,  sep="")
     })
     
     output$legend4app <- renderPlot({
