@@ -47,7 +47,7 @@ server <- function(input, output, session) {
             , helpText("where", em("S"),' = total number of species,')
             # , helpText('$$p_i= \\frac{abundance_i}{\\sum_{i=1}^Sabundance_i}$$')
             , helpText(em("p_i"), "= relative abundance of species", em("i"),",")
-            , helpText(em("r_i"), "= rarity  of species", em("i"), "= 1/", em("p_i"),",")
+            , helpText(em("r_i"), "= rarity  of species", em("i"), "; 1/", em("p_i"),",")
             , helpText("and", em("l"),' is the control parameter that scales the rarity axis.')
             , helpText('In this program,', em("D"),' is shown as the fulcrum of the lever. The arithmetic, geometric, and harmonic means are included as reference points for each scale.')
             )
