@@ -16,15 +16,16 @@ ui <- fluidPage(
             # Input: Slider for scaling exponent ell ----
             , sliderInput(inputId = "ell"
                         , label = helpText("scaling exponent", em("l"))
-                        , min = -3,
-                        , max = 2
+                        , min = -1,
+                        , max = 1
                         , value = 1
-                        , step = 0.02)
+                        , step = 0.2)
             , textInput(inputId="abundances"
                         , label="abundances, separated by commas"
                         , value= "20, 8, 5, 4, 2, 1")
             , checkboxInput(inputId="line"
                             , label="Plot stacks of individuals as a line segment. Check if difficult to distinguish columns; overplotting")
+            # , textOutput(outputId="warning")
             
         ),
         
