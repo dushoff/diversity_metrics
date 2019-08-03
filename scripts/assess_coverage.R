@@ -125,7 +125,7 @@ rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover
 
 #################
 # summarize differences; this is a little slow, maybe parellelize with nest() and future_map rather than using do.
-rarediffs<-rarefsl %>% 
+rarediffsm<-rarefsl %>% 
   gather(meth, esti, samp, chaoest, cover) %>%   
   group_by(l, size, reps,  meth) %>% 
   do(diff_btwn=data.frame(t(combn(.$comm, m = 2))) %>% unite(sitio) %>% pull(sitio)
@@ -135,11 +135,14 @@ rarediffs<-rarefsl %>%
 
 
 
+
 ## I think I fixed things so that k and rarediffs should have differences of the same sites in the same order for robust comparisons. 
 
 ##compute RMSE against true differences in diversity between comms
 rmses<-map_dfr(floor(10^seq(2,maxi,.05)), function(inds){
-  sqe<-rarediffs %>% filter(size==inds) %>% left_join(karr[[1]]) %>% mutate(sqdiff=(divdis-diffs)^2, method=meth)
+  (sqe<-rarediffsm %>% filter(size==inds) 
+    %>% left_join(karr[[1]], by=c("l"="m", "diff_btwn"="diff_btwn")) 
+    %>% mutate(sqdiff=(divdis-diffs)^2, method=meth))
   evalu<-sqe %>% group_by(l, method) %>% summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE)))
   return(data.frame(evalu, size=inds))
 })
@@ -161,6 +164,7 @@ rmses %>% ggplot(aes(size, rmse, color=method, shape=method))+
   labs(x="sample size (individuals)", y="RMSE in predicting pairwise differences \nin log(diversity) between communities")
 dev.off()
 
+rarediffsm %>% left_join(karr[[1]], by=c("l"="m", "diff_btwn"="diff_btwn")) %>% filter(l==-1) %>% ggplot(aes(size, diffs))+geom_point()+theme_classic()+facet_grid(meth~diff_btwn)+geom_hline(aes(yintercept=divdis))
 
 #############
 # find intersection
