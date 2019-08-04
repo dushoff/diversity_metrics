@@ -3,6 +3,9 @@ checknumeric<-function(x){x=ifelse(x == "", "1,a", gsub(" ","", x))
     numtest=grepl("^[0-9]{1,}$", unlist(strsplit(x,",")))
     return(sum(numtest)==length(numtest))}
 
+require(shiny)
+require(tidyverse)
+
 server <- function(input, output, session) {
     
    
