@@ -25,12 +25,16 @@ haegdat<-haegdat[,2:5]
 haegdat<-haegdat*2
 
 # #make communities. 3=1+2. 4=2+2. 1 more even. 
-comm1<-as.numeric(sim_sad(s_pool=120, n_sim=1e6, sad_coef=list(cv_abund=5)))
-comm2<-as.numeric(sim_sad(s_pool=120, n_sim=1e6, sad_coef=list(cv_abund=9)))
-comm3<-c(comm1, comm2)
-comm4<-(c(comm2, comm2))
+# comm1<-as.numeric(sim_sad(s_pool=120, n_sim=1e6, sad_coef=list(cv_abund=5)))
+# comm2<-as.numeric(sim_sad(s_pool=120, n_sim=1e6, sad_coef=list(cv_abund=9)))
+# comm3<-c(comm1, comm2)
+# comm4<-(c(comm2, comm2))
+# 
+# mikedat<-data.frame(comm1=c(comm1, rep(0,120)), comm2=c(comm2, rep(0,120)), comm3=comm3, comm4=comm4)
+# write.csv(mikedat, "data/mikedat.csv", row.names=F)
 
-mikedat<-data.frame(comm1=c(comm1, rep(0,120)), comm2=c(comm2, rep(0,120)), comm3=comm3, comm4=comm4)
+
+mikedat<-read.csv("data/mikedat.csv")
 
 # look at differences on log scale
 
@@ -56,7 +60,7 @@ td<-function(mydat){
   k<-map_dfr(c(-1,0,1), function(m){
     dists<-out %>% filter(l==m) %>% do(data.frame(divdis=combn(.$logdiv, 2, diff)))
     db<-unite(data.frame(t(combn(names(mydat),2))), db)[,1]
-    return(data.frame(dists, diff_btwn=db, m=m))
+    return(data.frame(dists, diff_btwn=db, l=m))
   
   })
   return(k)
@@ -69,7 +73,7 @@ td<-function(mydat){
 
 #set number of cores manually. This 64 is for running on Annotate after checking that no other big users with top
 nc<-60
-plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
+plan(strategy = multiprocess, workers = nc) #this is telling the computer to get ready for the future_ commands
 # one rep takes a long time on one fast core. I think estimateD might be the slow function. 
 nreps<-500
 maxi<-5 #max sample size=10^maxi
@@ -107,7 +111,7 @@ map(c("mikedat", "haegdat"), function(dat){
   write.csv(assesscov(get(dat)), file=paste("data/",dat, "500.csv", sep=""), row.names=F)
   })
 
-write.csv(assesscov(haegdat), file="data/haegdat500.csv", row.names=F)
+write.csv(assesscov(mikedat), file="data/mikedat500.csv", row.names=F)
 #creates a list for the true differences, a dataframe for each dataset
 karr<-map(c("mikedat", "haegdat"), function(dat){
   td(get(dat))
@@ -125,14 +129,22 @@ rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover
 
 #################
 # summarize differences; this is a little slow, maybe parellelize with nest() and future_map rather than using do.
+# actually parallelized with multidplyr. 
+
+clust<-new_cluster(nc) #this initiates a multidplyr cluster
+cluster_library(clust, "tidyverse") #this seems inefficient, but it has to load the package for each worker separately. Maybe furrr is doing this too but silently. Anwyays, it's maybe 5x faster when using 7 cores; that seems like a big improvement. 
+#It took about 6-10 minutes in series and 36 seconds this way. 
+start<-Sys.time()
 rarediffsm<-rarefsl %>% 
   gather(meth, esti, samp, chaoest, cover) %>%   
-  group_by(l, size, reps,  meth) %>% 
+  group_by(l, size, reps,  meth) %>%
+  partition(clust) %>% 
   do(diff_btwn=data.frame(t(combn(.$comm, m = 2))) %>% unite(sitio) %>% pull(sitio)
      , diffs=combn(.$esti, m=2, diff)
-     ) %>% 
-    unnest()
-
+  ) %>% 
+  collect() %>% 
+  unnest()
+took<-Sys.time()-start
 
 
 
@@ -141,7 +153,7 @@ rarediffsm<-rarefsl %>%
 ##compute RMSE against true differences in diversity between comms
 rmses<-map_dfr(floor(10^seq(2,maxi,.05)), function(inds){
   (sqe<-rarediffsm %>% filter(size==inds) 
-    %>% left_join(karr[[1]], by=c("l"="m", "diff_btwn"="diff_btwn")) 
+    %>% left_join(karr[[1]]) #by=c("l"="m", "diff_btwn"="diff_btwn") 
     %>% mutate(sqdiff=(divdis-diffs)^2, method=meth))
   evalu<-sqe %>% group_by(l, method) %>% summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE)))
   return(data.frame(evalu, size=inds))
@@ -168,11 +180,13 @@ rarediffsm %>% left_join(karr[[1]], by=c("l"="m", "diff_btwn"="diff_btwn")) %>% 
 
 #############
 # find intersection
-findint<-rmses %>% spread(method, rmse) %>%  group_by(hill, size) %>% mutate(chaowins=(samp-chaoest)>0) %>% filter(hill=="Richness")
+findint <- rmses %>% spread(method, rmse) %>%  group_by(hill, size) %>% mutate(chaowins = (samp-chaoest) > 0) %>% filter(hill == "Richness")
 View(findint)
 #crossing around 446
 
-rarefsl %>% filter(size==251) %>% ggplot(aes(coverage))+geom_histogram()+facet_wrap(~comm)
+rarefsl %>% filter(size == 251) %>% ggplot(aes(coverage)) +
+  geom_histogram() +
+  facet_wrap(~comm)
 
 ######### BASED ON THIS I HAVE NO IDEA WHAT'S GOING ON. MAYBE IT'S 90% COVERAGE THOUGH. 
 
