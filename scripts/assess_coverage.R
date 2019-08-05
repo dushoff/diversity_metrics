@@ -162,18 +162,19 @@ rmses<-map_dfr(floor(10^seq(2,maxi,.05)), function(inds){
 #just rename for human legibility
 rmses<-rmses %>% left_join(data.frame(l=c(-1,0,1), hill=c("Hill-Simpson", "Hill-Shannon", "Richness")))
 # set factor levels for plot ordering
-rmses$hill<-factor(rmses$hill, levels=c("Hill-Simpson", "Hill-Shannon", "Richness"))
+rmses$hill<-factor(rmses$hill, levels=c("empty1", "empty2", "Hill-Simpson", "Hill-Shannon", "Richness"))
 
 
 ## Show RMSE as a function of sample size for each hill number, each method with different color/point.
 pdf(file="figures/sample_a_lot_use_coverage.pdf")
 rmses %>% ggplot(aes(size, rmse, color=method, shape=method))+
-  geom_point(alpha=0.5, size=.75)+
-  geom_line(alpha=0.5, size=0.5)+
-  facet_wrap(~hill)+
-  scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
-  theme_classic()+
-  labs(x="sample size (individuals)", y="RMSE in predicting pairwise differences \nin log(diversity) between communities")
+    geom_point(alpha=0.5, size=.75)+
+    geom_line(alpha=0.5, size=0.5)+
+    facet_wrap(~hill)+
+    scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
+    theme_classic()+
+    scale_color_manual(values=c("#e7298a", "#66a61e", "#1b9e77"))+
+    labs(x="sample size (individuals)", y="RMSE in predicting pairwise differences \nin log(diversity) between communities")
 dev.off()
 
 rarediffsm %>% left_join(karr[[1]], by=c("l"="m", "diff_btwn"="diff_btwn")) %>% filter(l==-1) %>% ggplot(aes(size, diffs))+geom_point()+theme_classic()+facet_grid(meth~diff_btwn)+geom_hline(aes(yintercept=divdis))
