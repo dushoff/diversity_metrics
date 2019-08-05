@@ -4,7 +4,7 @@ checknumeric<-function(x){x=ifelse(x == "", "1,a", gsub(" ","", x))
     return(sum(numtest)==length(numtest))}
 
 require(shiny)
-require(tidyverse)
+source("balance.R")
 
 server <- function(input, output, session) {
     
@@ -50,7 +50,7 @@ server <- function(input, output, session) {
     
     output$legend4app <- renderPlot({
         
-        source("balance.R")
+        
         legend_for_app
         
     })
