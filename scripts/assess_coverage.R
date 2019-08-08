@@ -5,6 +5,8 @@ library(mobsim) #for simulating SADs with sim_sad
 library(furrr) #does parallelization
 library(iNEXT) # Chao's package for doing coverage etc.
 library(scales)
+library(multidplyr) #also does parallelization. I'm not sure it's the right way to go but leaving it for now
+library(viridis) # Dylan found new colorblind friendly colors
 source("scripts/helper_funs/estimation_funs.R")
 source("scripts/helper_funs/read_tcsv.R")
 
@@ -121,60 +123,79 @@ karr<-map(c("mikedat", "haegdat"), function(dat){
 
 
 #replaces diversities with log diversities
-rarefs<-read.csv("data/haegdat500.csv", stringsAsFactors = F)
-rarefs<-read.csv("data/mikedat500.csv", stringsAsFactors = F)
-
-rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover))
-
-
-#################
-# summarize differences; this is a little slow, maybe parellelize with nest() and future_map rather than using do.
-# actually parallelized with multidplyr. 
-
-clust<-new_cluster(nc) #this initiates a multidplyr cluster
-cluster_library(clust, "tidyverse") #this seems inefficient, but it has to load the package for each worker separately. Maybe furrr is doing this too but silently. Anwyays, it's maybe 5x faster when using 7 cores; that seems like a big improvement. 
-#It took about 6-10 minutes in series and 36 seconds this way. 
-start<-Sys.time()
-rarediffsm<-rarefsl %>% 
-  gather(meth, esti, samp, chaoest, cover) %>%   
-  group_by(l, size, reps,  meth) %>%
-  partition(clust) %>% 
-  do(diff_btwn=data.frame(t(combn(.$comm, m = 2))) %>% unite(sitio) %>% pull(sitio)
-     , diffs=combn(.$esti, m=2, diff)
-  ) %>% 
-  collect() %>% 
-  unnest()
-took<-Sys.time()-start
-
-
-
-## I think I fixed things so that k and rarediffs should have differences of the same sites in the same order for robust comparisons. 
-
-##compute RMSE against true differences in diversity between comms
-rmses<-map_dfr(floor(10^seq(2,maxi,.05)), function(inds){
-  (sqe<-rarediffsm %>% filter(size==inds) 
-    %>% left_join(karr[[1]]) #by=c("l"="m", "diff_btwn"="diff_btwn") 
-    %>% mutate(sqdiff=(divdis-diffs)^2, method=meth))
-  evalu<-sqe %>% group_by(l, method) %>% summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE)))
-  return(data.frame(evalu, size=inds))
-})
-
-#just rename for human legibility
-rmses<-rmses %>% left_join(data.frame(l=c(-1,0,1), hill=c("Hill-Simpson", "Hill-Shannon", "Richness")))
-# set factor levels for plot ordering
-rmses$hill<-factor(rmses$hill, levels=c("Hill-Simpson", "Hill-Shannon", "Richness"))
-
-
+empirical_SAD<-read.csv("data/haegdat500.csv", stringsAsFactors = F)
+parametric_SAD<-read.csv("data/mikedat500.csv", stringsAsFactors = F)
+rarefs<-bind_rows(empirical_SAD,parametric_SAD, .id="SAD")
+rarefs$SAD[rarefs$SAD=="1"]<-"empirical_SAD"
+rarefs$SAD[rarefs$SAD=="2"]<-"parametric_SAD"
+names(karr)<-c("parametric_SAD","empirical_SAD")
+karr<-map_dfr(karr, bind_rows, .id="SAD")
+#put cap on indiiduals at 10^4
+maxi<-4
+#takes about 7 mins like this with 7 cores
+no_cores_to_use<-7
+makeRmses<-function(rarefs){
+    rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover))
+    # indx<-ifelse(ds=="m", 1,2)
+    
+    #################
+    # summarize differences; this is a little slow, maybe parellelize with nest() and future_map rather than using do.
+    # actually parallelized with multidplyr. 
+    
+    clust<-new_cluster(no_cores_to_use) #this initiates a multidplyr cluster
+    cluster_library(clust, "tidyverse") #this seems inefficient, but it has to load the package for each worker separately. Maybe furrr is doing this too but silently. Anwyays, it's maybe 5x faster when using 7 cores; that seems like a big improvement. 
+    #It took about 6-10 minutes in series and 36 seconds this way. 
+    start<-Sys.time()
+    rarediffs<-rarefsl %>% 
+      gather(meth, esti, samp, chaoest, cover) %>%   
+      group_by(l, size, reps,  meth, SAD) %>%
+      partition(clust) %>% 
+      do(diff_btwn=data.frame(t(combn(.$comm, m = 2))) %>% unite(sitio) %>% pull(sitio)
+         , diffs=combn(.$esti, m=2, diff)
+      ) %>% 
+      collect() %>% 
+      unnest()
+    
+    took<-Sys.time()-start
+    print(took)
+    
+    
+    
+    ## I think I fixed things so that k and rarediffs should have differences of the same sites in the same order for robust comparisons. 
+    ##compute RMSE against true differences in diversity between comms
+    rmses<-map_dfr(floor(10^seq(2,maxi,.05)), function(inds){
+      (sqe<-rarediffs %>% filter(size==inds) 
+        %>% left_join(karr) #by=c("l"="m", "diff_btwn"="diff_btwn") 
+        %>% mutate(sqdiff=(divdis-diffs)^2, method=meth))
+      evalu<-sqe %>% group_by(l, method, SAD) %>% summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE)))
+      
+      return(data.frame(evalu, size=inds))
+    })
+    
+    #just rename for human legibility
+    rmses<-rmses %>% left_join(data.frame(l=c(-1,0,1), hill=c("Hill-Simpson", "Hill-Shannon", "Richness")))
+    # set factor levels for plot ordering
+    rmses$hill<-factor(rmses$hill, levels=c("Hill-Simpson", "Hill-Shannon", "Richness"))
+    return(rmses)
+}
+rmses<-makeRmses(rarefs)
+    
 ## Show RMSE as a function of sample size for each hill number, each method with different color/point.
-pdf(file="figures/sample_a_lot_use_coverage.pdf")
-rmses %>% ggplot(aes(size, rmse, color=method, shape=method))+
-    geom_point(alpha=0.5, size=.75)+
-    geom_line(alpha=0.5, size=0.5)+
-    facet_wrap(~hill)+
+# pdf(file="figures/sample_a_lot_use_coverage.pdf")
+rmses$method<-factor(rmses$method, levels=c("chaoest", "samp", "cover"), labels=c("asymptotic estimator", "size-based rarefaction", "coverage-based rarefaction"))
+assess_covPlot<-rmses %>% ggplot(aes(size, rmse, color=method, shape=method))+
+    geom_point(data=rmses %>% filter(size %in% floor(10^seq(2,4,0.2))),size=2)+
+    geom_line()+
+    facet_grid(SAD~hill)+
     scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
     theme_classic()+
-    scale_color_manual(values=c("#a6611a",  "#dfc27d", "#018571"))+
-    labs(x="sample size (individuals)", y="RMSE in predicting pairwise differences \nin log(diversity) between communities")
+    scale_color_viridis(discrete=T)+
+    # theme(guide_legend(title="standardization\nmethod"))+
+    labs(x="sample size (individuals)", y="RMSE in predicting pairwise differences \nin log(diversity) between communities", shape="standardization\nmethod", color="standardization\nmethod")#}
+    
+
+pdf(width=9, height=6, file="figures/why_coverage.pdf")
+assess_covPlot
 dev.off()
 
 rarediffsm %>% left_join(karr[[1]], by=c("l"="m", "diff_btwn"="diff_btwn")) %>% filter(l==-1) %>% ggplot(aes(size, diffs))+geom_point()+theme_classic()+facet_grid(meth~diff_btwn)+geom_hline(aes(yintercept=divdis))

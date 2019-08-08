@@ -15,7 +15,7 @@ ui <- fluidPage(
             
             # Input: Slider for scaling exponent ell ----
             , sliderInput(inputId = "ell"
-                        , label = helpText("scaling exponent", em("l"))
+                        , label = helpText("scaling exponent ℓ")
                         , min = -1,
                         , max = 1
                         , value = 1
@@ -31,7 +31,7 @@ ui <- fluidPage(
         
         # Main panel for displaying outputs ----
         mainPanel(
-            h3(textOutput(outputId="mean_rarity"))
+            h3(htmlOutput(outputId="mean_rarity"))
             # Output: Balance plot ----
             , plotOutput(outputId = "rarityPlot")
             #and a legend as another plot
