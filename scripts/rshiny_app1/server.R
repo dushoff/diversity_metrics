@@ -45,7 +45,8 @@ server <- function(input, output, session) {
         validate(
             need(checknumeric(input$abundances), "")
         )
-        HTML(paste("mean rarity = ",     signif(dfun(as.numeric(unlist(strsplit(input$abundances,",")))[as.numeric(unlist(strsplit(input$abundances,",")))>0], input$ell),3),sep=""), paste(", ℓ = ",  input$ell, sep=""))
+        HTML(paste("mean rarity = ",     signif(dfun(as.numeric(unlist(strsplit(input$abundances,",")))[as.numeric(unlist(strsplit(input$abundances,",")))>0], input$ell),3),sep=""), paste(", ℓ = ",  input$ell, sep=""), paste("total abundance = ")
+        ))
     })
     
     # output$legend4app <- renderPlot({
