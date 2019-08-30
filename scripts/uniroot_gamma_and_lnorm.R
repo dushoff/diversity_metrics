@@ -1,5 +1,7 @@
 # Generates a semi-parametric SAD based on richness, and simpson, and total abundance. Requires a bit of thought b/c function requires a "prior" for the "shape" parameter of either "gamma" or "lnorm." For gamma, seems like if it tries the a shape parameter too close to 0, it returns garbage in the form of ur_gamma(0)==-Inf.
 
+#returns a list. First element is SAD type and shape parameter. Second element is summary community info (total abundance, richness, shannon, simpson). Final element is abundance vector. ) abundances throw warning but not error. 
+
 source("scripts/helper_funs/estimation_funs.R")
 
 #define variables but also give them values for messing with
@@ -68,8 +70,9 @@ fit_SAD<-function(totAb=1e7, rich=50, simpson=40, int_lwr=0,int_uppr=1e9, dstr="
         if(sum(abus==0)>0) print("WARNING: you simulated species with 0 abundance")
         
         return(list("distribution_info"=c("distribution"=dstr, "fitted parameter"=fit_par$root)
+                    , "community_info"=c("richness"=rich, "Hill-Shannon"=shannon, "Hill-Simpson"=simpson, "total abundance"=totAb)
                     , "abundances"=abus
-                    , "diversities"=c("richness"=rich, "Hill-Shannon"=shannon, "Hill-Simpson"=simpson)
+                    
                    ))
         }
     )
