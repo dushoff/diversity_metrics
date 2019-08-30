@@ -1,6 +1,6 @@
 # Generates a semi-parametric SAD based on richness, and simpson, and total abundance. Requires a bit of thought b/c function requires a "prior" for the "shape" parameter of either "gamma" or "lnorm." For gamma, seems like if it tries the a shape parameter too close to 0, it returns garbage in the form of ur_gamma(0)==-Inf.
 
-#returns a list. First element is SAD type and shape parameter. Second element is summary community info (total abundance, richness, shannon, simpson). Final element is abundance vector. ) abundances throw warning but not error. 
+#returns a list. First element is SAD type and shape parameter. Second element is summary community info (total abundance, richness, shannon, simpson). Final element is abundance vector. 0 abundances throw warning but not error. 
 
 source("scripts/helper_funs/estimation_funs.R")
 
