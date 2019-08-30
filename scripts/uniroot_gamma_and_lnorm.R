@@ -29,28 +29,33 @@ ur_lognorm<-function(x,...){ ddiff=simpson-dfun(discrete_lnorm(rich, totAb, x), 
     return(ddiff)} #here x is arithmetic sd of lognormal.
 
 fit_SAD<-function(totAb=1e7, rich=50, simpson=40, int_lwr=0,int_uppr=1e9, dstr="lnorm"){
-    myerr<-NULL
-    if(dstr=="lnorm"){
-            fit_par=tryCatch(uniroot(ur_lognorm, lower=int_lwr, upper=int_uppr), error=function(e) message("ERROR: test int_lwr and int_uppr in ur_ function, output must have opposite signs"))
-            abus=tryCatch(discrete_lnorm(rich, totAb, fit_par$root), error=function(e) {message("did not fit param")
-                return(rep(100, length(rich)))}
-            )
-            
+    ifelse( !(dstr %in% c("lnorm", "gamma")), return("ERROR: dstr must be either `lnorm` or `gamma`"),
+        {if(dstr=="lnorm"){
+                fit_par=tryCatch(uniroot(ur_lognorm, lower=int_lwr, upper=int_uppr), error=function(e) message("ERROR: test int_lwr and int_uppr in ur_ function, output must have opposite signs"))
+                abus=tryCatch(discrete_lnorm(rich, totAb, fit_par$root), error=function(e) {message("did not fit param")
+                    return(rep(100, length(rich)))}
+                )
+                
         }
-   if(dstr=="gamma"){
-        fit_par=tryCatch(uniroot(ur_gamma, lower=int_lwr, upper=int_uppr), error=function(e) message("ERROR: test int_lwr and int_uppr in ur_ function, output must have opposite signs"))
-        abus=tryCatch(discrete_gamma(rich, totAb, fit_par$root), error=function(e) {message("did not fit param")
-                      return(rep(100, length(rich)))}
-                      )
-   }
-
-        
-    shannon=dfun(abus, 0)
-    return(list("distribution_info"=c("distribution"=dstr, "fitted parameter"=fit_par$root)
-                , "abundances"=abus
-                , "diversities"=c("richness"=rich, "Shannon-Hill"=shannon, "Simpson-Hill"=simpson)
-               ))
+        if(dstr=="gamma"){
+            fit_par=tryCatch(uniroot(ur_gamma, lower=int_lwr, upper=int_uppr), error=function(e) message("ERROR: test int_lwr and int_uppr in ur_ function, output must have opposite signs"))
+            abus=tryCatch(discrete_gamma(rich, totAb, fit_par$root), error=function(e) {
+                message("did not fit param")
+                return(rep(100, length(rich)))
+                }
+            )
+       }
+        shannon=dfun(abus, 0)
+        return(list("distribution_info"=c("distribution"=dstr, "fitted parameter"=fit_par$root)
+                    , "abundances"=abus
+                    , "diversities"=c("richness"=rich, "Shannon-Hill"=shannon, "Simpson-Hill"=simpson)
+                   ))
+        }
+    )
 }
 
-fit_SAD(dstr="lnorm", int_uppr=0.0001)    
-        
+#test function
+fit_SAD(dstr="lnorm")
+fit_SAD(dstr="nonsense")  
+fit_SAD(dstr="gamma")
+fit_SAD(dstr="gamma", int_lwr=1e-2)        
