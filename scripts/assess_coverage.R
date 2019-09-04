@@ -113,7 +113,7 @@ map(c("mikedat", "haegdat"), function(dat){
   write.csv(assesscov(get(dat)), file=paste("data/",dat, "500.csv", sep=""), row.names=F)
   })
 
-write.csv(assesscov(mikedat), file="data/mikedat500.csv", row.names=F)
+# write.csv(assesscov(mikedat), file="data/mikedat500.csv", row.names=F)
 #creates a list for the true differences, a dataframe for each dataset
 karr<-map(c("mikedat", "haegdat"), function(dat){
   td(get(dat))
@@ -166,8 +166,13 @@ makeRmses<-function(rarefs){
     rmses<-map_dfr(floor(10^seq(2,maxi,.05)), function(inds){
       (sqe<-rarediffs %>% filter(size==inds) 
         %>% left_join(karr) #by=c("l"="m", "diff_btwn"="diff_btwn") 
-        %>% mutate(sqdiff=(divdis-diffs)^2, method=meth))
-      evalu<-sqe %>% group_by(l, method, SAD) %>% summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE)))
+        %>% mutate(sqdiff=(divdis-diffs)^2, method=meth)
+        %>% mutate(rawdiff=divdis-diffs, method=meth))
+      evalu<-sqe %>% 
+        group_by(l, method, SAD) %>% 
+        summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE))
+                  , biascheck=mean(rawdiff, na.rm=T)
+                  )
       
       return(data.frame(evalu, size=inds))
     })
@@ -231,3 +236,10 @@ rarefs %>%
         theme_classic()
 dev.off()
 
+
+
+
+######################################
+# need to look at stuff and think about it here. not sure what files I saved. 
+md500<-read.csv("data/mikedat500.csv")
+head(md500)
