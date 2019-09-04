@@ -191,6 +191,36 @@ rmses<-makeRmses(rarefs)
 ## Show RMSE as a function of sample size for each hill number, each method with different color/point.
 # pdf(file="figures/sample_a_lot_use_coverage.pdf")
 rmses$method<-factor(rmses$method, levels=c("chaoest", "samp", "cover"), labels=c("asymptotic estimator", "size-based rarefaction", "coverage-based rarefaction"))
+
+
+#################
+#try to look at biase
+
+pdf(file="figures/bias_by_pair_and_size.pdf")
+rmses %>% filter(size %in% floor(10^seq(2,4,0.2))) %>% 
+  ggplot(aes(size, (exp(biascheck)-1)*100, color=method, shape=method))+
+  geom_hline(yintercept=0)+
+  geom_point(alpha=0.8, size=2)+
+  theme_classic()+
+  facet_grid(diff_btwn~hill)+
+  scale_color_viridis(discrete=T)+
+  labs(y="average % deviation from true diversity ratio between communities")+
+  scale_x_log10()
+dev.off()
+
+pdf(file="figures/RMS_bias.pdf")
+rmses %>% 
+  group_by(method, hill) %>% 
+  summarize(most_biased=(sqrt(mean(exp(biascheck)^2))-1)*100, ms_sd=sqrt(sd((biascheck)^2))) %>% 
+  ggplot(aes(method, most_biased, color=method, shape=method))+
+  geom_point(size=5)+
+  # geom_errorbar(aes(ymin=most_biased-1.96*ms_sd, ymax=most_biased+1.96*ms_sd))+
+  facet_wrap(~hill, nrow=3, scale="free")+
+  scale_color_viridis(discrete=T)+
+  labs(y="RMS % bias across community pairs and sample sizes")+
+  theme_classic()
+dev.off()
+
 assess_covPlot<-rmses %>% ggplot(aes(size, rmse, color=method, shape=method))+
     geom_point(data=rmses %>% filter(size %in% floor(10^seq(2,4,0.2))),size=2)+
     geom_line()+
