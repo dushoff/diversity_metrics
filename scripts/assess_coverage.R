@@ -167,12 +167,15 @@ makeRmses<-function(rarefs){
       (sqe<-rarediffs %>% filter(size==inds) 
         %>% left_join(karr) #by=c("l"="m", "diff_btwn"="diff_btwn") 
         %>% mutate(sqdiff=(divdis-diffs)^2, method=meth)
-        %>% mutate(rawdiff=divdis-diffs, method=meth))
+        %>% mutate(rawdiff=divdis-diffs)
+       )
+      
       evalu<-sqe %>% 
         group_by(l, method, SAD) %>% 
-        summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE))
-                  , biascheck=mean(rawdiff, na.rm=T)
-                  )
+        summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE))) %>% 
+        left_join(sqe) %>%  
+        group_by(l, diff_btwn, method, SAD) %>% 
+        summarize(biascheck=mean(rawdiff, na.rm=T))
       
       return(data.frame(evalu, size=inds))
     })
