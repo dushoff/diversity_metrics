@@ -47,6 +47,7 @@ SADs_list<-map(c("lnorm", "gamma"), function(distr){
   })
 })
 
+str()
 
 
 #quick summary to see how distributional assumption affects Shannon
@@ -159,16 +160,19 @@ trycheckingobs<-function(SAD){
   map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
     map_dfr(c(-1,0,1), function(ell){
           truemun<-truemu_inf(SAD$rel_abundances, size=size, reps=reps, l=ell)
-            future_map_dfr(1:reps, function(reps){obscp_inf(l=ell, size, SAD, truemun=truemun, B=Bnum)
+            map_dfr(1:reps, function(reps){obscp_inf(l=ell, size, SAD, truemun=truemun, B=Bnum)
             })
       })
   })
 }
 ##### apparently this was streamlined enough to store to a single .csv while running in parallel
 
-tic()
-trycheckingobs(fit_SAD())
-toc()
+
+future_map(1:length(flatten(flatten(SADs_list))), function(SAD){
+  write.csv(trycheckingobs(flatten(flatten(SADs_list))[[SAD]])
+            , file="data/fromR/trycheckingobs_with_without_mc.csv", row.names=F)
+  })
+
 # write.csv(trycheckingobs_R, file="data/big_richness_checkplot.csv", row.names=F)
 
 write.csv(trycheckingobs, file="data/fromR/trycheckingobs_with_without_mc.csv", row.names=F)
@@ -228,18 +232,19 @@ outerreps<-10
 
 #####################
 #uncomment to generate data for asymptotic diveristy checkplot/coverage for conceptual guide
-tic()
-map(SADs_list)
+
+map(1:length(flatten(flatten(SADs_list))), function(SAD){
   map(1:outerreps, function(x){
     ug_asy<-map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
         map_dfr(c(-1,0,1), function(l){
-            out<-checkplot_inf(SAD, l=l, inds=size, reps=reps)
+            out<-checkplot_inf(flatten(flatten(SADs_list))[[SAD]], l=l, inds=size, reps=reps)
         })
     })
     write.csv(ug_asy, paste("data/", sadind, "asy",  x, ".csv", sep="_"), row.names=F)
     # return(ug_asy)
   })
-(toc)
+})
+
 
 #######################################
 # extract data from files for use
@@ -565,34 +570,22 @@ dev.off()
 pdf(width=6,height=3, file="figures/comm3_standardized_just_150_750.pdf")
 par(mfrow=c(2,4), mar=c(2,2,2,0))
 lapply(c(150, 750), function(inds){
-<<<<<<< HEAD
-  lapply(c(-1,0,0.5,1), function(l){
-    options(scipen=5)
-    myhist("com3",inds=inds,l=l, var="standard")
-  })
-=======
+
     lapply(c(-1,0,0.5,1), function(l){
         options(scipen=5)
         myhist("com3",inds=inds,l=l, var="standard")
     })
->>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
+
 })
 dev.off()
 
 pdf(width=6,height=3, file="figures/comm3_checkplots_just_150_750.pdf")
 par(mfrow=c(2,4), mar=c(2,2,2,0))
 lapply(c(150, 750), function(inds){
-<<<<<<< HEAD
   lapply(c(-1,0,0.5,1), function(l){
     options(scipen=5)
     myhist("com3",inds=inds,l=l, var="checkplot")
   })
-=======
-    lapply(c(-1,0,0.5,1), function(l){
-        options(scipen=5)
-        myhist("com3",inds=inds,l=l, var="checkplot")
-    })
->>>>>>> f76a6dd99964fd78e2d7b0db789f856b57dfdb78
 })
 dev.off()
 
