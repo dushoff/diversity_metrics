@@ -147,18 +147,18 @@ Bt_prob_abu = function(x){
   f1 = sum(x==1)
   f2 = sum(x==2)
   #compute the coverage here
-  C = 1 - f1/n*ifelse(f2>0,(n-1)*f1/((n-1)*f1+2*f2),ifelse(f1>0,(n-1)*(f1-1)/((n-1)*(f1-1)+2),0))
+  C = 1 - f1/n*ifelse(f2>0,(n-1)*f1/((n-1)*f1+2*f2),ifelse(f1>0,(n-1)*(f1-1)/((n-1)*(f1-1)+2),0)) 
   #use coverage to define a weighting for observed frequencies... this is lambda_hat in Chao et al. 2013 and 2014 appendices explaining this bootstrapping procedure. I haven't quite wrapped my head around this yet. 
   #coverage deficit=p(next individual is a new species)=proportion of true community absent from sample
   # the denominator is the expected probability of observing all x if x/n=p 
-  W = (1-C)/sum(x/n*(1-x/n)^n)
+  W = max((1-C)/sum(x/n*(1-x/n)^n), 0, na.rm=T)
   
   #use that weighting here to get p.new for observed species in x
   p.new = x/n*(1-W*(1-x/n)^n)
   #then get number of species observed 0 times using chao1
-  f0 = ceiling(ifelse(f2>0,(n-1)/n*f1^2/(2*f2),(n-1)/n*f1*(f1-1)/2))
+  f0 = ceiling(ifelse(f2>0, (n-1)/n*f1^2/(2*f2),max((n-1)/n*f1*(f1-1)/2, 0, na.rm=T))) #edited to deal with case where f1, f2=0
   #assume that all unobserved have equal p, given by total coverage deficit divided by number of unobserved.
-  p0 = (1-C)/f0
+  p0 = max((1-C)/f0, 0, na.rm=T) #consider issues if p0==0
   #p.new includes estimated p's for the observed plus estimated p's for unobserved.
   p.new=c(p.new,rep(p0,f0))
   return(p.new)
@@ -584,6 +584,21 @@ checkchao<-function(x, B, l, truediv){ #, truemu_n
 #truemu computes the emprical average sample diveristy under sampling without replacement
 truemu<-function(comm, size, reps, l,...){
     sam<-replicate(reps, subsam(comm, size))
+    return(
+        mean(
+            apply(sam,2, function(x){dfun(x, l)})
+        )
+    )
+}
+sample_infinite<-function(commSAD, size){
+    namevec<-sample(1:length(commSAD), size=size, prob=commSAD, replace=T)
+    mysam <- unlist(lapply(1:length(commSAD), function(y){
+        length(which(namevec==y))}))#substample the whole community with # individuals=size)
+    return(mysam)}
+
+truemu_inf<-function(comm, size, reps, l,...){ #comm is abundance vector; size, reps, l all constants
+    sam<-replicate(reps, sample_infinite(comm, size=size))
+    
     return(
         mean(
             apply(sam,2, function(x){dfun(x, l)})
