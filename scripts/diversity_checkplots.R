@@ -37,14 +37,12 @@ select<-dplyr::select
 # com2<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=5)))
 # com3<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=10)))
 
-# simulate communities with fit_SAD
+# simulate communities with fit_SAD, basically isntantaneous
 
 SADs_list<-map(c("lnorm", "gamma"), function(distr){
-  if(distr=="lnorm"){int_lwr=0}
-  if(distr=="gamma"){int_lwr=0.1}
   map(c(100, 200), function(rich){
     map(c(.45,.55,.65,.75,.85), function(simp_Prop){
-      fit_SAD(totAb = 1e6, rich = rich, simpson = simp_Prop*rich, int_lwr = int_lwr, int_uppr = 1e9, dstr = distr)
+      fit_SAD(rich = rich, simpson = simp_Prop*rich, dstr = distr)
     })
   })
 })
@@ -61,7 +59,14 @@ see_Shannon <- map_dfr(SADs_list, function(dst){
 })
 
 #well, not much! But shannon is always higher with lnorm
-see_Shannon %>% ggplot(aes(as.numeric(as.character(Hill.Simpson))/as.numeric(as.character(richness)), as.numeric(as.character(Hill.Shannon)), color=distribution, shape=richness))+geom_point()+theme_classic()+scale_y_log10() +scale_x_log10()
+pdf("figures/Shannon_higher_with_lnorm.pdf")
+see_Shannon %>% 
+  ggplot(aes(as.numeric(as.character(Hill.Simpson))/as.numeric(as.character(richness))
+             , as.numeric(as.character(Hill.Shannon)), color=distribution, shape=richness))+
+    geom_point()+theme_classic()+scale_y_log10() +
+    scale_x_log10()+
+    labs(x="Hill-Simpson as fraction of richness", y="Hill-Shannon")
+dev.off()
 # pdf(height=2, width=6, file="figures/simssads.pdf")
 # par(mfrow=c(1,3))
 # plot(1:length(com1), com1, xlab="",  ylab="species abundance", type="line", ylim=c(0,26000))
