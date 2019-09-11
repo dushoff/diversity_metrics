@@ -41,7 +41,7 @@ select<-dplyr::select
 
 SADs_list<-map(c("lnorm", "gamma"), function(distr){
   map(c(100, 200), function(rich){
-    map(c(.45,.55,.65,.75,.85), function(simp_Prop){
+    map(c(.15,.25,.5,.75,.85), function(simp_Prop){
       fit_SAD(rich = rich, simpson = simp_Prop*rich, dstr = distr)
     })
   })
@@ -85,14 +85,14 @@ asab<-function(namevec){as.numeric(table(namevec))}
 #set up parallelization for large computations
 
 #set # cores
-nc<-6#per Rob's recommendation
+nc<-36#per Rob's recommendation
 
 
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 
 ########################
 # function to generate data for checkplots for fixed communities
-checkplot<-function(abs, B=2000, l, inds, reps){
+checkplot<-function(abs, B=Bnum, l, inds, reps){
   td<-dfun(abs, l) #compute true diversity
   #truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
   future_map_dfr(1:reps,function(x){
@@ -151,7 +151,7 @@ obscp<-function(l=l, size=size, dat=usersguide, B=2000, truemun=truemun...){
 
 #set number of reps
 reps<-5000
-Bnum<-2000
+Bnum<-200
 
 ####################
 #run this whole thing to get sample diversity checkplot-type info for sample diversity for a single community
