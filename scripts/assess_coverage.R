@@ -131,7 +131,7 @@ map(c("mikedat", "haegdat", "lowdat"), function(dat){
 karr<-map(c("mikedat", "haegdat","lowdat" ), function(dat){
   td(get(dat))
 })
-names(karr)<-c("parametric_SAD","empirical_SAD")
+names(karr)<-c("parametric_SAD","empirical_SAD", "small_SAD")
 karr<-map_dfr(karr, bind_rows, .id="SAD")
 
 
@@ -140,16 +140,15 @@ karr<-map_dfr(karr, bind_rows, .id="SAD")
 #replaces diversities with log diversities
 empirical_SAD<-read.csv("data/haegdat500.csv", stringsAsFactors = F)
 parametric_SAD<-read.csv("data/mikedat500.csv", stringsAsFactors = F)
-<<<<<<< HEAD
+
 small_SAD<-read.csv("data/lowdat500.csv", stringsAsFactors = F)
 
 rarefs<-bind_rows(empirical_SAD,parametric_SAD, small_SAD,.id="SAD")
 rarefs$SAD[rarefs$SAD=="1"]<-"empirical_SAD"
 rarefs$SAD[rarefs$SAD=="2"]<-"parametric_SAD"
 rarefs$SAD[rarefs$SAD=="3"]<-"small_SAD"
-names(karr)<-c("parametric_SAD","empirical_SAD", "small_SAD")
-karr<-map_dfr(karr, bind_rows, .id="SAD")
-=======
+
+
 #rarefs<-bind_rows(empirical_SAD,parametric_SAD, .id="SAD")
 rarefs<-map_dfr(c("empirical_SAD", "parametric_SAD"), function(dat){
   datr<-get(dat)
@@ -161,7 +160,6 @@ rarefs<-map_dfr(c("empirical_SAD", "parametric_SAD"), function(dat){
 rarefs$SAD[rarefs$SAD=="1"]<-"empirical_SAD"
 rarefs$SAD[rarefs$SAD=="2"]<-"parametric_SAD"
 
->>>>>>> 406afbeffb2eb3284fb5cc214e991dcdea5fd0d3
 #put cap on indiiduals at 10^4
 maxi<-4
 #takes about 7 mins like this with 7 cores
@@ -211,12 +209,8 @@ makeRmses<-function(rarefs){
         summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE))) %>% 
         left_join(sqe) %>%  
         group_by(l, diff_btwn, method, SAD, rmse) %>% 
-<<<<<<< HEAD
-        summarize(biascheck=mean(rawdiff, na.rm=T))
-=======
         summarize(biascheck=mean(rawdiff, na.rm=T), biasdir=mean(bias, na.rm=T))
->>>>>>> 406afbeffb2eb3284fb5cc214e991dcdea5fd0d3
-      
+
       return(data.frame(evalu, size=inds))
     })
     
@@ -226,10 +220,7 @@ makeRmses<-function(rarefs){
     rmses$hill<-factor(rmses$hill, levels=c("Hill-Simpson", "Hill-Shannon", "Richness"))
     return(rmses)
 }
-<<<<<<< HEAD
-rmses<-makeRmses(rarefs) #4.2 minutes
-    
-=======
+
 rmses<-makeRmses(rarefs)
 rmses
 
