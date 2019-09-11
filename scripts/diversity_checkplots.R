@@ -85,7 +85,7 @@ asab<-function(namevec){as.numeric(table(namevec))}
 #set up parallelization for large computations
 
 #set # cores
-nc<-36#per Rob's recommendation
+nc<-6#per Rob's recommendation
 
 
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
@@ -110,14 +110,14 @@ checkplot_inf<-function(SAD, B=2000, l, inds, reps){
   #truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
   future_map_dfr(1:reps,function(x){
     # obs<-subsam(abs, size=inds) #subsample true community within each replicate
-    namevec<-sample(1:length(SAD$rel_abundances), size=size, prob=SAD$rel_abundances, replace=T)
-    obs <- unlist(lapply(1:length(SAD$rel_abundances), function(y){
-      length(which(namevec==y))}))#substample the whole community with # individuals=size
+    
+    obs <- sample_infinite(SAD$rel_abundances,size=inds) #subsample the whole community with # individuals=size
     chaotile<-checkchao(obs, B, l, td) #then do B bootstrap samples for the augmented community based on that sample
     return(chaotile=data.frame(qtile=chaotile[1], truediv=chaotile[2], chaoest=chaotile[3], obsD=chaotile[4], l=l, inds=inds, reps=reps))
     
   })
 }
+
 
 
 #########################
@@ -150,7 +150,7 @@ obscp<-function(l=l, size=size, dat=usersguide, B=2000, truemun=truemun...){
 }
 
 #set number of reps
-reps<-5000
+reps<-500
 Bnum<-200
 
 ####################
@@ -166,8 +166,9 @@ trycheckingobs<-function(SAD){
 }
 ##### apparently this was streamlined enough to store to a single .csv while running in parallel
 
-
+tic()
 trycheckingobs(fit_SAD())
+toc()
 # write.csv(trycheckingobs_R, file="data/big_richness_checkplot.csv", row.names=F)
 
 write.csv(trycheckingobs, file="data/fromR/trycheckingobs_with_without_mc.csv", row.names=F)
@@ -227,15 +228,18 @@ outerreps<-10
 
 #####################
 #uncomment to generate data for asymptotic diveristy checkplot/coverage for conceptual guide
-
-map(1:outerreps, function(x){
-  ug_asy<-map_dfr(round(10^seq(2, 4, 0.25)), function(size){
-      map_dfr(c(-1,0,1), function(l){
-          out<-checkplot(abs=usersguide, l=l, inds=size, reps=reps)
-      })
+tic()
+map(SADs_list)
+  map(1:outerreps, function(x){
+    ug_asy<-map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
+        map_dfr(c(-1,0,1), function(l){
+            out<-checkplot_inf(SAD, l=l, inds=size, reps=reps)
+        })
+    })
+    write.csv(ug_asy, paste("data/", sadind, "asy",  x, ".csv", sep="_"), row.names=F)
+    # return(ug_asy)
   })
-  write.csv(ug_asy, paste("data/ug_asy",x, ".csv", sep="_"), row.names=F)
-})
+(toc)
 
 #######################################
 # extract data from files for use
