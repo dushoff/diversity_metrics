@@ -270,3 +270,26 @@ ab<-c(20,8,5,4,2,1) #candidate for user's guide
 # grid.arrange(p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p))
 
 # rarity_series(ab=ab, 1:-1)
+
+##############
+# RAD plot code
+radplot<-function(comm, maxrich=length(comm), maxab=max(comm), fill, shape=16){
+    comm<-comm[comm!=0]
+    rawrnk<-tibble(abund=comm, rnk=row_number(comm))
+    toplot<-rawrnk %>% 
+        mutate(x=-rnk-maxrich+max(rnk))
+    
+    f<-(toplot %>% ggplot(aes(x, abund, size))
+        +geom_point(shape=shape, color=fill, size=2)
+        +geom_line(color=fill)
+        + scale_x_continuous(limits=c(-maxrich, 0))
+        + scale_y_continuous(limits=c(0,maxab))
+        +theme_classic()
+        +ggtitle("              rank-abundance plot")
+        +theme(axis.text.x = element_text(color="white"), axis.text.y=element_text(colour="black")
+               , legend.position="none", text=element_text(size=12))
+        +labs(x="abundance rank", y="individuals")
+    ) 
+    return(f)
+    
+}

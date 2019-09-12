@@ -26,6 +26,7 @@ ui <- fluidPage(
             , checkboxInput(inputId="line"
                             , label="Plot stacks of individuals as a line segment. Check if difficult to distinguish columns; overplotting")
             # , textOutput(outputId="warning")
+            , plotOutput(outputId="RAD")
             
         ),
         
