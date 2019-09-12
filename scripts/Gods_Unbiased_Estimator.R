@@ -78,7 +78,7 @@ test_wacky<-left_join(test_wacky, truth)
 pdf("figures/Chao_rarity_estimator.pdf")
 test_wacky %>% gather(meth,esti, -c(1,2)) %>%
     ggplot(aes(size, esti, color=meth))+
-    geom_point(alpha=0.2)+
+    geom_point(alpha=0.02)+
     scale_x_log10()+
     scale_y_log10()+
     facet_wrap(~ell)+

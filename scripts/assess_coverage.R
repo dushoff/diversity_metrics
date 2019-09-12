@@ -36,7 +36,18 @@ haegdat<-haegdat*2
 # write.csv(mikedat, "data/mikedat.csv", row.names=F)
 
 
+#make a set of lower diversity communities
+# comm1<-as.numeric(sim_sad(s_pool=30, n_sim=1e6, sad_coef=list(cv_abund=5)))
+# comm2<-as.numeric(sim_sad(s_pool=30, n_sim=1e6, sad_coef=list(cv_abund=9)))
+# comm3<-c(comm1, comm2)
+# comm4<-(c(comm2, comm2))
+# 
+# lowdat<-data.frame(comm1=c(comm1, rep(0,30)), comm2=c(comm2, rep(0,30)), comm3=comm3, comm4=comm4)
+# 
+# write.csv(lowdat, "data/lowdat.csv", row.names=F)
+
 mikedat<-read.csv("data/mikedat.csv")
+lowdat<-read.csv("data/lowdat.csv")
 
 # look at differences on log scale
 
@@ -74,16 +85,17 @@ td<-function(mydat){
 ################################################################################################
 
 #set number of cores manually. This 64 is for running on Annotate after checking that no other big users with top
-nc<-60
+nc<-36
 plan(strategy = multiprocess, workers = nc) #this is telling the computer to get ready for the future_ commands
 # one rep takes a long time on one fast core. I think estimateD might be the slow function. 
-nreps<-500
-maxi<-5 #max sample size=10^maxi
+nreps<-1000
+# maxi<-5 #max sample size=10^maxi
+mini<-1.5
 maxi<-4.65 #good for haegdat
 
 
 assesscov<-function(mydat){future_map_dfr(1:nreps, function(reps){
-  map_dfr(floor(10^seq(2,maxi,.05)), function(inds){ #sample sizes
+  map_dfr(floor(10^seq(mini,maxi,.05)), function(inds){ #sample sizes
     mySeed<-1000*runif(1)
     # set.seed(mySeed)
     # set.seed(131.92345)
@@ -99,6 +111,7 @@ assesscov<-function(mydat){future_map_dfr(1:nreps, function(reps){
                                    , cover=covdivs[which(covdivs$site==com&covdivs$order==1-ell), "qD"] #this is diversity
                                    , coverage=covdivs[which(covdivs$site==com&covdivs$order==1-ell), "SC"] #this is coverage estimate
                                    , cov_size=covdivs[which(covdivs$site==com&covdivs$order==1-ell), "m"] #this is coverage estimate
+                                   , cov_size=covdivs[which(covdivs$site==com&covdivs$order==1-ell), "m"] #this is the size associated with that coverage estimate
                                    , l=ell, size=inds, comm=com, reps=reps) #not sure this error thing is necessary but seems conservative to keep it
 
                         , error=function(e) data.frame(samp=samp, chaoest=chaoest, cover=NA, coverage=NA, cov_size=NA, l=ell, size=inds, comm=com, reps=reps)))
@@ -109,15 +122,17 @@ assesscov<-function(mydat){future_map_dfr(1:nreps, function(reps){
 }
 
 # does each rarefaction using parallel set up above and writes data to disk
-map(c("mikedat", "haegdat"), function(dat){
-  write.csv(assesscov(get(dat)), file=paste("data/",dat, "500.csv", sep=""), row.names=F)
+map(c("mikedat", "haegdat", "lowdat"), function(dat){
+  write.csv(assesscov(get(dat)), file=paste("data/",dat, nreps, ".csv", sep=""), row.names=F)
   })
 
-write.csv(assesscov(mikedat), file="data/mikedat500.csv", row.names=F)
+# write.csv(assesscov(mikedat), file="data/mikedat500.csv", row.names=F)
 #creates a list for the true differences, a dataframe for each dataset
-karr<-map(c("mikedat", "haegdat"), function(dat){
+karr<-map(c("mikedat", "haegdat","lowdat" ), function(dat){
   td(get(dat))
 })
+names(karr)<-c("parametric_SAD","empirical_SAD", "small_SAD")
+karr<-map_dfr(karr, bind_rows, .id="SAD")
 
 
 
@@ -125,15 +140,30 @@ karr<-map(c("mikedat", "haegdat"), function(dat){
 #replaces diversities with log diversities
 empirical_SAD<-read.csv("data/haegdat500.csv", stringsAsFactors = F)
 parametric_SAD<-read.csv("data/mikedat500.csv", stringsAsFactors = F)
-rarefs<-bind_rows(empirical_SAD,parametric_SAD, .id="SAD")
+
+small_SAD<-read.csv("data/lowdat500.csv", stringsAsFactors = F)
+
+rarefs<-bind_rows(empirical_SAD,parametric_SAD, small_SAD,.id="SAD")
 rarefs$SAD[rarefs$SAD=="1"]<-"empirical_SAD"
 rarefs$SAD[rarefs$SAD=="2"]<-"parametric_SAD"
-names(karr)<-c("parametric_SAD","empirical_SAD")
-karr<-map_dfr(karr, bind_rows, .id="SAD")
+rarefs$SAD[rarefs$SAD=="3"]<-"small_SAD"
+
+
+#rarefs<-bind_rows(empirical_SAD,parametric_SAD, .id="SAD")
+rarefs<-map_dfr(c("empirical_SAD", "parametric_SAD"), function(dat){
+  datr<-get(dat)
+  datr$size<-as.factor(as.character(datr$size))
+  datr<-datr %>% dplyr::group_by(size, comm) %>% summarize(meancov=mean(cov_size), meanobs=mean(samp)) %>% group_by(size) %>% #filter(meancov==min(meancov)) %>% 
+    mutate(cRank=min_rank(meancov), dRank=min_rank(meanobs)) %>% select(size, comm, cRank, dRank) %>% right_join(datr)
+  return(datr)
+}, .id="SAD")
+rarefs$SAD[rarefs$SAD=="1"]<-"empirical_SAD"
+rarefs$SAD[rarefs$SAD=="2"]<-"parametric_SAD"
+
 #put cap on indiiduals at 10^4
 maxi<-4
 #takes about 7 mins like this with 7 cores
-no_cores_to_use<-7
+no_cores_to_use<-36
 makeRmses<-function(rarefs){
     rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover))
     # indx<-ifelse(ds=="m", 1,2)
@@ -152,6 +182,9 @@ makeRmses<-function(rarefs){
       partition(clust) %>% 
       do(diff_btwn=data.frame(t(combn(.$comm, m = 2))) %>% unite(sitio) %>% pull(sitio)
          , diffs=combn(.$esti, m=2, diff)
+         # , which(c(separate(sitio))==
+         , cDiff=combn(.$cov_size, m=2, diff)
+         
       ) %>% 
       collect() %>% 
       unnest()
@@ -163,12 +196,21 @@ makeRmses<-function(rarefs){
     
     ## I think I fixed things so that k and rarediffs should have differences of the same sites in the same order for robust comparisons. 
     ##compute RMSE against true differences in diversity between comms
-    rmses<-map_dfr(floor(10^seq(2,maxi,.05)), function(inds){
+    rmses<-future_map_dfr(floor(10^seq(mini,maxi,.05)), function(inds){
       (sqe<-rarediffs %>% filter(size==inds) 
         %>% left_join(karr) #by=c("l"="m", "diff_btwn"="diff_btwn") 
-        %>% mutate(sqdiff=(divdis-diffs)^2, method=meth))
-      evalu<-sqe %>% group_by(l, method, SAD) %>% summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE)))
+        %>% mutate(sqdiff=(divdis-diffs)^2, method=meth)
+        %>% mutate(rawdiff=divdis-diffs)
+        %>% mutate(bias=-1*sign(cDiff*diffs))
+       )
       
+      evalu<-sqe %>% 
+        group_by(l, method, SAD) %>% 
+        summarize(rmse=sqrt(mean(sqdiff, na.rm=TRUE))) %>% 
+        left_join(sqe) %>%  
+        group_by(l, diff_btwn, method, SAD, rmse) %>% 
+        summarize(biascheck=mean(rawdiff, na.rm=T), biasdir=mean(bias, na.rm=T))
+
       return(data.frame(evalu, size=inds))
     })
     
@@ -178,18 +220,101 @@ makeRmses<-function(rarefs){
     rmses$hill<-factor(rmses$hill, levels=c("Hill-Simpson", "Hill-Shannon", "Richness"))
     return(rmses)
 }
+
 rmses<-makeRmses(rarefs)
-    
+rmses
+
+pdf(file="figures/which_direction_for_bias.pdf")
+rmses %>%  
+  mutate(biascheck_correct=c("no", "maybe", "yes")[2-sign(biascheck*biasdir)]) %>% 
+  unite(BS, SAD,biascheck_correct) %>% 
+  mutate(BS=factor(BS, labels=c("No ", "Yes ", "No", "Yes"))) %>% 
+  filter(as.numeric(size)<500) %>% 
+  ggplot(aes(BS, abs(biascheck)))+
+    geom_jitter(width=0.25,height=0, alpha=0.8, aes(color=as.numeric(size)))+
+    theme_classic()+
+    facet_grid(method~hill)+
+    labs(x="bias sign predicted by which sample has lower coverage", y="magnitutde of bias")+
+    ylim(c(0,1)) +
+    geom_text(aes(y=.85, label=tot)
+            , data=(rmses %>%
+                      mutate(biascheck_correct=c("no", "maybe", "yes")[2-sign(biascheck*biasdir)]) %>%
+                      unite(BS, SAD,biascheck_correct) %>% 
+                      mutate(BS=factor(BS, labels=c("No ", "Yes ", "No", "Yes"))) %>% 
+                      filter(as.numeric(size)<500) %>%
+                      group_by(method, hill, BS) %>%
+                      summarize(tot=round(100*n()/84)))) +
+    guides(color=guide_legend("sample size \n(individuals)"))
+           #+
+  #theme(axis.text.x=element_text(angle=90))
+dev.off()
+
+
+View(rmses %>%  
+  mutate(biascheck_correct=c("no", "maybe", "yes")[2-sign(biascheck*biasdir)]) %>% 
+  unite(BS, SAD,biascheck_correct) %>% 
+  mutate(BS=factor(BS, labels=c("No", "Yes", "No", "Yes"))) %>% 
+  filter(as.numeric(size)<500) %>% 
+  group_by(diff_btwn, size, hill) %>% 
+  summarize(n_distinct(as.numeric(biascheck))))
+  
+
+
+rarefs$size<-as.character(rarefs$size)
+rmses$size<-as.character(rmses$size)
+OBs<-rmses%>% filter(sign(biascheck*biasdir)==-1, method=="samp", hill=="Richness") %>% left_join(rarefs)
+head(OBs)
+View(OBs)
+
+hist(rmses$biascheck)
+
+oddBallMeans<-OBs %>% separate(diff_btwn, c("a", "b")) %>% filter(comm==a|comm==b) %>% unite( diff_btwn, a,b) %>%  group_by(method, SAD, size, hill, comm, diff_btwn) %>% summarize_all(mean)
+
+View(oddBallMeans)
+OBs$diff_btwn
+View(oddBallMeans)
+>>>>>>> 406afbeffb2eb3284fb5cc214e991dcdea5fd0d3
 ## Show RMSE as a function of sample size for each hill number, each method with different color/point.
 # pdf(file="figures/sample_a_lot_use_coverage.pdf")
+# rmses$method<-c("asymptotic estimator", "coverage-based rarefaction", "size-based rarefaction")
 rmses$method<-factor(rmses$method, levels=c("chaoest", "samp", "cover"), labels=c("asymptotic estimator", "size-based rarefaction", "coverage-based rarefaction"))
+rmses
+#################
+#try to look at biase
+
+pdf(file="figures/bias_by_pair_and_size.pdf")
+rmses %>% filter(size %in% floor(10^seq(mini,4,0.2))) %>% 
+  ggplot(aes(size, (exp(biascheck)-1)*100, color=method, shape=method))+
+  geom_hline(yintercept=0)+
+  geom_point(alpha=0.8, size=2)+
+  theme_classic()+
+  facet_grid(diff_btwn~hill)+
+  scale_color_viridis(discrete=T)+
+  labs(y="average % deviation from true diversity ratio between communities")+
+  scale_x_log10()
+dev.off()
+
+pdf(file="figures/RMS_bias.pdf")
+rmses %>% 
+  group_by(method, hill) %>% 
+  summarize(most_biased=(sqrt(mean(exp(biascheck)^2))-1)*100, ms_sd=sqrt(sd((biascheck)^2))) %>% 
+  ggplot(aes(method, most_biased, color=method, shape=method))+
+  geom_point(size=5)+
+  # geom_errorbar(aes(ymin=most_biased-1.96*ms_sd, ymax=most_biased+1.96*ms_sd))+
+  facet_wrap(~hill, nrow=3, scale="free")+
+  scale_color_viridis(discrete=T)+
+  labs(y="RMS % bias across community pairs and sample sizes")+
+  theme_classic()
+dev.off()
+
 assess_covPlot<-rmses %>% ggplot(aes(size, rmse, color=method, shape=method))+
-    geom_point(data=rmses %>% filter(size %in% floor(10^seq(2,4,0.2))),size=2)+
+    geom_point(data=rmses %>% filter(size %in% floor(10^seq(mini,maxi,0.2))),size=2)+
     geom_line()+
     facet_grid(SAD~hill)+
-    scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
+    scale_x_log10(labels = trans_format("log10", math_format(10^.x)), limits=c(100,10000))+
     theme_classic()+
     scale_color_viridis(discrete=T)+
+    ylim(0,0.6)+
     # theme(guide_legend(title="standardization\nmethod"))+
     labs(x="sample size (individuals)", y="RMSE in predicting pairwise differences \nin log(diversity) between communities", shape="standardization\nmethod", color="standardization\nmethod")#}
     
@@ -231,3 +356,10 @@ rarefs %>%
         theme_classic()
 dev.off()
 
+
+
+
+######################################
+# need to look at stuff and think about it here. not sure what files I saved. 
+md500<-read.csv("data/mikedat500.csv")
+head(md500)

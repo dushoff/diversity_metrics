@@ -1,25 +1,11 @@
-### Hooks for the editor to set the default target
+## This is diversity_metrics 
+## makestuff/project.Makefile
+
 current: target
 -include target.mk
 
-##################################################################
-
-# make files
-
-Sources = Makefile README.md
-
-msrepo = https://github.com/dushoff
-ms = makestuff
-
+# include makestuff/perl.def
 Drop = ~/Dropbox
--include $(ms)/os.mk
-
-Sources += $(ms)
-$(ms)/%.mk: $(ms) $(ms)/Makefile ;
-$(ms)/Makefile:
-	git submodule update -i
-
-## Not part of make path now?
 Ignore += bibdir
 
 ##################################################################
@@ -100,8 +86,21 @@ library:
 
 ######################################################################
 
--include $(ms)/git.mk
--include $(ms)/visual.mk
+### Makestuff
+
+Sources += Makefile
+
+Ignore += makestuff
+msrepo = https://github.com/dushoff
+Makefile: makestuff/Makefile
+makestuff/Makefile:
+	git clone $(msrepo)/makestuff
+	ls $@
+
+-include makestuff/os.mk
+-include makestuff/git.mk
+-include makestuff/visual.mk
+-include makestuff/projdir.mk
 -include $(ms)/texdeps.mk
 -include $(ms)/autorefs.mk
 -include $(ms)/pandoc.mk
