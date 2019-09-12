@@ -47,7 +47,7 @@ SADs_list<-map(c("lnorm", "gamma"), function(distr){
   })
 })
 
-str()
+
 
 
 #quick summary to see how distributional assumption affects Shannon
@@ -86,7 +86,7 @@ asab<-function(namevec){as.numeric(table(namevec))}
 #set up parallelization for large computations
 
 #set # cores
-nc<-6#per Rob's recommendation
+nc<-20#per Rob's recommendation
 
 
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
@@ -151,7 +151,7 @@ obscp<-function(l=l, size=size, dat=usersguide, B=2000, truemun=truemun...){
 }
 
 #set number of reps
-reps<-500
+reps<-5000
 Bnum<-200
 
 ####################
@@ -170,7 +170,7 @@ trycheckingobs<-function(SAD){
 
 future_map(1:length(flatten(flatten(SADs_list))), function(SAD){
   write.csv(trycheckingobs(flatten(flatten(SADs_list))[[SAD]])
-            , file="data/fromR/trycheckingobs_with_without_mc.csv", row.names=F)
+            , file="data/fromR/trycheckingobs_SAD.csv", row.names=F)
   })
 
 # write.csv(trycheckingobs_R, file="data/big_richness_checkplot.csv", row.names=F)

@@ -83,12 +83,12 @@ fit_SAD<-function(totAb=1e7, rich=50, simpson=40, int_lwr=1e-4,int_uppr=1e2, dst
 }
 
 #test function
-fit_SAD(dstr="lnorm") #works
-fit_SAD(dstr="nonsense")  #gives custom error (though not as error message)
-fit_SAD(dstr="gamma") #works
-fit_SAD(dstr="lnorm", rich=50, simpson=90) #gives custom error (though not as error message)
-fit_SAD(dstr="lnorm", rich=50, simpson=2) #works
-fit_SAD(dstr="gamma", rich=50, simpson=2) #works
+# fit_SAD(dstr="lnorm") #works
+# fit_SAD(dstr="nonsense")  #gives custom error (though not as error message)
+# fit_SAD(dstr="gamma") #works
+# fit_SAD(dstr="lnorm", rich=50, simpson=90) #gives custom error (though not as error message)
+# fit_SAD(dstr="lnorm", rich=50, simpson=2) #works
+# fit_SAD(dstr="gamma", rich=50, simpson=2) #works
 
 
 
