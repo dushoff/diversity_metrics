@@ -170,7 +170,7 @@ trycheckingobs<-function(SAD){
 
 future_map(1:length(flatten(flatten(SADs_list))), function(SAD){
   write.csv(trycheckingobs(flatten(flatten(SADs_list))[[SAD]])
-            , file="data/fromR/trycheckingobs_SAD.csv", row.names=F)
+            , file=paste("data/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""), row.names=F)
   })
 
 # write.csv(trycheckingobs_R, file="data/big_richness_checkplot.csv", row.names=F)
