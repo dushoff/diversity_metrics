@@ -243,7 +243,7 @@ map(1:length(flatten(flatten(SADs_list))), function(SAD){
             out<-checkplot_inf(flatten(flatten(SADs_list))[[SAD]], l=l, inds=size, reps=reps)
         })
     })
-    write.csv(ug_asy, paste("data/", sadind, "asy",  x, ".csv", sep="_"), row.names=F)
+    write.csv(ug_asy, paste("data/SAD", SAD, "asy",  x, ".csv", sep="_"), row.names=F)
     # return(ug_asy)
   })
 })
