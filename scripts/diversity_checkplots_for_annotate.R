@@ -4,11 +4,11 @@
 #load functions and packages
 library(furrr)#parallelization
 source("scripts/helper_funs/uniroot_gamma_and_lnorm.R")
-source("scripts/helper_funs/prettify.R")
-library(scales)#trans_breaks
-# library(mobsim)#simulate communities
-library(cowplot) #sometimes nice stuff for multipanel ggplotting
-invlogit<-arm::invlogit
+# source("scripts/helper_funs/prettify.R")
+# library(scales)#trans_breaks
+# # library(mobsim)#simulate communities
+# library(cowplot) #sometimes nice stuff for multipanel ggplotting
+# invlogit<-arm::invlogit
 #library(vegan) # for fisherfit
 #library(MASS) # for fitdistr
 # library(scales) #for function muted
