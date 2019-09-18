@@ -208,7 +208,9 @@ rarity_plot <- function(ab, ell, means=-1:1, noco=1, lines=F, ...){
 		scale_plot(ab, ell, noco=noco, lines=lines,...) 
 		+ mean_points(ab, means, noco=noco)
 		+ fulcrum(ab, ell, noco=noco, ...)
-		+ scale_color_brewer(type="qual", palette="Dark2") 
+		+ scale_color_brewer(type="qual", palette="Set1")
+		# + scale_color_viridis_d(option="plasma")
+		# +scale_color_manual(values=c("#AA8E39", "#294F6D", "#4B2D73"))
 	)
 }
 
@@ -270,7 +272,11 @@ ab<-c(20,8,5,4,2,1) #candidate for user's guide
 # grid.arrange(p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p), p, omit_y(p), omit_y(p))
 
 # rarity_series(ab=ab, 1:-1)
-
+pdf(file="figures/rarity_plots_for_guide.pdf")
+rarity_plot(ab, 1)
+white_y(rarity_plot(ab,0))
+white_y(rarity_plot(ab,-1))
+dev.off()
 ##############
 # RAD plot code
 radplot<-function(comm, maxrich=length(comm), maxab=max(comm), fill, shape=16){

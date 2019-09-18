@@ -138,10 +138,10 @@ karr<-map_dfr(karr, bind_rows, .id="SAD")
 
 
 #replaces diversities with log diversities
-empirical_SAD<-read.csv("data/haegdat500.csv", stringsAsFactors = F)
-parametric_SAD<-read.csv("data/mikedat500.csv", stringsAsFactors = F)
+empirical_SAD<-read.csv("data/fromR/haegdat1000.csv", stringsAsFactors = F)
+parametric_SAD<-read.csv("data/fromR/mikedat1000.csv", stringsAsFactors = F)
 
-small_SAD<-read.csv("data/lowdat500.csv", stringsAsFactors = F)
+small_SAD<-read.csv("data/fromR/lowdat1000.csv", stringsAsFactors = F)
 
 rarefs<-bind_rows(empirical_SAD,parametric_SAD, small_SAD,.id="SAD")
 rarefs$SAD[rarefs$SAD=="1"]<-"empirical_SAD"
@@ -150,20 +150,23 @@ rarefs$SAD[rarefs$SAD=="3"]<-"small_SAD"
 
 
 #rarefs<-bind_rows(empirical_SAD,parametric_SAD, .id="SAD")
-rarefs<-map_dfr(c("empirical_SAD", "parametric_SAD"), function(dat){
+rarefs<- map_dfr(c("empirical_SAD", "small_SAD", "parametric_SAD"), function(dat){
   datr<-get(dat)
   datr$size<-as.factor(as.character(datr$size))
-  datr<-datr %>% dplyr::group_by(size, comm) %>% summarize(meancov=mean(cov_size), meanobs=mean(samp)) %>% group_by(size) %>% #filter(meancov==min(meancov)) %>% 
+  datr<-datr %>% group_by(size, comm) %>% summarize(meancov=mean(cov_size, na.rm=T), meanobs=mean(samp)) %>%  ungroup()%>% group_by(size) %>% #filter(meancov==min(meancov)) %>%
     mutate(cRank=min_rank(meancov), dRank=min_rank(meanobs)) %>% select(size, comm, cRank, dRank) %>% right_join(datr)
   return(datr)
 }, .id="SAD")
+
+
 rarefs$SAD[rarefs$SAD=="1"]<-"empirical_SAD"
-rarefs$SAD[rarefs$SAD=="2"]<-"parametric_SAD"
+rarefs$SAD[rarefs$SAD=="2"]<-"small_SAD"
+rarefs$SAD[rarefs$SAD=="3"]<-"parametric_SAD"
 
 #put cap on indiiduals at 10^4
 maxi<-4
 #takes about 7 mins like this with 7 cores
-no_cores_to_use<-36
+no_cores_to_use<-7
 makeRmses<-function(rarefs){
     rarefsl<-rarefs %>% mutate(chaoest=log(chaoest), samp=log(samp), cover=log(cover))
     # indx<-ifelse(ds=="m", 1,2)
@@ -314,7 +317,7 @@ assess_covPlot<-rmses %>% ggplot(aes(size, rmse, color=method, shape=method))+
     scale_x_log10(labels = trans_format("log10", math_format(10^.x)), limits=c(100,10000))+
     theme_classic()+
     scale_color_viridis(discrete=T)+
-    ylim(0,0.6)+
+    ylim(0,0.65)+
     # theme(guide_legend(title="standardization\nmethod"))+
     labs(x="sample size (individuals)", y="RMSE in predicting pairwise differences \nin log(diversity) between communities", shape="standardization\nmethod", color="standardization\nmethod")#}
     
