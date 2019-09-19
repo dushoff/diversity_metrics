@@ -178,6 +178,7 @@ future_map(1:length(flatten(flatten(SADs_list))), function(SAD){
 
 ##################################
 # read in data and make checkplot for sample diveristy
+<<<<<<< HEAD
 
 sample_div_cp<-future_map_dfr(1:20, function(SAD){
   newdf<-read.csv(file=paste("data/fromR/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""))
@@ -190,6 +191,14 @@ sample_div_cp<-future_map_dfr(1:20, function(SAD){
 #   return(data.frame(newdf, "SAD_index"=rep(SAD, length(newdf[,1]))))
 # })
 # write.csv(sample_div_cp, "data/fromR/sample_diversity_checkplots.csv", row.names=F)
+=======
+# trycheckingobs<-read.csv("data/fromR/trycheckingobs_with_without_mc.csv")
+sample_div_cp<-future_map_dfr(1:20, function(SAD){
+  newdf<-read.csv(file=paste("data/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""))
+  return(data.frame(newdf, "SAD_index"=rep(SAD, length(newdf[,1]))))
+})
+write.csv(sample_div_cp, "data/fromR/sample_diversity_checkplots.csv", row.names=F)
+>>>>>>> c31bd29873160bb2f7c5a0ae3540bca349285995
 
 sample_div_cp<-read.csv("data/fromR/sample_diversity_checkplots.csv")
 
@@ -293,6 +302,17 @@ head(getug)
 
 str(getug)
 # correct<-getug[seq(500, length(getug$l), by=500),]
+sdlogs<-getug %>% gather(etype, div, chaoest, obsD )%>% group_by(l, inds, SAD_ind, etype) %>% summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
+sdlogs
+plot(sdlogs$sdlog, sdlogs$cv)
+sdlogs %>%
+    filter(!is.na(l)) %>%  
+               ggplot(aes(inds, sdlog, color=etype))+
+    geom_point()+
+    facet_grid(l~SAD_ind)+
+    theme_classic()+scale_x_log10()
+#look at dslog of estimates
+
 
 pdf("figures/too_many_checkplots_asymptotic_diversity.pdf")
 map(1:40, function(SAD){
