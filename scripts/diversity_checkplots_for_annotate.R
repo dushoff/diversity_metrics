@@ -188,6 +188,9 @@ sample_div_cp<-future_map_dfr(1:20, function(SAD){
 head(sample_div_cp)
 
 sample_div_cp %>% filter(size==round(10^3.75), l==1, SAD_index==20)
+
+#compute sd_logs for these
+sample_div_cp %>% group_by(l, size, SAD_index) %>% summarize(sdlog=sd(log(obsD)))
 #####################
 #checkplot figure, not used in users guide, now does checkplot without mean correction. 
 # pdf(file="figures/empirical_checkplot1_nomc.pdf")
