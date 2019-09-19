@@ -178,9 +178,15 @@ future_map(1:length(flatten(flatten(SADs_list))), function(SAD){
 
 ##################################
 # read in data and make checkplot for sample diveristy
-# trycheckingobs<-read.csv("data/fromR/trycheckingobs_with_without_mc.csv")
-# sample_div_cp<-future_map_dfr(1:20, function(SAD){
+
+sample_div_cp<-future_map_dfr(1:20, function(SAD){
+  newdf<-read.csv(file=paste("data/fromR/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""))
+  return(data.frame(newdf, "SAD_index"=rep(SAD, length(newdf[,1]))))
+})
+
+# sdlogs<-future_map_dfr(1:20, function(SAD){
 #   newdf<-read.csv(file=paste("data/fromR/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""))
+#   newdf<-newdf  %>% group_by(l, size) %>% summarize(sdlog=sd(log(obsD)))
 #   return(data.frame(newdf, "SAD_index"=rep(SAD, length(newdf[,1]))))
 # })
 # write.csv(sample_div_cp, "data/fromR/sample_diversity_checkplots.csv", row.names=F)
