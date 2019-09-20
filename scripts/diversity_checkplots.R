@@ -166,30 +166,38 @@ trycheckingobs<-function(SAD){
 }
 ##### apparently this was streamlined enough to store to a single .csv while running in parallel
 
-
 future_map(1:length(flatten(flatten(SADs_list))), function(SAD){
-  write.csv(trycheckingobs(flatten(flatten(SADs_list))[[SAD]])
-            , file="data/fromR/trycheckingobs_SAD.csv", row.names=F)
-  })
+    write.csv(trycheckingobs(flatten(flatten(SADs_list))[[SAD]])
+              , file=paste("data/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""), row.names=F)
+})
 
 # write.csv(trycheckingobs_R, file="data/big_richness_checkplot.csv", row.names=F)
 
 # write.csv(trycheckingobs, file="data/fromR/trycheckingobs_with_without_mc.csv", row.names=F)
 
+
 ##################################
 # read in data and make checkplot for sample diveristy
 # trycheckingobs<-read.csv("data/fromR/trycheckingobs_with_without_mc.csv")
-sample_div_cp<-future_map_dfr(1:20, function(SAD){
-  newdf<-read.csv(file=paste("data/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""))
-  return(data.frame(newdf, "SAD_index"=rep(SAD, length(newdf[,1]))))
-})
-write.csv(sample_div_cp, "data/fromR/sample_diversity_checkplots.csv", row.names=F)
+# sample_div_cp<-future_map_dfr(1:20, function(SAD){
+#     newdf<-read.csv(, file=paste("data/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""))
+#     return(data.frame(newdf, "SAD_index"=rep(SAD, length(newdf[,1]))))
+# })
+# write.csv(sample_div_cp, "data/fromR/sample_diversity_checkplots.csv", row.names=F)
 
 sample_div_cp<-read.csv("data/fromR/sample_diversity_checkplots.csv")
 
 #compute sd_logs for these
-sample_div_cp %>% group_by(l, size, SAD_index) %>% summarize(sdlog=sd(log(obsD)))
-
+pdf("figures/variability_in_sample_diversity.pdf")
+sample_div_cp %>% 
+    group_by(l, size, SAD_index) %>% 
+    summarize(sdlog=sd(log(obsD))) %>% 
+    ggplot(aes(size, sdlog, color=factor(l), shape=factor(l)))+
+    geom_point()+
+    geom_line()+
+    scale_x_log10()+
+    facet_wrap(~SAD_index)+theme_classic()
+dev.off()
 ##################################
 # read in data and make checkplot for sample diveristy
 trycheckingobs<-read.csv("data/fromR/trycheckingobs_with_without_mc.csv")
@@ -295,12 +303,13 @@ sdlogs %>%
                ggplot(aes(inds, sdlog, color=etype))+
     geom_point()+
     facet_grid(l~SAD_ind)+
-    theme_classic()+scale_x_log10()
+    theme_classic()+scale_x_log10()+
+    geom_hline(yintercept=0.1)
 #look at dslog of estimates
 
 
 pdf("figures/too_many_checkplots_asymptotic_diversity.pdf")
-map(1:40, function(SAD){
+map(1:20, function(SAD){
   map(-1:1, function(ell){
     try(getug %>% filter(SAD_ind==SAD, l==ell) %>% 
       ggplot(aes(qtile))+
