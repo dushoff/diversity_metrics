@@ -166,10 +166,10 @@ trycheckingobs<-function(SAD){
 }
 ##### apparently this was streamlined enough to store to a single .csv while running in parallel
 
-future_map(1:length(flatten(flatten(SADs_list))), function(SAD){
-    write.csv(trycheckingobs(flatten(flatten(SADs_list))[[SAD]])
-              , file=paste("data/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""), row.names=F)
-})
+# future_map(1:length(flatten(flatten(SADs_list))), function(SAD){
+#     write.csv(trycheckingobs(flatten(flatten(SADs_list))[[SAD]])
+#               , file=paste("data/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""), row.names=F)
+# })
 
 # write.csv(trycheckingobs_R, file="data/big_richness_checkplot.csv", row.names=F)
 
@@ -179,11 +179,24 @@ future_map(1:length(flatten(flatten(SADs_list))), function(SAD){
 ##################################
 # read in data and make checkplot for sample diveristy
 # trycheckingobs<-read.csv("data/fromR/trycheckingobs_with_without_mc.csv")
+
+
+# trycheckingobs<-read.csv("data/fromR/trycheckingobs_with_without_mc.csv")
 # sample_div_cp<-future_map_dfr(1:20, function(SAD){
 #     newdf<-read.csv(, file=paste("data/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""))
 #     return(data.frame(newdf, "SAD_index"=rep(SAD, length(newdf[,1]))))
 # })
+
+
+# sample_div_cp<-future_map_dfr(1:20, function(SAD){
+#   newdf<-read.csv(file=paste("data/fromR/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""))
+#   return(data.frame(newdf, "SAD_index"=rep(SAD, length(newdf[,1]))))
+# })
+# 
+
 # write.csv(sample_div_cp, "data/fromR/sample_diversity_checkplots.csv", row.names=F)
+
+
 
 sample_div_cp<-read.csv("data/fromR/sample_diversity_checkplots.csv")
 
@@ -198,9 +211,6 @@ sample_div_cp %>%
     scale_x_log10()+
     facet_wrap(~SAD_index)+theme_classic()
 dev.off()
-##################################
-# read in data and make checkplot for sample diveristy
-trycheckingobs<-read.csv("data/fromR/trycheckingobs_with_without_mc.csv")
 
 #####################
 #checkplot figure, not used in users guide, now does checkplot without mean correction. 
@@ -501,50 +511,6 @@ quantile(brokelist[[1]][[1]][[1]]$chaoest,0.025)
 
 
 myhist<-function(comm, inds, l, var=c("chaoest", "standard", "checkplot")){
-<<<<<<< HEAD
-  x<-which(c("com1", "com2", "com3")==comm)
-  y<-which(c(150,300,750)==inds)
-  z<-which(c(-1,0,0.5,1)==l)
-  if(var=="standard"){
-    hist(scale(brokelist[[x]][[y]][[z]]$chaoest, scale=F)/mean(brokelist[[x]][[y]][[z]]$chaoest)
-         , xlab=NULL
-         , ylab=NULL
-         , main=NULL
-         , ylim=c(0,700000)
-         , xlim=c(-0.7,2.2)
-         #, xlab="standardized \n estimated diversity", ylab="frequency", main=paste(c("com1", "com2", "com3")[x],"inds=",c(150,300,750)[y], "l=", c(-1,0,0.5,1)[z])
-    )
-    abline(v=(mean(brokelist[[x]][[y]][[z]]$truediv)-mean(brokelist[[x]][[y]][[z]]$chaoest))/mean(brokelist[[x]][[y]][[z]]$chaoest), col="red")
-    abline(v=quantile(scale(brokelist[[x]][[y]][[z]]$chaoest, scale=F)/mean(brokelist[[x]][[y]][[z]]$chaoest), 0.975), col="blue")
-    abline(v=quantile(scale(brokelist[[x]][[y]][[z]]$chaoest, scale=F)/mean(brokelist[[x]][[y]][[z]]$chaoest), 0.025), col="blue")
-  }
-  if(var=="chaoest"){
-    hist(brokelist[[x]][[y]][[z]]$chaoest 
-         , xlab=NULL
-         , ylab=NULL
-         , main=NULL
-         , ylim=c(0,700000)
-         #,xlab="estimated diversity", ylab="frequency", main=paste(c("com1", "com2", "com3")[x],"inds=",c(150,300,750)[y], "l=", c(-1,0,0.5,1)[z])
-    )
-    abline(v=mean(brokelist[[x]][[y]][[z]]$truediv), col="red")
-    abline(v=quantile((brokelist[[x]][[y]][[z]]$chaoest), 0.975), col="blue")
-    abline(v=quantile((brokelist[[x]][[y]][[z]]$chaoest), 0.025), col="blue")
-  }
-  if(var=="checkplot"){
-    hist(brokelist[[x]][[y]][[z]]$qtile
-         , ylim=c(0,420000)
-         , xlab=NULL
-         , ylab=NULL
-         , main=NULL
-         # , xlab="nominal p-value", ylab="frequency"
-         # , main=paste(c("com1", "com2", "com3")[x]
-         #              ,"inds=",c(150,300,750)[y]
-         #              , "l=", c(-1,0,0.5,1)[z])
-    )
-    abline(h=62500, col="red")
-  }
-  
-=======
     x<-which(c("com1", "com2", "com3")==comm)
     y<-which(c(150,300,750)==inds)
     z<-which(c(-1,0,0.5,1)==l)
