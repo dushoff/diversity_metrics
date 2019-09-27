@@ -331,32 +331,30 @@ inds<-data.frame("l"=c(1,0,-1),
 
 
 
-###############################################
-# confirm enough reps to get observed mean and true mean to be the same here
-# checktruemu<-trycheckingobs %>% group_by(l, size) %>% summarize(tm=mean(truemu), om=mean(obsD))
-# checktruemu %>% ggplot(aes(tm, om))+geom_point()
 #################################################
 # this is asymptotic diversity for users guide
 
-#set reps to 500 but outerreps to 10 for efficient use of anotate
-reps<-500
-outerreps<-10
-nc<-36#per Rob's recommendation
-plan(strategy=multiprocess, workers=nc) 
-#####################
-#uncomment to generate data for asymptotic diveristy checkplot/coverage for conceptual guide
 
-map(1:length(flatten(flatten(SADs_list))), function(SAD){
-  map(1:outerreps, function(x){
-    ug_asy<-map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
-        map_dfr(c(-1,0,1), function(l){
-            out<-checkplot_inf(flatten(flatten(SADs_list))[[SAD]], l=l, inds=size, reps=reps)
-        })
-    })
-    write.csv(ug_asy, paste("data/SAD", SAD, "asy",  x, ".csv", sep="_"), row.names=F)
-    # return(ug_asy)
-  })
-})
+#####################
+#uncomment to generate data for asymptotic diveristy checkplot/ CI coverage
+
+# #set reps to 500 but outerreps to 10 for efficient use of anotate
+# reps<-500
+# outerreps<-10
+# nc<-36#per Rob's recommendation
+# plan(strategy=multiprocess, workers=nc) 
+
+# map(1:length(flatten(flatten(SADs_list))), function(SAD){
+#   map(1:outerreps, function(x){
+#     ug_asy<-map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
+#         map_dfr(c(-1,0,1), function(l){
+#             out<-checkplot_inf(flatten(flatten(SADs_list))[[SAD]], l=l, inds=size, reps=reps)
+#         })
+#     })
+#     write.csv(ug_asy, paste("data/SAD", SAD, "asy",  x, ".csv", sep="_"), row.names=F)
+#     # return(ug_asy)
+#   })
+# })
 
 
 #######################################
@@ -375,10 +373,7 @@ getug<-future_map_dfr(1:sad_list_length, function(x){
     
 })
 
-head(getug)
-
-str(getug)
-# correct<-getug[seq(500, length(getug$l), by=500),]
+#summarize SDlog(diversity)
 sdlogs<-getug %>% gather(etype, div, chaoest, obsD )%>% group_by(l, inds, SAD_ind, etype) %>% summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
 
 #figure for MS possibly, showing how this works for even and uneven comms 
@@ -423,14 +418,14 @@ sdlogs %>%
     # geom_hline(yintercept=0.1)+
   labs(x="sample size", y="SD of log(asymptotic estimator) under random sampling")
 dev.off()
-#look at dslog of estimates
+#look at SDlog of estimates
 
 
 pdf("figures/too_many_checkplots_asymptotic_diversity.pdf")
 map(1:20, function(SAD){
   map(-1:1, function(ell){
     try(getug %>% filter(SAD_ind==SAD, l==ell) %>% 
-      ggplot(aes(qtile))+
+      ggplot(aes(qtile/100))+
       geom_histogram()+
       theme_classic()+
       facet_wrap(~inds)+
