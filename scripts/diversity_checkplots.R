@@ -300,15 +300,22 @@ dev.off()
 
 pdf("figures/too_many_checkplots_sample_diversity_limited.pdf")
 # map(1:40, function(SAD){
-  map(-1:1, function(ell){
-    sample_div_cp %>% filter(SAD_index==16, l==ell, size %in% 10^c(2:5)) %>% 
-      ggplot(aes(chaotile_mc))+
+map(-1:1, function(ell){
+  map(1:4, function(SAD){
+    sample_div_cp %>% filter(SAD_index==c(1,5,11,15)[SAD], l==ell, size %in% round(10^seq(2, 4, .5))) %>% 
+      ggplot(aes(chaotile_mc/100))+
       geom_histogram()+
       theme_classic()+
       facet_wrap(~size)+
-      ggtitle(paste("checkplot for sample Hill diveristy, ell =",ell))
+      ggtitle(paste("checkplot for sample "
+                    , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell]
+                    ,"; "
+                    , c("lognormal; uneven","lognormal; even", "gamma; uneven", "gamma; even")[SAD] 
+                    , sep=""
+                    ))+
+      labs(x="p-value")
   })
-# })
+})
 
 dev.off()
 ####################################
@@ -434,8 +441,27 @@ map(1:20, function(SAD){
   })
 })
 dev.off()
+#########################
+# A few checkplots for asymptotic diversity
 
-
+pdf("figures/checkplots_asymptotic_limited.pdf")
+map(-1:1, function(ell){
+  map(1:4, function(SAD){
+    getug %>% filter(SAD_ind==c(1,5,11,15)[SAD], l==ell, inds %in% round(10^seq(2, 4, .5))) %>% 
+      ggplot(aes(qtile/100))+
+      geom_histogram()+
+      theme_classic()+
+      facet_wrap(~inds)+
+      ggtitle(paste("checkplot for asymptotic "
+                    , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell]
+                    ,"; "
+                    , c("lognormal; uneven","lognormal; even", "gamma; uneven", "gamma; even")[SAD] 
+                    , sep=""
+      ))+
+      labs(x="p-value")
+  })
+})
+dev.off()
 #############
 # make a few checkplots for draft
 pdf("figures/asymptotic_richness_checkplot.pdf")
