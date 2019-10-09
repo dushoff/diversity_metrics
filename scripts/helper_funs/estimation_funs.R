@@ -462,7 +462,7 @@ dfun<-function(ab, l){
 ### MR addition: simple communities to test doubling property
 # library(iNEXT)
 library(tidyverse)
-library(EntropyEstimation)
+# library(EntropyEstimation)
 #function to take an abundance vector and subsample to size
 subsam<-function(ab_vec, size=sum(ab_vec)){
   inds<-unlist(lapply(1:length(ab_vec), function(x){
@@ -481,12 +481,12 @@ subcom<-function(com, size){
   ))
 }
 
-Nielsen<-function(x){
-  w<-sum(x)
-  p<-x/sum(x)
-  d<-(w-1)^2/(sum(p^2)*(w+1)*(w-2)+3-2)
-  return(d)
-}
+# Nielsen<-function(x){
+#   w<-sum(x)
+#   p<-x/sum(x)
+#   d<-(w-1)^2/(sum(p^2)*(w+1)*(w-2)+3-2)
+#   return(d)
+# }
 
 #estimates hill with order q for each comm at each size in sequence
 raref<-function(from, to, by, comm,n=1, q){

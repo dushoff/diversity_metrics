@@ -151,7 +151,7 @@ obscp_inf <- function(l=l, size=size, SAD=SAD, B=2000, truemun=truemun...){
 # }
 
 #set number of reps
-reps<-5000
+reps<-5e3
 Bnum<-200
 
 ####################
@@ -181,7 +181,16 @@ future_map(1:length(flatten(flatten(SADs_list))), function(SAD){
 ##################################
 # read in data and make checkplot for sample diveristy
 # trycheckingobs<-read.csv("data/fromR/trycheckingobs_with_without_mc.csv")
+sample_div_cp<-future_map_dfr(1:20, function(SAD){
+  newdf<-read.csv(, file=paste("data/fromR/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""))
+  return(data.frame(newdf, "SAD_index"=rep(SAD, length(newdf[,1]))))
+})
+head(sample_div_cp)
 
+sample_div_cp %>% filter(size==round(10^3.75), l==1, SAD_index==20)
+
+#compute sd_logs for these
+sample_div_cp %>% group_by(l, size, SAD_index) %>% summarize(sdlog=sd(log(obsD)))
 #####################
 #checkplot figure, not used in users guide, now does checkplot without mean correction. 
 # pdf(file="figures/empirical_checkplot1_nomc.pdf")
@@ -192,7 +201,19 @@ future_map(1:length(flatten(flatten(SADs_list))), function(SAD){
 #         theme_classic()+
 #         facet_wrap(~size+l)
 # })
-# dev.off()
+pdf("figures/too_many_checkplots_sample_diversity.pdf")
+map(1:20, function(SAD){
+  map(-1:1, function(ell){
+    sample_div_cp %>% filter(SAD_index==SAD, l==ell) %>% 
+    ggplot(aes(chaotile_mc))+
+      geom_histogram()+
+      theme_classic()+
+      facet_wrap(~size)+
+      ggtitle(paste("SAD number", SAD, "ell =",ell))
+  })
+})
+  
+dev.off()
 # 
 # pdf(file="figures/do_richness_CI_ever_work.pdf")
 # trycheckingobs_R %>% 
