@@ -1,7 +1,7 @@
 ##### code, finally, to compare asymptotic and 3 ways of doing rarefaction. 
 
 library(tidyverse)
-library(mobsim) #for simulating SADs with sim_sad
+# library(mobsim) #for simulating SADs with sim_sad
 library(furrr) #does parallelization
 library(iNEXT) # Chao's package for doing coverage etc.
 library(scales)
@@ -11,46 +11,73 @@ source("scripts/helper_funs/estimation_funs.R")
 source("scripts/helper_funs/read_tcsv.R")
 
 
-#load microbial data used in Haegeman 2013
-
-haegdat <- read.tcsv("data/Haegeman_data.csv") 
-# deal with NAs added in previous line
-haegdat[is.na(haegdat)]<-0
-# #remove first sample, much smaller
-# haegdat<-haegdat[,-1]
-# #repeat, last is bad too, relatively
-# haegdat<-haegdat[,-8]
-#seems like we get crazy stuff if we use wildly incomparable things. So stick with the four soil communities, see if it works at all. 
-
-haegdat<-haegdat[,2:5]
-#try doubling haegdat values to get 100% coverage by definition
-haegdat<-haegdat*2
-
-# #make communities. 3=1+2. 4=2+2. 1 more even. 
-# comm1<-as.numeric(sim_sad(s_pool=120, n_sim=1e6, sad_coef=list(cv_abund=5)))
-# comm2<-as.numeric(sim_sad(s_pool=120, n_sim=1e6, sad_coef=list(cv_abund=9)))
-# comm3<-c(comm1, comm2)
-# comm4<-(c(comm2, comm2))
+# #load microbial data used in Haegeman 2013
 # 
-# mikedat<-data.frame(comm1=c(comm1, rep(0,120)), comm2=c(comm2, rep(0,120)), comm3=comm3, comm4=comm4)
-# write.csv(mikedat, "data/mikedat.csv", row.names=F)
-
-
-#make a set of lower diversity communities
-# comm1<-as.numeric(sim_sad(s_pool=30, n_sim=1e6, sad_coef=list(cv_abund=5)))
-# comm2<-as.numeric(sim_sad(s_pool=30, n_sim=1e6, sad_coef=list(cv_abund=9)))
-# comm3<-c(comm1, comm2)
-# comm4<-(c(comm2, comm2))
+# haegdat <- read.tcsv("data/Haegeman_data.csv") 
+# # deal with NAs added in previous line
+# haegdat[is.na(haegdat)]<-0
+# # #remove first sample, much smaller
+# # haegdat<-haegdat[,-1]
+# # #repeat, last is bad too, relatively
+# # haegdat<-haegdat[,-8]
+# #seems like we get crazy stuff if we use wildly incomparable things. So stick with the four soil communities, see if it works at all. 
 # 
-# lowdat<-data.frame(comm1=c(comm1, rep(0,30)), comm2=c(comm2, rep(0,30)), comm3=comm3, comm4=comm4)
+# haegdat<-haegdat[,2:5]
+# #try doubling haegdat values to get 100% coverage by definition
+# haegdat<-haegdat*2
 # 
-# write.csv(lowdat, "data/lowdat.csv", row.names=F)
-
-mikedat<-read.csv("data/mikedat.csv")
-lowdat<-read.csv("data/lowdat.csv")
-
+# # #make communities. 3=1+2. 4=2+2. 1 more even. 
+# # comm1<-as.numeric(sim_sad(s_pool=120, n_sim=1e6, sad_coef=list(cv_abund=5)))
+# # comm2<-as.numeric(sim_sad(s_pool=120, n_sim=1e6, sad_coef=list(cv_abund=9)))
+# # comm3<-c(comm1, comm2)
+# # comm4<-(c(comm2, comm2))
+# # 
+# # mikedat<-data.frame(comm1=c(comm1, rep(0,120)), comm2=c(comm2, rep(0,120)), comm3=comm3, comm4=comm4)
+# # write.csv(mikedat, "data/mikedat.csv", row.names=F)
+# 
+# 
+# #make a set of lower diversity communities
+# # comm1<-as.numeric(sim_sad(s_pool=30, n_sim=1e6, sad_coef=list(cv_abund=5)))
+# # comm2<-as.numeric(sim_sad(s_pool=30, n_sim=1e6, sad_coef=list(cv_abund=9)))
+# # comm3<-c(comm1, comm2)
+# # comm4<-(c(comm2, comm2))
+# # 
+# # lowdat<-data.frame(comm1=c(comm1, rep(0,30)), comm2=c(comm2, rep(0,30)), comm3=comm3, comm4=comm4)
+# # 
+# # write.csv(lowdat, "data/lowdat.csv", row.names=F)
+# 
+# mikedat<-read.csv("data/mikedat.csv")
+# lowdat<-read.csv("data/lowdat.csv")
+# 
 # look at differences on log scale
 
+
+###################################
+# simulate new comms and sample per checkplot paper; ish.
+
+SADs_list<-map(c("lnorm", "gamma"), function(distr){
+    map(c(.125,.25,.5), function(simp_Prop){
+      fit_SAD(rich = 50, simpson = simp_Prop*50, dstr = distr)
+    })
+})
+
+gettwo<-function(myrow, ind, target){
+  cSAD=c(target[[ind[myrow,1]]][[3]],target[[ind[myrow,2]]][[3]])
+}
+
+guideSADs<-map(SADs_list, function(distr){
+  
+  lits=map(distr, function(x){
+    littleSAD=x[[3]]
+  })
+  bigs=map(1:6, function(combo){
+    ind=combinations(3,2, repeats.allowed=T)
+    bigSAD=gettwo(combo, ind, distr)
+    return(bigSAD)})
+  return(flatten(list(lits, bigs)))
+})
+
+guideSADs
 #beware of using variables this way.. this loop was for comms 1-4
 # out<-map_dfr(1:4, function(comm){
 #     map_dfr(c(-1,0,1), function(l){
@@ -63,8 +90,9 @@ lowdat<-read.csv("data/lowdat.csv")
 
 td<-function(mydat){
   out<- map_dfr(c(-1,0,1), function(l){
-          map_dfr(names(mydat), function(comm){
-      data.frame(logdiv=log(dfun(mydat[,comm], l=l)), comm=comm, l=l)
+          map_dfr(1:length(mydat), function(comm){
+            data.frame(logdiv=log(dfun(as.numeric(unlist(mydat[[comm]])), l=l)), comm=comm, l=l)
+            # data.frame(logdiv=log(dfun(mydat[,comm], l=l)), comm=comm, l=l)
     })
   })
 
@@ -72,7 +100,7 @@ td<-function(mydat){
 
   k<-map_dfr(c(-1,0,1), function(m){
     dists<-out %>% filter(l==m) %>% do(data.frame(divdis=combn(.$logdiv, 2, diff)))
-    db<-unite(data.frame(t(combn(names(mydat),2))), db)[,1]
+    db<-unite(data.frame(t(combn(1:length(mydat),2))), db)[,1]
     return(data.frame(dists, diff_btwn=db, l=m))
   
   })
@@ -80,18 +108,21 @@ td<-function(mydat){
 }
 
 
+td(guideSADs[[1]])
 ################################################################################################
 ###### This is a giant routine that will take a long time and tons of compute resources ########
 ################################################################################################
 
 #set number of cores manually. This 64 is for running on Annotate after checking that no other big users with top
-nc<-36
+nc<-42
 plan(strategy = multiprocess, workers = nc) #this is telling the computer to get ready for the future_ commands
 # one rep takes a long time on one fast core. I think estimateD might be the slow function. 
-nreps<-1000
+nreps<-200
 # maxi<-5 #max sample size=10^maxi
 mini<-1.5
-maxi<-4.65 #good for haegdat
+maxi<-4.5
+
+
 
 
 assesscov<-function(mydat){future_map_dfr(1:nreps, function(reps){
@@ -100,10 +131,10 @@ assesscov<-function(mydat){future_map_dfr(1:nreps, function(reps){
     # set.seed(mySeed)
     # set.seed(131.92345)
     # inds<-223
-    rare<-lapply(names(mydat), function(com){subsam(mydat[,com], inds)}) #rarefy each community
-    names(rare)<-names(mydat)
+    rare<-lapply(1:length(mydat), function(com){sample_infinite(mydat[[com]], inds)}) #rarefy each community
+    names(rare)<-com
     covdivs<-tryCatch(estimateD(rare, base="coverage"), error=function(e) data.frame(site=rep(names(mydat),3), order=rep(c(-1,0,1), length(mydat)), qD=rep(mySeed, 3*length(mydat)), SC=rep(mySeed, 3*length(mydat)))) #use iNEXT::estimateD to compute expected Hill diversities for equal coverage
-    map_dfr(names(mydat), function(com){ #then loop over communities again, b/c going to return one row for each combination of sample size, community, hill exponent
+    map_dfr(1:length(mydat), function(com){ #then loop over communities again, b/c going to return one row for each combination of sample size, community, hill exponent
       map_dfr(c(-1,0,1), function(ell){ #hill exponents
         samp<-dfun(rare[[com]], l=ell) #compute sample diversity
         chaoest<-tryCatch(Chao_Hill_abu(rare[[com]], q=1-ell), error=function(e) "whoops") #compute asymptotic estimator; Chao uses q=1-l
@@ -122,10 +153,12 @@ assesscov<-function(mydat){future_map_dfr(1:nreps, function(reps){
 }
 
 # does each rarefaction using parallel set up above and writes data to disk
-map(c("mikedat", "haegdat", "lowdat"), function(dat){
-  write.csv(assesscov(get(dat)), file=paste("data/",dat, nreps, ".csv", sep=""), row.names=F)
-  })
-
+# map(c("mikedat", "haegdat", "lowdat"), function(dat){
+#   write.csv(assesscov(get(dat)), file=paste("data/",dat, nreps, ".csv", sep=""), row.names=F)
+#   })
+map(1:2, function(dist){
+  write.csv(assesscov(guideSADs[[1]]), file=paste("data/", c("lnorm", "gamma")[dist], ".csv", sep=""), row.names=F)
+})
 # write.csv(assesscov(mikedat), file="data/mikedat500.csv", row.names=F)
 #creates a list for the true differences, a dataframe for each dataset
 karr<-map(c("mikedat", "haegdat","lowdat" ), function(dat){

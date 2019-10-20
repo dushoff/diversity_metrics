@@ -76,6 +76,7 @@ myabs<-map_dfr(flatten(flatten(SADs_list)), function(x)data.frame(ab=x$rel_abund
 
 remsub <- function(variable, value){
   return(gsub("_"," ",value))}
+
 pdf("figures/RAD_for_extreme_SADs_rich_100.pdf")
 myabs %>% left_join(data.frame(
   SAD=as.character(1:20)
@@ -582,10 +583,57 @@ comb_cov %>% mutate(conserv=log(outside/(1-outside))) %>%
 dev.off()
 
 
+2^15
+
+##########
+# generate comms with 3 spp
+nsamp<-5e2
+maxr<-24
+
+nc<-12
+R_FUTURE_FORK_ENABLE<-T
+
+plan(strategy=multiprocess, workers=nc)
+library(tictoc)
+tic()
+myres<-future_map_dfr(1:maxr, function(rep){
+  map_dfr(1:100, function(irep){
+    A<-runif(1, 1/3, 1)
+    B<-runif(1, (1-A)/2, 1-A)
+    C<-1-A-B
+    map_dfr(2^c(2:15), function(inds){
+      mysams<-replicate(nsamp, sample_infinite(c(A,B,C), size=inds))
+      sam_shan<-sd(log(unlist(apply(mysams, MARGIN=2, FUN=function(x){dfun(x, 0)}))), na.rm=T)
+      sam_sim<-sd(log(unlist(apply(mysams, MARGIN=2, FUN=function(x){dfun(x, -1)}))), na.rm=T)
+      return(data.frame(inds, sam_shan, sam_sim, A, B, C))
+    })
+  })
+})
+toc()
+
+myres<-myres %>% rowwise(.) %>% 
+  mutate(low=min(c(A,B,C)), mid=median(c(A,B,C)), high=max(c(A,B,C)), rulebreaker=sam_shan>sam_sim
+         , Hill.Shannon=dfun(c(A,B,C),0), Hill.Simpson=dfun(c(A,B,C),-1))
 
 
+myres %>% ggplot(aes(Hill.Shannon, Hill.Simpson, color=rulebreaker, shape=rulebreaker))+
+  geom_point(alpha=0.02)+
+  theme_classic()
 
+pdf("figures/better_variability_plot.pdf")
+myres %>% 
+  left_join(myres %>% 
+              group_by(low, mid) %>% 
+              summarize(rb=sum(rulebreaker), rf=sum(!rulebreaker), purity=max(c(rb, rf))/14)) %>% 
+  ggplot(aes(low/mid, mid/high, color=7.5-rf, shape=rulebreaker))+
+  geom_point(alpha=0.05, size=3)+
+  scale_color_gradient2()+
+  guides(color=guide_colorbar("tendency to break the rules"))+
+  theme_classic()
+  
 
+dev.off()
 
+myres %>% ggplot(aes(inds, fill=rulebreaker))+geom_histogram(alpha=0.2, position="dodge")
 
-
+?guides
