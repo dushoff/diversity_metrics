@@ -8,13 +8,14 @@ library(iNEXT)
 fullcomm<-fit_SAD(rich=100, simpson=20)
 
 #get each sample size 5k times
-nc<-55
+nc<-7
 plan(strategy = multiprocess, workers = nc)
 
-reps<-5000
+reps<-500
+SS<-200
 somedata_to_think_about<-future_map_dfr(1:reps, function(rep){
-    map_dfr(floor(10^seq(1.5,4,0.1)), function(SS){
+    # map_dfr(floor(10^seq(1.5,4,0.1)), function(SS){
         data.frame(SS=SS, estimateD(sample_infinite(fullcomm[[3]], SS), base="coverage", level=.75))
     })
-})
+
 
