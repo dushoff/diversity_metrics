@@ -213,11 +213,13 @@ trycheckingobs<-function(SAD){
 
 
 # trycheckingobs<-read.csv("data/fromR/trycheckingobs_with_without_mc.csv")
-# sample_div_cp<-future_map_dfr(1:20, function(SAD){
-#     newdf<-read.csv(, file=paste("data/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""))
-#     return(data.frame(newdf, "SAD_index"=rep(SAD, length(newdf[,1]))))
-# })
+sample_div_cp<-future_map_dfr(1:20, function(SAD){
+    newdf<-read.csv(, file=paste("data/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""))
+    return(data.frame(newdf, "SAD_index"=rep(SAD, length(newdf[,1]))))
+})
 
+sample_div_cp %>% filter(size==562) %>% ggplot(aes(obsD))+geom_density()+facet_grid(SAD_index~l)
+unique(sample_div_cp$size)
 
 # sample_div_cp<-future_map_dfr(1:20, function(SAD){
 #   newdf<-read.csv(file=paste("data/fromR/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""))
@@ -228,9 +230,9 @@ trycheckingobs<-function(SAD){
 # write.csv(sample_div_cp, "data/fromR/sample_diversity_checkplots.csv", row.names=F)
 
 
-
-sample_div_cp<-read.csv("data/fromR/sample_diversity_checkplots.csv")
-
+# sample_div_cp<-read.csv("data/fromR/trycheckingobs_SAD_3.csv")
+# sample_div_cp<-read.csv("data/fromR/sample_diversity_checkplots.csv")
+head(sample_div_cp)
 #compute sd_logs for these
 pdf("figures/variability_in_sample_diversity_extremes.pdf")
 sample_div_cp %>% 
@@ -334,11 +336,11 @@ inds<-data.frame("l"=c(1,0,-1),
                  )
 
 # tc<-left_join(tvcov, inds)
+tc<-sample_div_cp %>% group_by(l, size, SAD_index) %>% summarize(outside=1-(sum(chaotile_mc>97.5)+sum(chaotile_mc<2.5))/(5000)) %>% left_join(inds)
 
+tc
 
-
-
-
+min(tc$outside)
 #################################################
 # this is asymptotic diversity for users guide
 
@@ -544,14 +546,14 @@ getug %>% filter(SAD_ind==5, l==-1, inds %in% 10^c(2:5)) %>%
 dev.off()
 
 
-asycov<-getug%>% 
-    group_by(l, inds, SAD_ind) %>% 
+asycov<-getug%>% filter(SAD_ind==7) %>% 
+    group_by(l, inds) %>% 
     summarize(outside=1-(sum(qtile>97.5)+sum(qtile<2.5))/(5000)) %>% left_join(inds)
 
 
 ###############################
 # combine sample and saymptotic to make a single multi-panel graph 
-comb_cov<-bind_rows("sample diversity"=tc %>% rename(inds=size) %>% filter(inds<10^4.2), "asymptotic diversity"=asycov, .id="esttype" )
+comb_cov<-bind_rows("sample diversity"=tc %>% filter(SAD_index==7) %>% rename(inds=size), "asymptotic diversity"=asycov, .id="esttype" )
 #code to generate plot
 #to figure out y-axis breaks:  prettify(trans_breaks(arm::logit, invlogit, n=15)(c(0.5,0.9999999)))
 
@@ -559,7 +561,8 @@ comb_cov<-bind_rows("sample diversity"=tc %>% rename(inds=size) %>% filter(inds<
 # figure for Users guide to show statistical coverage for asymptotic estimators and also sample diveristy CIs
 pdf(file="figures/CI_coverage_guide.pdf", height=6, width=6) #
 
-comb_cov %>% mutate(conserv=log(outside/(1-outside))) %>% 
+comb_cov %>% filter(inds<=10^4) %>% 
+    mutate(conserv=log(outside/(1-outside))) %>% 
     ggplot(aes(inds, outside, color=conserv, shape=esttype))+
     geom_point(size=2)+
 
@@ -567,7 +570,7 @@ comb_cov %>% mutate(conserv=log(outside/(1-outside))) %>%
     facet_grid(divind~esttype, switch="y" )+#strip.position=NULL
     theme_classic()+
     scale_shape_manual(values=c(17,15))+
-    scale_color_gradient2(low="red",mid="grey", high="blue", limits=c(-.5,5), midpoint=2.944, breaks=c(-.5,5), labels=c(" over-confident",  " conservative"))+
+    scale_color_gradient2(low="red",mid="grey55", high="cyan", limits=c(-.6,6), midpoint=2.944, breaks=c(-.6,6), labels=c(" over-confident",  " conservative"))+
     scale_y_continuous(trans="logit", limits=c(0.3, .995), breaks=c(0.3,0.5, 0.73, 0.88, 0.95, 0.98,0.99), labels=c(30,50, 73, 88, 95, 98, 99))+ #modify this so that it doesn't go quite as high
     scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
     labs(y="% chance 95% CI contains true value")+
