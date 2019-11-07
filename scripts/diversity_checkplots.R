@@ -185,6 +185,14 @@ obscp_inf <- function(l=l, size=size, SAD=SAD, B=2000, truemun=truemun...){
 #set number of reps
 reps<-5e3
 Bnum<-1000
+truemun<-truemu_inf(SADs_list[[1]][[2]][[3]]$rel_abundances, size=200, reps=reps, l=0)
+
+plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
+quickout<-future_map_dfr(1:reps, function(reps){
+   obscp_inf(l=0, 200, SADs_list[[1]][[2]][[3]], truemun=truemun, B=Bnum)}
+    )
+quickout
+quickout %>% ggplot(aes(chaotile_mc))+geom_histogram()+theme_classic()
 
 ####################
 #run this whole thing to get sample diversity checkplot-type info for sample diversity for a single community
