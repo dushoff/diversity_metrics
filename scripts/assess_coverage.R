@@ -8,6 +8,9 @@ library(scales)
 library(multidplyr) #also does parallelization. I'm not sure it's the right way to go but leaving it for now
 library(gtools)
 library(viridis) # Dylan found new colorblind friendly colors
+
+library(gtools)
+
 source("scripts/helper_funs/read_tcsv.R")
 source("scripts/helper_funs/uniroot_gamma_and_lnorm.R")
 R_FUTURE_FORK_ENABLE=T
@@ -57,7 +60,7 @@ lowdat<-read.csv("data/lowdat.csv")
 
 ###################################
 # simulate new comms and sample per checkplot paper; ish.
-
+# 
 SADs_list<-map(c("lnorm", "gamma"), function(distr){
     map(c(.125,.25,.5), function(simp_Prop){
       fit_SAD(rich = 50, simpson = simp_Prop*50, dstr = distr)
@@ -80,7 +83,7 @@ guideSADs<-map(SADs_list, function(distr){
   return(flatten(list(lits, bigs)))
 })
 
-guideSADs
+# guideSADs
 #beware of using variables this way.. this loop was for comms 1-4
 # out<-map_dfr(1:4, function(comm){
 #     map_dfr(c(-1,0,1), function(l){
@@ -117,7 +120,7 @@ karr<-td(guideSADs[[1]])
 ################################################################################################
 
 #set number of cores manually. This 64 is for running on Annotate after checking that no other big users with top
-nc<-42
+nc<-50
 plan(strategy = multiprocess, workers = nc) #this is telling the computer to get ready for the future_ commands
 # one rep takes a long time on one fast core. I think estimateD might be the slow function. 
 nreps<-200
@@ -129,14 +132,14 @@ maxi<-4.5
 
 
 assesscov<-function(mydat){future_map_dfr(1:nreps, function(reps){
-  map_dfr(floor(10^seq(mini,maxi,.05)), function(inds){ #sample sizes
-    mySeed<-1000*runif(1)
+  map_dfr(floor(10^seq(mini,maxi,.1)), function(inds){ #sample sizes
+    mySeed<-10#1000*runif(1)
     # set.seed(mySeed)
     # set.seed(131.92345)
     # inds<-223
     rare<-lapply(1:length(mydat), function(com){sample_infinite(mydat[[com]], inds)}) #rarefy each community
-    names(rare)<-com
-    covdivs<-tryCatch(estimateD(rare, base="coverage"), error=function(e) data.frame(site=rep(names(mydat),3), order=rep(c(-1,0,1), length(mydat)), qD=rep(mySeed, 3*length(mydat)), SC=rep(mySeed, 3*length(mydat)))) #use iNEXT::estimateD to compute expected Hill diversities for equal coverage
+    names(rare)<-1:length(mydat)
+    covdivs<-tryCatch(estimateD(rare, base="coverage"), error=function(e) data.frame(site=rep(1:length(mydat),3), order=rep(c(-1,0,1), length(mydat)), qD=rep(mySeed, 3*length(mydat)), SC=rep(mySeed, 3*length(mydat)))) #use iNEXT::estimateD to compute expected Hill diversities for equal coverage
     map_dfr(1:length(mydat), function(com){ #then loop over communities again, b/c going to return one row for each combination of sample size, community, hill exponent
       map_dfr(c(-1,0,1), function(ell){ #hill exponents
         samp<-dfun(rare[[com]], l=ell) #compute sample diversity
