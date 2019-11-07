@@ -162,8 +162,8 @@ obscp_inf <- function(l=l, size=size, SAD=SAD, B=2000, truemun=truemun...){
   obs<-dfun(sam,l) #K. here we are just taking a single sample and computing the observed diversity
   pro = apply(data.bt,2,function(boot)dfun(boot, l)) #This had been inconsistent with intent and was doing estimator stuff where we just wanted the naive answer.
   pro_mc<-pro-mean(pro)+obs
-  chaotile_mc<-sum(pro_mc<=truemun)/(B/100)
-  chaotile<-sum(pro<=truemun)/(B/100)
+  chaotile_mc<-(sum(pro_mc<truemun)+1)/((B+1)/100)
+  chaotile<-(sum(pro<truemun)+1)/((1+B)/100)
   return(data.frame("chaotile"=chaotile, "chaotile_mc"=chaotile_mc,
                     "truemu"=truemun,  "obsD"=obs, "l"=l, "size"=size ))
 }
@@ -182,7 +182,7 @@ obscp_inf <- function(l=l, size=size, SAD=SAD, B=2000, truemun=truemun...){
 
 #set number of reps
 reps<-5e3
-Bnum<-200
+Bnum<-1000
 
 ####################
 #run this whole thing to get sample diversity checkplot-type info for sample diversity for a single community
