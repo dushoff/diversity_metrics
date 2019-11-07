@@ -162,8 +162,10 @@ obscp_inf <- function(l=l, size=size, SAD=SAD, B=2000, truemun=truemun...){
   obs<-dfun(sam,l) #K. here we are just taking a single sample and computing the observed diversity
   pro = apply(data.bt,2,function(boot)dfun(boot, l)) #This had been inconsistent with intent and was doing estimator stuff where we just wanted the naive answer.
   pro_mc<-pro-mean(pro)+obs
-  chaotile_mc<-(sum(pro_mc<truemun)+1)/((B+1)/100)
-  chaotile<-(sum(pro<truemun)+1)/((1+B)/100)
+  # chaotile_mc<-(sum(pro_mc<truemun)+1)/((B+1)/100)
+  # chaotile<-(sum(pro<truemun)+1)/((1+B)/100)
+  chaotile_mc<-findInterval(truemun, quantile(pro_mc, seq(0,1,0.0005)))/20
+  chaotile<-findInterval(truemun, quantile(pro, seq(0,1,0.0005)))/20
   return(data.frame("chaotile"=chaotile, "chaotile_mc"=chaotile_mc,
                     "truemu"=truemun,  "obsD"=obs, "l"=l, "size"=size ))
 }
