@@ -168,8 +168,8 @@ obscp_inf <- function(l=l, size=size, SAD=SAD, B=2000, truemun=truemun...){
   pro_mc<-pro-mean(pro)+obs
   # chaotile_mc<-(sum(pro_mc<truemun)+1)/((B+1)/100)
   # chaotile<-(sum(pro<truemun)+1)/((1+B)/100)
-  chaotile_mc<-findInterval(truemun, quantile(pro_mc, seq(0,1,0.0005)), left.open = T)/20
-  chaotile<-findInterval(truemun, quantile(pro, seq(0,1,0.0005)), left.open = T)/20
+  chaotile_mc<-findInterval(truemun, quantile(pro_mc, seq(0,1,0.0005)), all.inside = T)/20
+  chaotile<-findInterval(truemun, quantile(pro, seq(0,1,0.0005)), all.inside=T)/20
   return(data.frame("chaotile"=chaotile, "chaotile_mc"=chaotile_mc,
                     "truemu"=truemun,  "obsD"=obs, "l"=l, "size"=size ))
 }
