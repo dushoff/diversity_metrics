@@ -164,8 +164,8 @@ obscp_inf <- function(l=l, size=size, SAD=SAD, B=2000, truemun=truemun...){
   pro_mc<-pro-mean(pro)+obs
   # chaotile_mc<-(sum(pro_mc<truemun)+1)/((B+1)/100)
   # chaotile<-(sum(pro<truemun)+1)/((1+B)/100)
-  chaotile_mc<-findInterval(truemun, quantile(pro_mc, seq(0,1,0.0005)))/20
-  chaotile<-findInterval(truemun, quantile(pro, seq(0,1,0.0005)))/20
+  chaotile_mc<-findInterval(truemun, quantile(pro_mc, seq(0,1,0.005)))/2
+  chaotile<-findInterval(truemun, quantile(pro, seq(0,1,0.005)))/2
   return(data.frame("chaotile"=chaotile, "chaotile_mc"=chaotile_mc,
                     "truemu"=truemun,  "obsD"=obs, "l"=l, "size"=size ))
 }
@@ -351,21 +351,23 @@ min(tc$outside)
 #uncomment to generate data for asymptotic diveristy checkplot/ CI coverage
 
 # #set reps to 500 but outerreps to 10 for efficient use of anotate
-# reps<-500
-# outerreps<-10
-# nc<-36#per Rob's recommendation
-# plan(strategy=multiprocess, workers=nc) 
+reps<-500
+outerreps<-10
+nc<-45#per Rob's recommendation
+plan(strategy=multiprocess, workers=nc)
 
 # map(1:length(flatten(flatten(SADs_list))), function(SAD){
-#   map(1:outerreps, function(x){
-#     ug_asy<-map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
-#         map_dfr(c(-1,0,1), function(l){
-#             out<-checkplot_inf(flatten(flatten(SADs_list))[[SAD]], l=l, inds=size, reps=reps)
-#         })
-#     })
-#     write.csv(ug_asy, paste("data/SAD", SAD, "asy",  x, ".csv", sep="_"), row.names=F)
-#     # return(ug_asy)
-#   })
+  map(1:outerreps, function(x){
+    ug_asy<-map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
+        map_dfr(c(-1,0,1), function(l){
+            # out<-checkplot_inf(flatten(flatten(SADs_list))[[SAD]], l=l, inds=size, reps=reps)
+          out<-checkplot_inf(flatten(flatten(SADs_list))[[7]], l=l, inds=size, reps=reps)
+        })
+    })
+    # write.csv(ug_asy, paste("data/SAD", SAD, "asy",  x, ".csv", sep="_"), row.names=F)
+    write.csv(ug_asy, paste("data/SAD_7_asy",  x, ".csv", sep="_"), row.names=F)
+    # return(ug_asy)
+  })
 # })
 
 
