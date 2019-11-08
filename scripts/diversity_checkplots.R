@@ -149,6 +149,10 @@ checkplot_inf<-function(SAD, B=2000, l, inds, reps){
   })
 }
 
+quick_asy<-checkplot_inf(SADs_list[[1]][[2]][[3]], l=0, inds=200, reps=5e3)
+
+quick_asy
+quick_asy %>% ggplot(aes(qtile))+geom_histogram()+theme_classic()
 
 
 #########################
@@ -164,8 +168,10 @@ obscp_inf <- function(l=l, size=size, SAD=SAD, B=2000, truemun=truemun...){
   pro_mc<-pro-mean(pro)+obs
   # chaotile_mc<-(sum(pro_mc<truemun)+1)/((B+1)/100)
   # chaotile<-(sum(pro<truemun)+1)/((1+B)/100)
-  chaotile_mc<-findInterval(truemun, quantile(pro_mc, seq(0,1,0.005)))/2
-  chaotile<-findInterval(truemun, quantile(pro, seq(0,1,0.005)))/2
+
+  chaotile_mc<-findInterval(truemun, quantile(pro_mc, seq(0,1,0.0005)), all.inside = T)/20
+  chaotile<-findInterval(truemun, quantile(pro, seq(0,1,0.0005)), all.inside=T)/20
+
   return(data.frame("chaotile"=chaotile, "chaotile_mc"=chaotile_mc,
                     "truemu"=truemun,  "obsD"=obs, "l"=l, "size"=size ))
 }
@@ -185,6 +191,14 @@ obscp_inf <- function(l=l, size=size, SAD=SAD, B=2000, truemun=truemun...){
 #set number of reps
 reps<-5e3
 Bnum<-1000
+truemun<-truemu_inf(SADs_list[[1]][[2]][[3]]$rel_abundances, size=200, reps=reps, l=0)
+
+plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
+quickout<-future_map_dfr(1:reps, function(reps){
+   obscp_inf(l=0, 200, SADs_list[[1]][[2]][[3]], truemun=truemun, B=Bnum)}
+    )
+quickout
+quickout %>% ggplot(aes(chaotile_mc))+geom_histogram()+theme_classic()
 
 ####################
 #run this whole thing to get sample diversity checkplot-type info for sample diversity for a single community
