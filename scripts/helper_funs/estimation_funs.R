@@ -569,13 +569,13 @@ checkchao<-function(x, B, l, truediv){ #, truemu_n
   chaotile<-findInterval(truediv, quantile(pro, seq(0,1,0.0005)), all.inside = T)/20#(sum(pro<truediv)+1)/((B+1)/100) #I think this is a good percentile estimate based on North et al. 2002? This has a clear tie-breaking bias in one direction
   # mletile<-sum(mleadj<=truemu_n)/(B/100)
   # mleprob<-t.test(mleadj, mu=truemu_n)$p.value
-  return(c("chaotile"=chaotile 
+  return(list(bs=pro, out=c("chaotile"=chaotile 
            # , "mletile"=mletile
            # , "mleprob"=mleprob
            , "truediv"=truediv
            # , "truemu_n"=truemu_n
            , "chaoest"=Chao_Hill_abu(x, 1-l)
-           , "obsD"=dfun(x,l))
+           , "obsD"=dfun(x,l)))
   )}
 
 ################
