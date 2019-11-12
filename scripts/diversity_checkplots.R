@@ -116,7 +116,7 @@ asab<-function(namevec){as.numeric(table(namevec))}
 #set up parallelization for large computations
 
 #set # cores
-nc<-7#per Rob's recommendation
+nc<-24#per Rob's recommendation
 
 
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
@@ -148,6 +148,30 @@ checkplot_inf<-function(SAD, B=2000, l, inds, reps){
     
   })
 }
+
+
+########################
+# to make QQ plot
+checkplot_QQ<-function(SAD, B=2000, l, inds, reps){
+  hillname<-ifelse(l==-1, "Hill-Simpson", ifelse(l==0, "Hill-Shannon", "richness"))
+  td<-SAD$community_info[hillname] #grab true diversity from SAD object
+  #truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
+  future_map(1:reps,function(x){
+    # obs<-subsam(abs, size=inds) #subsample true community within each replicate
+    
+    obs <- sample_infinite(SAD$rel_abundances,size=inds) #subsample the whole community with # individuals=size
+    chaotile<-checkchao(obs, B, l, td) #then do B bootstrap samples for the augmented community based on that sample
+    return(list(chaotile=data.frame(qtile=chaotile[[2]][1], truediv=chaotile[[2]][2], chaoest=chaotile[[3]][3], obsD=chaotile[[3]][4], l=l, inds=inds, reps=reps), bs=chaotile[[1]]))
+    
+  })
+}
+
+SAD<-SADs_list[[1]][[2]][[3]]
+l<-0
+inds<-200
+B<-500
+
+quick_asy_QQ<-checkplot_QQ(SADs_list[[1]][[2]][[3]], l=0, inds=200, reps=5e2)
 
 quick_asy<-checkplot_inf(SADs_list[[1]][[2]][[3]], l=0, inds=200, reps=5e3)
 
