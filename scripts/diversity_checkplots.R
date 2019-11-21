@@ -47,9 +47,36 @@ SADs_list<-map(c("lnorm", "gamma"), function(distr){
   })
 })
 
+testsad<-c(as.numeric(fit_SAD(rich=30,simpson=20)[[3]]), as.numeric(fit_SAD(rich=350,simpson=5, dstr="gamma")[[3]]))
+
+head(testsad)
+x<-rep(5:250, 35)
+y<-function(x){dfun(sample_infinite(testsad, x),-1)}
+x
+y(10)
+mydf<-data.frame(x=x, y=sapply(x,y))
+
+nc<-7#per Rob's recommendation
 
 
+plan(strategy=multiprocess, workers=nc) #thi
 
+reps<200
+
+checkvars<-future_map_dfr(3:300*10, function(ss){
+  map_dfr(1:reps, function(rep){
+    mys<-sample_infinite(SADs_list[[1]][[2]][[1]][[3]], ss)
+    data.frame(asy_Simpson=Chao_Hill_abu(mys, q=1), sampsimp=dfun(mys, 0), ss=ss)
+  })
+  
+})
+mycv<-function(x){sd(x)/mean(x)}
+checkvars %>% group_by(m) %>%  mutate_at(c("SC", "q = 0","q = 1","q = 2" ), mycv) %>% 
+  ggplot(aes(m, SC))+geom_point()+geom_point(aes(y=`q = 0`), color="red")+
+  geom_point(aes(y=`q = 1`), color="blue")+
+  geom_point(aes(y=`q = 2`), color="green")+theme_classic()
+
+mydf %>% ggplot(aes(x,y))+geom_smooth()
 #quick summary to see how distributional assumption affects Shannon
 see_Shannon <- map_dfr(SADs_list, function(dst){
   map_dfr(dst, function(R){
