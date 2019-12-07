@@ -640,15 +640,15 @@ comb_cov %>% filter(inds<=10^4) %>%
     theme_classic()+
     scale_shape_manual(values=c(17,15))+
     scale_color_gradient2(low="red",mid="grey55", high="cyan", limits=c(-.6,6), midpoint=2.944, breaks=c(-.6,6), labels=c(" over-confident",  " conservative"))+
-    scale_y_continuous(trans="logit", limits=c(0.3, .995), breaks=c(0.3,0.5, 0.73, 0.88, 0.95, 0.98,0.99), labels=c(30,50, 73, 88, 95, 98, 99))+ #modify this so that it doesn't go quite as high
+    scale_y_continuous(trans="logit", limits=c(0.3, .995), breaks=c(0.3,0.5, 0.73, 0.88, 0.95, 0.98,0.99, 0.995), labels=c(30,50, 73, 88, 95, 98, 99, 99.5))+ #modify this so that it doesn't go quite as high
     scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
-    labs(y="% chance 95% CI contains true value")+
+    labs(y="% samples for which 95% CI contains true value", x="individuals")+
     theme(legend.title = element_blank()
           , panel.spacing=unit(1.3, "lines")
-          , axis.title.x=element_blank()
           , strip.placement.y = "outside"
-          , strip.background = element_blank()
+          , strip.background = element_blank()#element_rect(fill="lightgrey", linetype=0)
           , strip.text=element_text(face="bold")
+          # , strip.text.y = element_text(angle = 180)
           , legend.text=element_text(hjust=0.5)    )+
     guides(shape=F)
 
