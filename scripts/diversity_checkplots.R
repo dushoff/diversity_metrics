@@ -47,9 +47,36 @@ SADs_list<-map(c("lnorm", "gamma"), function(distr){
   })
 })
 
+testsad<-c(as.numeric(fit_SAD(rich=30,simpson=20)[[3]]), as.numeric(fit_SAD(rich=350,simpson=5, dstr="gamma")[[3]]))
+
+head(testsad)
+x<-rep(5:250, 35)
+y<-function(x){dfun(sample_infinite(testsad, x),-1)}
+x
+y(10)
+mydf<-data.frame(x=x, y=sapply(x,y))
+
+nc<-7#per Rob's recommendation
 
 
+plan(strategy=multiprocess, workers=nc) #thi
 
+reps<200
+
+checkvars<-future_map_dfr(3:300*10, function(ss){
+  map_dfr(1:reps, function(rep){
+    mys<-sample_infinite(SADs_list[[1]][[2]][[1]][[3]], ss)
+    data.frame(asy_Simpson=Chao_Hill_abu(mys, q=1), sampsimp=dfun(mys, 0), ss=ss)
+  })
+  
+})
+mycv<-function(x){sd(x)/mean(x)}
+checkvars %>% group_by(m) %>%  mutate_at(c("SC", "q = 0","q = 1","q = 2" ), mycv) %>% 
+  ggplot(aes(m, SC))+geom_point()+geom_point(aes(y=`q = 0`), color="red")+
+  geom_point(aes(y=`q = 1`), color="blue")+
+  geom_point(aes(y=`q = 2`), color="green")+theme_classic()
+
+mydf %>% ggplot(aes(x,y))+geom_smooth()
 #quick summary to see how distributional assumption affects Shannon
 see_Shannon <- map_dfr(SADs_list, function(dst){
   map_dfr(dst, function(R){
@@ -616,15 +643,15 @@ comb_cov %>% filter(inds<=10^4) %>%
     theme_classic()+
     scale_shape_manual(values=c(17,15))+
     scale_color_gradient2(low="red",mid="grey55", high="cyan", limits=c(-.6,6), midpoint=2.944, breaks=c(-.6,6), labels=c(" over-confident",  " conservative"))+
-    scale_y_continuous(trans="logit", limits=c(0.3, .995), breaks=c(0.3,0.5, 0.73, 0.88, 0.95, 0.98,0.99), labels=c(30,50, 73, 88, 95, 98, 99))+ #modify this so that it doesn't go quite as high
+    scale_y_continuous(trans="logit", limits=c(0.3, .995), breaks=c(0.3,0.5, 0.73, 0.88, 0.95, 0.98,0.99, 0.995), labels=c(30,50, 73, 88, 95, 98, 99, 99.5))+ #modify this so that it doesn't go quite as high
     scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
-    labs(y="% chance 95% CI contains true value")+
+    labs(y="% samples for which 95% CI contains true value", x="individuals")+
     theme(legend.title = element_blank()
           , panel.spacing=unit(1.3, "lines")
-          , axis.title.x=element_blank()
           , strip.placement.y = "outside"
-          , strip.background = element_blank()
+          , strip.background = element_blank()#element_rect(fill="lightgrey", linetype=0)
           , strip.text=element_text(face="bold")
+          # , strip.text.y = element_text(angle = 180)
           , legend.text=element_text(hjust=0.5)    )+
     guides(shape=F)
 
