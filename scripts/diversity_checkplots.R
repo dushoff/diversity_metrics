@@ -14,55 +14,41 @@ library(scales)#trans_breaks
 # library(scales) #for function muted
 select<-dplyr::select
 
+# function to remove subscripts
+remsub <- function(variable, value){
+  return(gsub("_"," ",value))}
+
+#function to summarize frequencies
+asab<-function(namevec){as.numeric(table(namevec))}
+
+###################
+# function to compute CV
+mycv<-function(x){sd(x)/mean(x)}
+
+
+
 ########################################
-#simulate communities 
-# #start with JD comms
-# mini<-100
-# com1 <- c(1, 1, 1, 1)
-# com2 <- c(1, rep(1/(mini-1), mini))
-# #add a more naturalistic one
-# com3<-as.numeric(sim_sad(s_pool=60, n_sim=100000))
-# #this is supersampling
-# o1<-sample(1:length(com1), prob=com1, size=inds, replace=T)
-# o2<-sample(1:length(com2), prob=com2, size=inds, replace=T)
-
-
-
-# #make a community for User's Guide
-# usersguide<-as.numeric(sim_sad(s_pool=120, n_sim=1000000, sad_coef=list(cv_abund=5)))
-# 
-# 
-# #three communities with richness ~60, and different skew
-# com1<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=2)))
-# com2<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=5)))
-# com3<-as.numeric(sim_sad(s_pool=60, n_sim=100000, sad_coef=list(cv_abund=10)))
-
 # simulate communities with fit_SAD, basically isntantaneous
 
 SADs_list<-map(c("lnorm", "gamma"), function(distr){
   map(c(100, 200), function(rich){
-    map(c(.15,.25,.5,.75,.85), function(simp_Prop){
+    map(c(0.05, 15,.25,.5,.75,.85), function(simp_Prop){
       fit_SAD(rich = rich, simpson = simp_Prop*rich, dstr = distr)
     })
   })
 })
 
-testsad<-c(as.numeric(fit_SAD(rich=30,simpson=20)[[3]]), as.numeric(fit_SAD(rich=350,simpson=5, dstr="gamma")[[3]]))
 
-head(testsad)
-x<-rep(5:250, 35)
-y<-function(x){dfun(sample_infinite(testsad, x),-1)}
-x
-y(10)
-mydf<-data.frame(x=x, y=sapply(x,y))
+#set up parallelization
+#set number of cores
+nc<-7 
 
-nc<-7#per Rob's recommendation
+#will do forked in base R and sometimes in Rstudio at least on my mac
+plan(strategy=multiprocess, workers=nc) 
 
-
-plan(strategy=multiprocess, workers=nc) #thi
-
-reps<200
-
+reps<-200
+###################
+#this looks like it is checking someething abotu Simpson but it looks kind of wrong
 checkvars<-future_map_dfr(3:300*10, function(ss){
   map_dfr(1:reps, function(rep){
     mys<-sample_infinite(SADs_list[[1]][[2]][[1]][[3]], ss)
@@ -70,7 +56,11 @@ checkvars<-future_map_dfr(3:300*10, function(ss){
   })
   
 })
-mycv<-function(x){sd(x)/mean(x)}
+
+
+
+############
+# did checkvars used to be something else? 
 checkvars %>% group_by(m) %>%  mutate_at(c("SC", "q = 0","q = 1","q = 2" ), mycv) %>% 
   ggplot(aes(m, SC))+geom_point()+geom_point(aes(y=`q = 0`), color="red")+
   geom_point(aes(y=`q = 1`), color="blue")+
@@ -78,35 +68,38 @@ checkvars %>% group_by(m) %>%  mutate_at(c("SC", "q = 0","q = 1","q = 2" ), mycv
 
 mydf %>% ggplot(aes(x,y))+geom_smooth()
 #quick summary to see how distributional assumption affects Shannon
-see_Shannon <- map_dfr(SADs_list, function(dst){
-  map_dfr(dst, function(R){
-    map_dfr(R, function(S){
-      return("summaryStats" =data.frame(t(c(S$distribution_info, S$community_info))))
-    })
-  })
-})
+# see_Shannon <- map_dfr(SADs_list, function(dst){
+#   map_dfr(dst, function(R){
+#     map_dfr(R, function(S){
+#       return("summaryStats" =data.frame(t(c(S$distribution_info, S$community_info))))
+#     })
+#   })
+# })
 
 #well, not much! But shannon is always higher with lnorm
-pdf("figures/Shannon_higher_with_lnorm.pdf")
-see_Shannon %>% 
-  ggplot(aes(as.numeric(as.character(Hill.Simpson))/as.numeric(as.character(richness))
-             , as.numeric(as.character(Hill.Shannon)), color=distribution, shape=richness))+
-    geom_point()+theme_classic()+scale_y_log10() +
-    scale_x_log10()+
-    labs(x="Hill-Simpson as fraction of richness", y="Hill-Shannon")
-dev.off()
+# pdf("figures/Shannon_higher_with_lnorm.pdf")
+# see_Shannon %>% 
+#   ggplot(aes(as.numeric(as.character(Hill.Simpson))/as.numeric(as.character(richness))
+#              , as.numeric(as.character(Hill.Shannon)), color=distribution, shape=richness))+
+#     geom_point()+theme_classic()+scale_y_log10() +
+#     scale_x_log10()+
+#     labs(x="Hill-Simpson as fraction of richness", y="Hill-Shannon")
+# dev.off()
 
 ##############
 # make rank abundance distributions
 
-myabs<-map_dfr(flatten(flatten(SADs_list)), function(x)data.frame(ab=x$rel_abundances), .id="SAD")
+#getting a weird error with this! seems to work on my computer but not on annotate
 
-remsub <- function(variable, value){
-  return(gsub("_"," ",value))}
+myabs<-map_dfr(flatten(flatten(SADs_list)) #, function(x) data.frame(names(x)))
+               , function(x){data.frame(ab=x$rel_abundances)}
+               , .id="SAD")
+
+myabs
 
 pdf("figures/RAD_for_extreme_SADs_rich_100.pdf")
 myabs %>% left_join(data.frame(
-  SAD=as.character(1:20)
+  SAD=as.character(1:24)
   , skew=factor(c("uneven", "int", "int","int", "even"), levels=c("uneven", "int", "even"))
   , dist=factor(c(rep("lognormal", 10), rep("gamma", 10)), levels=c("lognormal", "gamma"))
 )) %>% 
@@ -114,7 +107,7 @@ myabs %>% left_join(data.frame(
   group_by(SAD, abD, dist, skew) %>% 
   mutate(abrank=min_rank(desc(ab)), log_relative_abundance=log(ab), relative_abundance=ab) %>% 
   gather(scl, rel_abund, relative_abundance, log_relative_abundance )%>% 
-  filter(SAD %in% c("1","11","5","15")) %>% 
+  filter(SAD %in% c("1","13","6","16")) %>% 
   ggplot(aes(abrank, rel_abund, color=dist))+
     geom_point(alpha=0.5, size=1)+
     geom_line(size=.4, alpha=0.5)+
@@ -131,9 +124,6 @@ dev.off()
 # plot(1:length(com2), com2, xlab="species rank", ylab="", type="line", ylim=c(0,26000))
 # plot(1:length(com3), com3, xlab="", ylab="", type="line", ylim=c(0,26000) )
 # dev.off()
-
-asab<-function(namevec){as.numeric(table(namevec))}
-
 
 
 #gets slightly closer than obs
