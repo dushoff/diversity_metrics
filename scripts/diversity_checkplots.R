@@ -161,7 +161,7 @@ checkplot_QQ<-function(SAD, B=2000, l, inds, reps){
     
     obs <- sample_infinite(SAD$rel_abundances,size=inds) #subsample the whole community with # individuals=size
     chaotile<-checkchao(obs, B, l, td) #then do B bootstrap samples for the augmented community based on that sample
-    return(list(chaotile=data.frame(qtile=chaotile[[2]][1], truediv=chaotile[[2]][2], chaoest=chaotile[[3]][3], obsD=chaotile[[3]][4], l=l, inds=inds, reps=reps), bs=chaotile[[1]]))
+    return(list(chaotile=data.frame(qtile=chaotile[[2]][1], truediv=chaotile[[2]][2], chaoest=chaotile[[2]][3], obsD=chaotile[[2]][4], l=l, inds=inds, reps=reps), bs=chaotile[[1]]))
     
   })
 }
@@ -172,6 +172,9 @@ inds<-200
 B<-500
 
 quick_asy_QQ<-checkplot_QQ(SADs_list[[1]][[2]][[3]], l=0, inds=200, reps=5e2)
+
+my_bs<-quick_asy_QQ %>% map(function(x){x$bs})
+my_bs
 
 quick_asy<-checkplot_inf(SADs_list[[1]][[2]][[3]], l=0, inds=200, reps=5e3)
 
