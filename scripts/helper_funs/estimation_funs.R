@@ -554,28 +554,36 @@ sApp <- function(samp){
 
 ################################################################
 #MR function to take abundance vector and "l" and return the quantile of B bootstrap iterations of Chao technique that true value falls on. Could be extended to include sample Hill as Chao seems to have
-checkchao<-function(x, B, l, truediv){ #, truemu_n
+# x<-1:5
+# B<-10
+# l<-1
+# truediv<-5
+
+checkchao<-function(x, B, l, truediv, conf=0.95){ #, truemu_n
   n<-sum(x)
   #columns of this matrix are replicate boostraps
   data.bt = rmultinom(B,n,Bt_prob_abu(x))
-  #for sample diversity
-  # obs<-dfun(x,l)
-  # mle = apply(data.bt,2,function(boot)dfun(boot, l))
-  # mleadj =mle-mean(mle)+dfun(x, l)
-  # #Chao estimator
-  # chaoest<-Chao_Hill_abu(x, 1-l)
+  #get estimator for each bootstrapped sample
   pro = apply(data.bt,2,function(boot)Chao_Hill_abu(boot,1-l))
+  #mean correction
   pro<-pro-mean(pro)+Chao_Hill_abu(x, 1-l)
-  chaotile<-findInterval(truediv, quantile(pro, seq(0,1,0.0005)), all.inside = T)/20#(sum(pro<truediv)+1)/((B+1)/100) #I think this is a good percentile estimate based on North et al. 2002? This has a clear tie-breaking bias in one direction
-  # mletile<-sum(mleadj<=truemu_n)/(B/100)
-  # mleprob<-t.test(mleadj, mu=truemu_n)$p.value
-  return(list(bs=pro, out=c("chaotile"=chaotile 
-           # , "mletile"=mletile
-           # , "mleprob"=mleprob
-           , "truediv"=truediv
-           # , "truemu_n"=truemu_n
-           , "chaoest"=Chao_Hill_abu(x, 1-l)
-           , "obsD"=dfun(x,l)))
+  
+  #break ties
+  less<-sum(pro<truediv)/length(pro)
+  more<-sum(pro>truediv)/length(pro)
+  p<-runif(1, min(less, more), max(less, more))
+ 
+  lower<-max(pro[which(min_rank(pro)<=max(floor(B*(1-conf)/2),1))])
+  upper<-min(pro[which(min_rank(-pro)<=max(floor(B*(1-conf)/2),1))])
+  
+  return(data.frame(p=p
+                , lower=lower
+                , upper=upper
+                , truediv=truediv
+                , "chaoest"=Chao_Hill_abu(x, 1-l)
+                , "obsD"=dfun(x,l)
+            )
+         
   )}
 
 ################
@@ -588,6 +596,9 @@ truemu<-function(comm, size, reps, l,...){
         )
     )
 }
+
+
+
 sample_infinite<-function(commSAD, size){
     namevec<-sample(1:length(commSAD), size=size, prob=commSAD, replace=T)
     mysam <- unlist(lapply(1:length(commSAD), function(y){

@@ -32,7 +32,7 @@ mycv<-function(x){sd(x)/mean(x)}
 
 SADs_list<-map(c("lnorm", "gamma"), function(distr){
   map(c(100, 200), function(rich){
-    map(c(0.05, 15,.25,.5,.75,.85), function(simp_Prop){
+    map(c(0.05, .15,.25,.5,.75,.85), function(simp_Prop){
       fit_SAD(rich = rich, simpson = simp_Prop*rich, dstr = distr)
     })
   })
@@ -88,29 +88,25 @@ mydf %>% ggplot(aes(x,y))+geom_smooth()
 
 ##############
 # make rank abundance distributions
-
-#getting a weird error with this! seems to work on my computer but not on annotate
-
 myabs<-map_dfr(flatten(flatten(SADs_list)) #, function(x) data.frame(names(x)))
                , function(x){data.frame(ab=x$rel_abundances)}
                , .id="SAD")
 
-myabs
 
-pdf("figures/RAD_for_extreme_SADs_rich_100.pdf")
+pdf("figures/RAD_for_extreme_SADs_rich_200.pdf")
 myabs %>% left_join(data.frame(
   SAD=as.character(1:24)
-  , skew=factor(c("uneven", "int", "int","int", "even"), levels=c("uneven", "int", "even"))
-  , dist=factor(c(rep("lognormal", 10), rep("gamma", 10)), levels=c("lognormal", "gamma"))
+  , skew=factor(c("uneven", "int","int", "int","int", "even"), levels=c("uneven", "int", "even"))
+  , dist=factor(c(rep("lognormal", 12), rep("gamma", 12)), levels=c("lognormal", "gamma"))
 )) %>% 
   mutate(abD=paste(dist, skew)) %>% 
   group_by(SAD, abD, dist, skew) %>% 
   mutate(abrank=min_rank(desc(ab)), log_relative_abundance=log(ab), relative_abundance=ab) %>% 
   gather(scl, rel_abund, relative_abundance, log_relative_abundance )%>% 
-  filter(SAD %in% c("1","13","6","16")) %>% 
+  filter(SAD %in% c("7","10","12","19","22","24")) %>% 
   ggplot(aes(abrank, rel_abund, color=dist))+
-    geom_point(alpha=0.5, size=1)+
-    geom_line(size=.4, alpha=0.5)+
+    geom_point(alpha=0.1, size=1)+
+    geom_line(size=.4, alpha=0.1)+
     theme_classic()+
     theme(text=element_text(size=16))+
     labs(x="abundance rank", y="", color="", shape="")+
@@ -118,22 +114,12 @@ myabs %>% left_join(data.frame(
 dev.off()               
 
 
-# pdf(height=2, width=6, file="figures/simssads.pdf")
-# par(mfrow=c(1,3))
-# plot(1:length(com1), com1, xlab="",  ylab="species abundance", type="line", ylim=c(0,26000))
-# plot(1:length(com2), com2, xlab="species rank", ylab="", type="line", ylim=c(0,26000))
-# plot(1:length(com3), com3, xlab="", ylab="", type="line", ylim=c(0,26000) )
-# dev.off()
-
-
-#gets slightly closer than obs
-# show1<-checkplot(com1, l=0, inds=150, reps=1000)
 
 ####################################
 #set up parallelization for large computations
 
 #set # cores
-nc<-24#per Rob's recommendation
+nc<-43#per Rob's recommendation
 
 
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
@@ -159,44 +145,72 @@ checkplot_inf<-function(SAD, B=2000, l, inds, reps){
   future_map_dfr(1:reps,function(x){
     # obs<-subsam(abs, size=inds) #subsample true community within each replicate
     
-    obs <- sample_infinite(SAD$rel_abundances,size=inds) #subsample the whole community with # individuals=size
-    chaotile<-checkchao(obs, B, l, td) #then do B bootstrap samples for the augmented community based on that sample
-    return(chaotile=data.frame(qtile=chaotile[1], truediv=chaotile[2], chaoest=chaotile[3], obsD=chaotile[4], l=l, inds=inds, reps=reps))
+    obs <- sample_infinite(SAD$rel_abundances, size=inds) #subsample the whole community with # individuals=size
+
+    chaotile <- checkchao(x=obs, B=B, l=l, truediv=td) #then do B bootstrap samples for the augmented community based on that sample
+    return(myout=data.frame(p=chaotile$p
+                               , truediv=chaotile$truediv
+                               , chaoest=chaotile$chaoest
+                               , obsD=chaotile$obsD
+                               , upper=chaotile$upper
+                               , lower=chaotile$lower
+                               , l
+                               , inds
+                               , reps)
+           )
     
   })
 }
+#################################################
+#asymptotic diversity checkplots
 
+# #set reps to 5000 but outerreps to 10 for efficient use of anotate
+reps<-5000
+outerreps<-10
+nc<-40#per Rob's recommendation
+plan(strategy=multiprocess, workers=nc)
 
-########################
-# to make QQ plot
-checkplot_QQ<-function(SAD, B=2000, l, inds, reps){
-  hillname<-ifelse(l==-1, "Hill-Simpson", ifelse(l==0, "Hill-Shannon", "richness"))
-  td<-SAD$community_info[hillname] #grab true diversity from SAD object
-  #truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
-  future_map(1:reps,function(x){
-    # obs<-subsam(abs, size=inds) #subsample true community within each replicate
-    
-    obs <- sample_infinite(SAD$rel_abundances,size=inds) #subsample the whole community with # individuals=size
-    chaotile<-checkchao(obs, B, l, td) #then do B bootstrap samples for the augmented community based on that sample
-    return(list(chaotile=data.frame(qtile=chaotile[[2]][1], truediv=chaotile[[2]][2], chaoest=chaotile[[2]][3], obsD=chaotile[[2]][4], l=l, inds=inds, reps=reps), bs=chaotile[[1]]))
-    
+map(c(7,10,12,19,22,24), function(SAD){
+  map(1:outerreps, function(x){
+    ug_asy<-map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
+      map_dfr(c(-1,0,1), function(l){
+        out<-checkplot_inf(flatten(flatten(SADs_list))[[SAD]], l=l, inds=size, reps=reps)
+        # out<-checkplot_inf(flatten(flatten(SADs_list))[[7]], l=l, inds=size, reps=reps)
+      })
+    })
+    write.csv(ug_asy, paste("data/SAD", SAD, "asy_new",  x, ".csv", sep="_"), row.names=F)
+    # write.csv(ug_asy, paste("data/SAD_7_asy",  x, ".csv", sep="_"), row.names=F)
+    # return(ug_asy)
   })
-}
+})
 
-SAD<-SADs_list[[1]][[2]][[3]]
-l<-0
-inds<-200
-B<-500
 
-quick_asy_QQ<-checkplot_QQ(SADs_list[[1]][[2]][[3]], l=0, inds=200, reps=5e2)
+# ########################
+# # to make QQ plot
+# checkplot_QQ<-function(SAD, B=2000, l, inds, reps){
+#   hillname<-ifelse(l==-1, "Hill-Simpson", ifelse(l==0, "Hill-Shannon", "richness"))
+#   td<-SAD$community_info[hillname] #grab true diversity from SAD object
+#   #truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
+#   future_map(1:reps,function(x){
+#     # obs<-subsam(abs, size=inds) #subsample true community within each replicate
+#     
+#     obs <- sample_infinite(SAD$rel_abundances,size=inds) #subsample the whole community with # individuals=size
+#     chaotile<-checkchao(obs, B, l, td) #then do B bootstrap samples for the augmented community based on that sample
+#     return(list(chaotile=data.frame(qtile=chaotile[[2]][1], truediv=chaotile[[2]][2], chaoest=chaotile[[2]][3], obsD=chaotile[[2]][4], l=l, inds=inds, reps=reps), bs=chaotile[[1]]))
+#     
+#   })
+# }
 
-my_bs<-quick_asy_QQ %>% map(function(x){x$bs})
-my_bs
 
-quick_asy<-checkplot_inf(SADs_list[[1]][[2]][[3]], l=0, inds=200, reps=5e3)
+# quick_asy_QQ<-checkplot_QQ(SADs_list[[1]][[2]][[3]], l=0, inds=200, reps=5e2)
+# 
+# my_bs<-quick_asy_QQ %>% map(function(x){x$bs})
+# my_bs
+
+quick_asy<-checkplot_inf(SADs_list[[1]][[2]][[3]], l=0, inds=200, reps=5e2)
 
 quick_asy
-quick_asy %>% ggplot(aes(qtile))+geom_histogram()+theme_classic()
+quick_asy %>% ggplot(aes(p))+geom_histogram()+theme_classic()
 
 
 #########################
@@ -401,32 +415,6 @@ tc<-sample_div_cp %>% group_by(l, size, SAD_index) %>% summarize(outside=1-(sum(
 tc
 
 min(tc$outside)
-#################################################
-# this is asymptotic diversity for users guide
-
-
-#####################
-#uncomment to generate data for asymptotic diveristy checkplot/ CI coverage
-
-# #set reps to 500 but outerreps to 10 for efficient use of anotate
-reps<-500
-outerreps<-10
-nc<-45#per Rob's recommendation
-plan(strategy=multiprocess, workers=nc)
-
-# map(1:length(flatten(flatten(SADs_list))), function(SAD){
-  map(1:outerreps, function(x){
-    ug_asy<-map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
-        map_dfr(c(-1,0,1), function(l){
-            # out<-checkplot_inf(flatten(flatten(SADs_list))[[SAD]], l=l, inds=size, reps=reps)
-          out<-checkplot_inf(flatten(flatten(SADs_list))[[7]], l=l, inds=size, reps=reps)
-        })
-    })
-    # write.csv(ug_asy, paste("data/SAD", SAD, "asy",  x, ".csv", sep="_"), row.names=F)
-    write.csv(ug_asy, paste("data/SAD_7_asy",  x, ".csv", sep="_"), row.names=F)
-    # return(ug_asy)
-  })
-# })
 
 
 #######################################
