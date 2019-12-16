@@ -33,7 +33,7 @@ mycv<-function(x){sd(x)/mean(x)}
 SADs_list<-map(c("lnorm", "gamma"), function(distr){
   map(c(100, 200), function(rich){
     map(c(0.05, .15,.25,.5,.75,.85), function(simp_Prop){
-      fit_SAD(rich = rich, simpson = simp_Prop*rich, dstr = distr)
+      fit_SAD(rich = rich, simpson = simp_Prop*(rich-1)+1, dstr = distr)
     })
   })
 })
@@ -226,15 +226,15 @@ obscp_inf <- function(l=l, size=size, SAD=SAD, B=2000, truemun=truemun, conf=0.9
   pro = apply(data.bt,2,function(boot)dfun(boot, l)) #sample diversity for bootstraps
   pro_mc<-pro-mean(pro)+obs
 
-  less<-sum(pro_mc<truemun)/length(pro)
-  more<-sum(pro_mc>truemun)/length(pro)
+  less<-sum(pro_mc<truemun)/length(pro_mc)
+  more<-(length(pro_mc)-sum(pro_mc>truemun))/length(pro_mc)
   p<-runif(1, min(less, more), max(less, more))
   
   lower<-max(pro_mc[which(min_rank(pro_mc)<=max(floor(B*(1-conf)/2),1))])
   upper<-min(pro_mc[which(min_rank(-pro_mc)<=max(floor(B*(1-conf)/2),1))])
   
   less_no_mc<-sum(pro<truemun)/length(pro)
-  more_no_mc<-sum(pro>truemun)/length(pro)
+  more_no_mc<-(length(pro)-sum(pro>truemun))/length(pro)
   p_no_mc<-runif(1, min(less, more), max(less, more))
   
   lower_no_mc<-max(pro[which(min_rank(pro)<=max(floor(B*(1-conf)/2),1))])
