@@ -570,7 +570,7 @@ checkchao<-function(x, B, l, truediv, conf=0.95){ #, truemu_n
   
   #break ties
   less<-sum(pro<truediv)/length(pro)
-  more<-sum(pro>truediv)/length(pro)
+  more<-(length(pro)-sum(pro>truediv))/length(pro)
   p<-runif(1, min(less, more), max(less, more))
  
   lower<-max(pro[which(min_rank(pro)<=max(floor(B*(1-conf)/2),1))])
