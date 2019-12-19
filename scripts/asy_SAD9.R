@@ -1,0 +1,16 @@
+source("scripts/checkplot_initials.R")
+source("scripts/checkplot_inf.R")
+reps<-125
+outerreps<-400
+nc<-125#per Rob's recommendation
+plan(strategy=multiprocess, workers=nc)
+l<-0
+map(1:outerreps, function(x){
+    map(rev(round(10^seq(2, 5, 0.25))), function(size){
+        start<-Sys.time()
+out<-checkplot_inf(flatten(flatten(SADs_list))[[9]], l=l, inds=size, reps=reps)
+write.csv(out, paste("data/SAD9"l", l, "inds", size, "outer",  x, ".csv", sep="_"), row.names=F)
+print(Sys.time()-start)
+})
+  })
+})
