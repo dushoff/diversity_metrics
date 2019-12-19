@@ -1,0 +1,174 @@
+# script to make checkplots for Chao's variance estimators for diversity estimates. Also creates non-checkplot figure of CI coverage for Chao1 for the conceptual guide.
+
+
+#record start time
+start<-Sys.time()
+#############
+#load functions and packages
+library(furrr)#parallelization
+source("scripts/helper_funs/uniroot_gamma_and_lnorm.R")
+# source("/Rstudio_Git/Dushoff_diversity/scripts/helper_funs/radplot.R")
+# source("scripts/helper_funs/prettify.R")
+library(scales)#trans_breaks
+# library(cowplot) #sometimes nice stuff for multipanel ggplotting
+# invlogit<-arm::invlogit
+#library(vegan) # for fisherfit
+#library(MASS) # for fitdistr
+# library(scales) #for function muted
+select<-dplyr::select
+
+# function to remove subscripts
+remsub <- function(variable, value){
+  return(gsub("_"," ",value))}
+
+#function to summarize frequencies
+asab<-function(namevec){as.numeric(table(namevec))}
+
+###################
+# function to compute CV
+mycv<-function(x){sd(x)/mean(x)}
+
+
+
+########################################
+# simulate communities with fit_SAD, basically isntantaneous
+
+SADs_list<-map(c("lnorm", "gamma"), function(distr){
+  map(c(100, 200), function(rich){
+    map(c(0.05, .15,.25,.5,.75,.85), function(simp_Prop){
+      fit_SAD(rich = rich, simpson = simp_Prop*rich, dstr = distr)
+    })
+  })
+})
+
+
+
+
+
+###################
+#this looks like it is checking someething abotu Simpson but it looks kind of wrong
+# checkvars<-future_map_dfr(3:300*10, function(ss){
+#   map_dfr(1:reps, function(rep){
+#     mys<-sample_infinite(SADs_list[[1]][[2]][[1]][[3]], ss)
+#     data.frame(asy_Simpson=Chao_Hill_abu(mys, q=1), sampsimp=dfun(mys, 0), ss=ss)
+#   })
+#   
+# })
+# 
+# 
+# 
+# ############
+# # did checkvars used to be something else? 
+# checkvars %>% group_by(m) %>%  mutate_at(c("SC", "q = 0","q = 1","q = 2" ), mycv) %>% 
+#   ggplot(aes(m, SC))+geom_point()+geom_point(aes(y=`q = 0`), color="red")+
+#   geom_point(aes(y=`q = 1`), color="blue")+
+#   geom_point(aes(y=`q = 2`), color="green")+theme_classic()
+# 
+# mydf %>% ggplot(aes(x,y))+geom_smooth()
+# #quick summary to see how distributional assumption affects Shannon
+# # see_Shannon <- map_dfr(SADs_list, function(dst){
+# #   map_dfr(dst, function(R){
+# #     map_dfr(R, function(S){
+# #       return("summaryStats" =data.frame(t(c(S$distribution_info, S$community_info))))
+# #     })
+# #   })
+# # })
+# 
+# #well, not much! But shannon is always higher with lnorm
+# # pdf("figures/Shannon_higher_with_lnorm.pdf")
+# # see_Shannon %>% 
+# #   ggplot(aes(as.numeric(as.character(Hill.Simpson))/as.numeric(as.character(richness))
+# #              , as.numeric(as.character(Hill.Shannon)), color=distribution, shape=richness))+
+# #     geom_point()+theme_classic()+scale_y_log10() +
+# #     scale_x_log10()+
+# #     labs(x="Hill-Simpson as fraction of richness", y="Hill-Shannon")
+# # dev.off()
+# 
+# ##############
+# # make rank abundance distributions
+# myabs<-map_dfr(flatten(flatten(SADs_list)) #, function(x) data.frame(names(x)))
+#                , function(x){data.frame(ab=x$rel_abundances)}
+#                , .id="SAD")
+# 
+# 
+# pdf("figures/RAD_for_extreme_SADs_rich_200.pdf")
+# myabs %>% left_join(data.frame(
+#   SAD=as.character(1:24)
+#   , skew=factor(c("uneven", "int","int", "int","int", "even"), levels=c("uneven", "int", "even"))
+#   , dist=factor(c(rep("lognormal", 12), rep("gamma", 12)), levels=c("lognormal", "gamma"))
+# )) %>% 
+#   mutate(abD=paste(dist, skew)) %>% 
+#   group_by(SAD, abD, dist, skew) %>% 
+#   mutate(abrank=min_rank(desc(ab)), log_relative_abundance=log(ab), relative_abundance=ab) %>% 
+#   gather(scl, rel_abund, relative_abundance, log_relative_abundance )%>% 
+#   filter(SAD %in% c("7","10","12","19","22","24")) %>% 
+#   ggplot(aes(abrank, rel_abund, color=dist))+
+#     geom_point(alpha=0.1, size=1)+
+#     geom_line(size=.4, alpha=0.1)+
+#     theme_classic()+
+#     theme(text=element_text(size=16))+
+#     labs(x="abundance rank", y="", color="", shape="")+
+#     facet_grid(fct_rev(scl)~skew, scales="free", switch="y", labeller=remsub)
+# dev.off()               
+# 
+# 
+# 
+####################################
+#set up parallelization for large computations
+
+#set # cores
+nc<-43#per Rob's recommendation
+
+
+plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
+
+########################
+# # function to generate data for checkplots for fixed communities
+# checkplot<-function(abs, B=Bnum, l, inds, reps){
+#   td<-dfun(abs, l) #compute true diversity
+#   #truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
+#   future_map_dfr(1:reps,function(x){
+#     obs<-subsam(abs, size=inds) #subsample true community within each replicate
+#     chaotile<-checkchao(obs, B, l, td) #then do B bootstrap samples for the augmented community based on that sample
+#     return(chaotile=data.frame(qtile=chaotile[1], truediv=chaotile[2], chaoest=chaotile[3], obsD=chaotile[4], l=l, inds=inds, reps=reps))
+# 
+#   })
+# }
+
+# for infinite community, generated by fit_SAD (SAD is the name of that list object)
+checkplot_inf<-function(SAD, B=2000, l, inds, reps){
+  hillname<-ifelse(l==-1, "Hill-Simpson", ifelse(l==0, "Hill-Shannon", "richness"))
+  td<-SAD$community_info[hillname] #grab true diversity from SAD object
+  #truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
+  future_map_dfr(1:reps,function(x){
+    # obs<-subsam(abs, size=inds) #subsample true community within each replicate
+    
+    obs <- sample_infinite(SAD$rel_abundances, size=inds) #subsample the whole community with # individuals=size
+
+    chaotile <- checkchao(x=obs, B=B, l=l, truediv=td) #then do B bootstrap samples for the augmented community based on that sample
+    return(myout=data.frame(p=chaotile$p
+                               , truediv=chaotile$truediv
+                               , chaoest=chaotile$chaoest
+                               , obsD=chaotile$obsD
+                               , upper=chaotile$upper
+                               , lower=chaotile$lower
+                               , l
+                               , inds
+                               , reps)
+           )
+    
+  })
+}
+#################################################
+#asymptotic diversity checkplots
+
+# #set reps to 5000 but outerreps to 10 for efficient use of anotate
+
+
+nc<-40#per Rob's recommendation
+plan(strategy=multiprocess, workers=nc)
+
+out<-checkplot_inf(flatten(flatten(SADs_list))[[7]], l=0, inds=100, reps=5e3)
+
+took<-Sys.time()-start
+write.csv(rbind(out, rep(took, length(out))), "data/fromR/amarelouttest")
