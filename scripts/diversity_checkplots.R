@@ -161,30 +161,50 @@ checkplot_inf<-function(SAD, B=2000, l, inds, reps){
 }
 #################################################
 #asymptotic diversity checkplots
+# 
+# # #set reps to 5000 but outerreps to 10 for efficient use of anotate
+# reps<-5000
+# outerreps<-10
+# nc<-15#per Rob's recommendation
+# plan(strategy=multiprocess, workers=nc)
+# 
+# map(c(7,19,10,22,12,24), function(SAD){
+#   map(1:outerreps, function(x){
+#    map(rev(round(10^seq(2, 5, 0.25))), function(size){
+#       map(c(-1,1), function(l){
+#         start<-Sys.time()
+#         
+#         out<-checkplot_inf(flatten(flatten(SADs_list))[[SAD]], l=l, inds=size, reps=reps)
+#         write.csv(out, paste("data/SAD", SAD, "l", l, "inds", size, "outer",  x, ".csv", sep="_"), row.names=F)# out<-checkplot_inf(flatten(flatten(SADs_list))[[7]], l=l, inds=size, reps=reps)
+#         print(Sys.time()-start)
+#       })
+#     })
+#     
+#     # write.csv(ug_asy, paste("data/SAD_7_asy",  x, ".csv", sep="_"), row.names=F)
+#     # return(ug_asy)
+#   })
+# })
 
-# #set reps to 5000 but outerreps to 10 for efficient use of anotate
-reps<-5000
-outerreps<-10
-nc<-15#per Rob's recommendation
+reps<-125
+outerreps<-400
+nc<-128#per Rob's recommendation
 plan(strategy=multiprocess, workers=nc)
-
+l<-0
 map(c(7,19,10,22,12,24), function(SAD){
   map(1:outerreps, function(x){
-   map(rev(round(10^seq(2, 5, 0.25))), function(size){
-      map(c(-1,1), function(l){
+    map(rev(round(10^seq(2, 5, 0.25))), function(size){
+     
         start<-Sys.time()
         
         out<-checkplot_inf(flatten(flatten(SADs_list))[[SAD]], l=l, inds=size, reps=reps)
-        write.csv(out, paste("data/SAD", SAD, "l", l, "inds", size, "outer",  x, ".csv", sep="_"), row.names=F)# out<-checkplot_inf(flatten(flatten(SADs_list))[[7]], l=l, inds=size, reps=reps)
+        write.csv(out, paste("data/SAD", SAD, "l", l, "inds", size, "outer",  x, ".csv", sep="_"), row.names=F)
         print(Sys.time()-start)
       })
-    })
-    
+   
     # write.csv(ug_asy, paste("data/SAD_7_asy",  x, ".csv", sep="_"), row.names=F)
     # return(ug_asy)
   })
 })
-
 
 # ########################
 # # to make QQ plot
@@ -253,7 +273,7 @@ obscp_inf <- function(l=l, size=size, SAD=SAD, B=2000, truemun=truemun, conf=0.9
                     , "obsD"=obs
                     , "l"=l
                     , "size"=size ))
->>>>>>> 2c6377f18ad2e39c57dd575c2fe787c19f383744
+
 }
 
 # #for a fixed community 
@@ -285,18 +305,23 @@ trycheckingobs<-function(SAD){
   map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
     map_dfr(c(-1,0,1), function(ell){
       truemun<-truemu_inf(SAD$rel_abundances, size=size, reps=reps, l=ell)
-      map_dfr(1:reps, function(reps){obscp_inf(l=ell, size, SAD, truemun=truemun, B=Bnum)
+      future_map_dfr(1:reps, function(reps){obscp_inf(l=ell, size, SAD, truemun=truemun, B=Bnum)
 
       })
     })
   })
 }
 ##### apparently this was streamlined enough to store to a single .csv while running in parallel
-reps<-5e4
+reps<-5e3
 Bnum<-2e3
-future_map(c(7,10,12,19,22,24), function(SAD){
-    write.csv(trycheckingobs(flatten(flatten(SADs_list))[[SAD]])
-              , file=paste("data/fromR/new_trycheckingobs_SAD_", SAD, ".csv", sep=""), row.names=F)
+nc<-125
+plan(strategy=multiprocess, workers=nc)
+map(1:10, function(tryme){
+  map(1:24, function(SAD){
+    nd<-trycheckingobs(flatten(flatten(SADs_list))[[SAD]])
+      write.csv(nd
+                , file=paste("data/new_trycheckingobs_SAD_", SAD,"iter_", tryme, ".csv", sep=""), row.names=F)
+  })
 })
 
 # write.csv(trycheckingobs_R, file="data/big_richness_checkplot.csv", row.names=F)
