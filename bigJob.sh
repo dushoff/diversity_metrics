@@ -3,7 +3,7 @@
 # Name of the partition 
 #SBATCH --job-name=several_div # Name of the job 
 #SBATCH --ntasks=1 # Number of tasks 
-#SBATCH --cpus-per-task= 6 # Number of CPUs per task 
+#SBATCH --cpus-per-task=6 # Number of CPUs per task 
 #SBATCH --mem=192GB # Requested memory 
 #SBATCH --array=0-23 # Array job will submit 24 jobs
 #SBATCH --time=72:00:00 # Total run time limit (HH:MM:SS)
