@@ -33,41 +33,39 @@ mycv<-function(x){sd(x)/mean(x)}
 SADs_list<-map(c("lnorm", "gamma"), function(distr){
   map(c(100, 200), function(rich){
     map(c(0.05, .15,.25,.5,.75,.85), function(simp_Prop){
-      fit_SAD(rich = rich, simpson = simp_Prop*rich, dstr = distr)
+      fit_SAD(rich = rich, simpson = simp_Prop*(rich-1)+1, dstr = distr)
     })
   })
 })
 
 
-#set up parallelization
-#set number of cores
-nc<-7 
 
-#will do forked in base R and sometimes in Rstudio at least on my mac
-plan(strategy=multiprocess, workers=nc) 
 
-reps<-200
-###################
-#this looks like it is checking someething abotu Simpson but it looks kind of wrong
-checkvars<-future_map_dfr(3:300*10, function(ss){
-  map_dfr(1:reps, function(rep){
-    mys<-sample_infinite(SADs_list[[1]][[2]][[1]][[3]], ss)
-    data.frame(asy_Simpson=Chao_Hill_abu(mys, q=1), sampsimp=dfun(mys, 0), ss=ss)
-  })
-  
-})
-
+# #will do forked in base R and sometimes in Rstudio at least on my mac
+# plan(strategy=multiprocess, workers=nc) 
+# 
+# reps<-200
+# ###################
+# #this looks like it is checking someething abotu Simpson but it looks kind of wrong
+# checkvars<-future_map_dfr(3:300*10, function(ss){
+#   map_dfr(1:reps, function(rep){
+#     mys<-sample_infinite(SADs_list[[1]][[2]][[1]][[3]], ss)
+#     data.frame(asy_Simpson=Chao_Hill_abu(mys, q=1), sampsimp=dfun(mys, 0), ss=ss)
+#   })
+#   
+# })
+# 
 
 
 ############
-# did checkvars used to be something else? 
-checkvars %>% group_by(m) %>%  mutate_at(c("SC", "q = 0","q = 1","q = 2" ), mycv) %>% 
-  ggplot(aes(m, SC))+geom_point()+geom_point(aes(y=`q = 0`), color="red")+
-  geom_point(aes(y=`q = 1`), color="blue")+
-  geom_point(aes(y=`q = 2`), color="green")+theme_classic()
-
-mydf %>% ggplot(aes(x,y))+geom_smooth()
-#quick summary to see how distributional assumption affects Shannon
+# # did checkvars used to be something else? 
+# checkvars %>% group_by(m) %>%  mutate_at(c("SC", "q = 0","q = 1","q = 2" ), mycv) %>% 
+#   ggplot(aes(m, SC))+geom_point()+geom_point(aes(y=`q = 0`), color="red")+
+#   geom_point(aes(y=`q = 1`), color="blue")+
+#   geom_point(aes(y=`q = 2`), color="green")+theme_classic()
+# 
+# mydf %>% ggplot(aes(x,y))+geom_smooth()
+# #quick summary to see how distributional assumption affects Shannon
 # see_Shannon <- map_dfr(SADs_list, function(dst){
 #   map_dfr(dst, function(R){
 #     map_dfr(R, function(S){
@@ -88,41 +86,41 @@ mydf %>% ggplot(aes(x,y))+geom_smooth()
 
 ##############
 # make rank abundance distributions
-myabs<-map_dfr(flatten(flatten(SADs_list)) #, function(x) data.frame(names(x)))
-               , function(x){data.frame(ab=x$rel_abundances)}
-               , .id="SAD")
-
-
-pdf("figures/RAD_for_extreme_SADs_rich_200.pdf")
-myabs %>% left_join(data.frame(
-  SAD=as.character(1:24)
-  , skew=factor(c("uneven", "int","int", "int","int", "even"), levels=c("uneven", "int", "even"))
-  , dist=factor(c(rep("lognormal", 12), rep("gamma", 12)), levels=c("lognormal", "gamma"))
-)) %>% 
-  mutate(abD=paste(dist, skew)) %>% 
-  group_by(SAD, abD, dist, skew) %>% 
-  mutate(abrank=min_rank(desc(ab)), log_relative_abundance=log(ab), relative_abundance=ab) %>% 
-  gather(scl, rel_abund, relative_abundance, log_relative_abundance )%>% 
-  filter(SAD %in% c("7","10","12","19","22","24")) %>% 
-  ggplot(aes(abrank, rel_abund, color=dist))+
-    geom_point(alpha=0.1, size=1)+
-    geom_line(size=.4, alpha=0.1)+
-    theme_classic()+
-    theme(text=element_text(size=16))+
-    labs(x="abundance rank", y="", color="", shape="")+
-    facet_grid(fct_rev(scl)~skew, scales="free", switch="y", labeller=remsub)
-dev.off()               
-
+# myabs<-map_dfr(flatten(flatten(SADs_list)) #, function(x) data.frame(names(x)))
+#                , function(x){data.frame(ab=x$rel_abundances)}
+#                , .id="SAD")
+# 
+# 
+# pdf("figures/RAD_for_extreme_SADs_rich_200.pdf")
+# myabs %>% left_join(data.frame(
+#   SAD=as.character(1:24)
+#   , skew=factor(c("uneven", "int","int", "int","int", "even"), levels=c("uneven", "int", "even"))
+#   , dist=factor(c(rep("lognormal", 12), rep("gamma", 12)), levels=c("lognormal", "gamma"))
+# )) %>% 
+#   mutate(abD=paste(dist, skew)) %>% 
+#   group_by(SAD, abD, dist, skew) %>% 
+#   mutate(abrank=min_rank(desc(ab)), log_relative_abundance=log(ab), relative_abundance=ab) %>% 
+#   gather(scl, rel_abund, relative_abundance, log_relative_abundance )%>% 
+#   filter(SAD %in% c("7","10","12","19","22","24")) %>% 
+#   ggplot(aes(abrank, rel_abund, color=dist))+
+#     geom_point(alpha=0.1, size=1)+
+#     geom_line(size=.4, alpha=0.1)+
+#     theme_classic()+
+#     theme(text=element_text(size=16))+
+#     labs(x="abundance rank", y="", color="", shape="")+
+#     facet_grid(fct_rev(scl)~skew, scales="free", switch="y", labeller=remsub)
+# dev.off()               
+# 
 
 
 ####################################
 #set up parallelization for large computations
 
 #set # cores
-nc<-43#per Rob's recommendation
-
-
-plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
+# nc<-43#per Rob's recommendation
+# 
+# 
+# plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 
 ########################
 # # function to generate data for checkplots for fixed communities
@@ -146,44 +144,67 @@ checkplot_inf<-function(SAD, B=2000, l, inds, reps){
     # obs<-subsam(abs, size=inds) #subsample true community within each replicate
     
     obs <- sample_infinite(SAD$rel_abundances, size=inds) #subsample the whole community with # individuals=size
-
+    
     chaotile <- checkchao(x=obs, B=B, l=l, truediv=td) #then do B bootstrap samples for the augmented community based on that sample
     return(myout=data.frame(p=chaotile$p
-                               , truediv=chaotile$truediv
-                               , chaoest=chaotile$chaoest
-                               , obsD=chaotile$obsD
-                               , upper=chaotile$upper
-                               , lower=chaotile$lower
-                               , l
-                               , inds
-                               , reps)
-           )
+                            , truediv=chaotile$truediv
+                            , chaoest=chaotile$chaoest
+                            , obsD=chaotile$obsD
+                            , upper=chaotile$upper
+                            , lower=chaotile$lower
+                            , l
+                            , inds
+                            , reps)
+    )
     
   })
 }
 #################################################
 #asymptotic diversity checkplots
+# 
+# # #set reps to 5000 but outerreps to 10 for efficient use of anotate
+# reps<-5000
+# outerreps<-10
+# nc<-15#per Rob's recommendation
+# plan(strategy=multiprocess, workers=nc)
+# 
+# map(c(7,19,10,22,12,24), function(SAD){
+#   map(1:outerreps, function(x){
+#    map(rev(round(10^seq(2, 5, 0.25))), function(size){
+#       map(c(-1,1), function(l){
+#         start<-Sys.time()
+#         
+#         out<-checkplot_inf(flatten(flatten(SADs_list))[[SAD]], l=l, inds=size, reps=reps)
+#         write.csv(out, paste("data/SAD", SAD, "l", l, "inds", size, "outer",  x, ".csv", sep="_"), row.names=F)# out<-checkplot_inf(flatten(flatten(SADs_list))[[7]], l=l, inds=size, reps=reps)
+#         print(Sys.time()-start)
+#       })
+#     })
+#     
+#     # write.csv(ug_asy, paste("data/SAD_7_asy",  x, ".csv", sep="_"), row.names=F)
+#     # return(ug_asy)
+#   })
+# })
 
-# #set reps to 5000 but outerreps to 10 for efficient use of anotate
-reps<-5000
-outerreps<-10
-nc<-40#per Rob's recommendation
+reps<-125
+outerreps<-400
+nc<-128#per Rob's recommendation
 plan(strategy=multiprocess, workers=nc)
-
-map(c(7,10,12,19,22,24), function(SAD){
+l<-0
+map(c(7,19,10,22,12,24), function(SAD){
   map(1:outerreps, function(x){
-    ug_asy<-map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
-      map_dfr(c(-1,0,1), function(l){
+    map(rev(round(10^seq(2, 5, 0.25))), function(size){
+     
+        start<-Sys.time()
+        
         out<-checkplot_inf(flatten(flatten(SADs_list))[[SAD]], l=l, inds=size, reps=reps)
-        # out<-checkplot_inf(flatten(flatten(SADs_list))[[7]], l=l, inds=size, reps=reps)
+        write.csv(out, paste("data/SAD", SAD, "l", l, "inds", size, "outer",  x, ".csv", sep="_"), row.names=F)
+        print(Sys.time()-start)
       })
-    })
-    write.csv(ug_asy, paste("data/SAD", SAD, "asy_new",  x, ".csv", sep="_"), row.names=F)
+   
     # write.csv(ug_asy, paste("data/SAD_7_asy",  x, ".csv", sep="_"), row.names=F)
     # return(ug_asy)
   })
 })
-
 
 # ########################
 # # to make QQ plot
@@ -225,15 +246,15 @@ obscp_inf <- function(l=l, size=size, SAD=SAD, B=2000, truemun=truemun, conf=0.9
   pro = apply(data.bt,2,function(boot)dfun(boot, l)) #sample diversity for bootstraps
   pro_mc<-pro-mean(pro)+obs
 
-  less<-sum(pro_mc<truemun)/length(pro)
-  more<-sum(pro_mc>truemun)/length(pro)
+  less<-sum(pro_mc<truemun)/length(pro_mc)
+  more<-(length(pro_mc)-sum(pro_mc>truemun))/length(pro_mc)
   p<-runif(1, min(less, more), max(less, more))
   
   lower<-max(pro_mc[which(min_rank(pro_mc)<=max(floor(B*(1-conf)/2),1))])
   upper<-min(pro_mc[which(min_rank(-pro_mc)<=max(floor(B*(1-conf)/2),1))])
   
   less_no_mc<-sum(pro<truemun)/length(pro)
-  more_no_mc<-sum(pro>truemun)/length(pro)
+  more_no_mc<-(length(pro)-sum(pro>truemun))/length(pro)
   p_no_mc<-runif(1, min(less, more), max(less, more))
   
   lower_no_mc<-max(pro[which(min_rank(pro)<=max(floor(B*(1-conf)/2),1))])
@@ -252,6 +273,7 @@ obscp_inf <- function(l=l, size=size, SAD=SAD, B=2000, truemun=truemun, conf=0.9
                     , "obsD"=obs
                     , "l"=l
                     , "size"=size ))
+
 }
 
 # #for a fixed community 
@@ -272,8 +294,8 @@ truemun<-truemu_inf(SADs_list[[1]][[2]][[3]]$rel_abundances, size=200, reps=reps
 
 plan(strategy=multiprocess, workers=nc) #this is telling the computer to get ready for the future_ commands
 quickout<-future_map_dfr(1:reps, function(reps){
-   obscp_inf(l=0, 200, SADs_list[[1]][[2]][[3]], truemun=truemun, B=Bnum)}
-    )
+  obscp_inf(l=0, 200, SADs_list[[1]][[2]][[3]], truemun=truemun, B=Bnum)}
+)
 quickout
 quickout %>% ggplot(aes(p))+geom_histogram()+theme_classic()
 
@@ -282,18 +304,24 @@ quickout %>% ggplot(aes(p))+geom_histogram()+theme_classic()
 trycheckingobs<-function(SAD){
   map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
     map_dfr(c(-1,0,1), function(ell){
-          truemun<-truemu_inf(SAD$rel_abundances, size=size, reps=reps, l=ell)
-           map_dfr(1:reps, function(reps){obscp_inf(l=ell, size, SAD, truemun=truemun, B=Bnum)
-            })
+      truemun<-truemu_inf(SAD$rel_abundances, size=size, reps=reps, l=ell)
+      future_map_dfr(1:reps, function(reps){obscp_inf(l=ell, size, SAD, truemun=truemun, B=Bnum)
+
       })
+    })
   })
 }
 ##### apparently this was streamlined enough to store to a single .csv while running in parallel
-reps<-5e4
+reps<-5e3
 Bnum<-2e3
-future_map(c(7,10,12,19,22,24), function(SAD){
-    write.csv(trycheckingobs(flatten(flatten(SADs_list))[[SAD]])
-              , file=paste("data/fromR/new_trycheckingobs_SAD_", SAD, ".csv", sep=""), row.names=F)
+nc<-125
+plan(strategy=multiprocess, workers=nc)
+map(1:10, function(tryme){
+  map(1:24, function(SAD){
+    nd<-trycheckingobs(flatten(flatten(SADs_list))[[SAD]])
+      write.csv(nd
+                , file=paste("data/new_trycheckingobs_SAD_", SAD,"iter_", tryme, ".csv", sep=""), row.names=F)
+  })
 })
 
 # write.csv(trycheckingobs_R, file="data/big_richness_checkplot.csv", row.names=F)
@@ -308,8 +336,8 @@ future_map(c(7,10,12,19,22,24), function(SAD){
 
 # trycheckingobs<-read.csv("data/fromR/trycheckingobs_with_without_mc.csv")
 sample_div_cp<-future_map_dfr(1:20, function(SAD){
-    newdf<-read.csv(, file=paste("data/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""))
-    return(data.frame(newdf, "SAD_index"=rep(SAD, length(newdf[,1]))))
+  newdf<-read.csv(, file=paste("data/fromR/trycheckingobs_SAD_", SAD, ".csv", sep=""))
+  return(data.frame(newdf, "SAD_index"=rep(SAD, length(newdf[,1]))))
 })
 
 sample_div_cp %>% filter(size==562) %>% ggplot(aes(obsD))+geom_density()+facet_grid(SAD_index~l)
@@ -337,21 +365,21 @@ sample_div_cp %>%
     SAD_index=1:20
     , skew=factor(c("uneven", "int", "int","int", "even"), levels=c("uneven", "int", "even"))
     , dist=factor(c(rep("lognormal", 10), rep("gamma", 10)), levels=c("lognormal", "gamma"))
-   )) %>% 
+  )) %>% 
   filter(SAD_index %in% c(1, 11, 5, 15) )%>% 
-    group_by(hill, size, skew, dist, SAD_index) %>% 
-    summarize(sdlog=sd(log(obsD))) %>% 
-    ggplot(aes(size, sdlog, color=hill, shape=hill))+
-    geom_point(alpha=0.8)+
-    geom_line(alpha=0.8)+
-    scale_x_log10(breaks=trans_breaks("log10", function(x) 10^x),
-                  labels = trans_format("log10", math_format(10^.x)))+
-    theme_classic()+
-    # geom_hline(yintercept=0.1)+
-    labs(x="sample size (individuals)"
-         , y="SD of log(sample diversity) under random sampling"
-         , color="", shape="" )+
-    facet_grid(dist~skew)+
+  group_by(hill, size, skew, dist, SAD_index) %>% 
+  summarize(sdlog=sd(log(obsD))) %>% 
+  ggplot(aes(size, sdlog, color=hill, shape=hill))+
+  geom_point(alpha=0.8)+
+  geom_line(alpha=0.8)+
+  scale_x_log10(breaks=trans_breaks("log10", function(x) 10^x),
+                labels = trans_format("log10", math_format(10^.x)))+
+  theme_classic()+
+  # geom_hline(yintercept=0.1)+
+  labs(x="sample size (individuals)"
+       , y="SD of log(sample diversity) under random sampling"
+       , color="", shape="" )+
+  facet_grid(dist~skew)+
   theme(text=element_text(size=16))
 dev.off()
 
@@ -409,7 +437,7 @@ map(-1:1, function(ell){
                     ,"; "
                     , c("lognormal; uneven","lognormal; even", "gamma; uneven", "gamma; even")[SAD] 
                     , sep=""
-                    ))+
+      ))+
       labs(x="p-value")
   })
 })
@@ -425,9 +453,9 @@ nreps<-5e3 #this should be 5000 for now
 #relable facets by creating new factor in df
 inds<-data.frame("l"=c(1,0,-1), 
                  divind=factor(c("richness", "Hill-Shannon", "Hill-Simpson"),
-                                              levels=c("richness", "Hill-Shannon", "Hill-Simpson")
-                               )
+                               levels=c("richness", "Hill-Shannon", "Hill-Simpson")
                  )
+)
 
 # tc<-left_join(tvcov, inds)
 tc<-sample_div_cp %>% group_by(l, size, SAD_index) %>% summarize(outside=1-(sum(chaotile_mc>97.5)+sum(chaotile_mc<2.5))/(5000)) %>% left_join(inds)
@@ -447,10 +475,10 @@ getug<-future_map_dfr(1:sad_list_length, function(x){
     mydf<-tryCatch(read.csv(paste("data/SAD", x, "asy",  y, ".csv", sep="_")), error=function(e){
       data.frame(qtile=NA, truediv=NA, chaoest=NA, obsD=NA, l=NA, inds=NA, reps=NA)})
     mydf<-data.frame(mydf, SAD_ind=x)
-       return(mydf)
+    return(mydf)
     
   })
-    
+  
 })
 
 #summarize SDlog(diversity)
@@ -488,14 +516,14 @@ dev.off()
 plot(sdlogs$sdlog, sdlogs$cv)
 pdf(file="figures/sampling_variability_asymptotic.pdf")
 sdlogs %>%
-    filter(etype=="chaoest") %>%  
-               ggplot(aes(inds, sdlog, color=factor(l), shape=factor(l)))+
-    geom_point()+
-    geom_line()+
-    facet_wrap(~SAD_ind, ncol=5)+
-    theme_classic()+scale_x_log10()+
-    theme(axis.text.x=element_text(angle=90))+
-    # geom_hline(yintercept=0.1)+
+  filter(etype=="chaoest") %>%  
+  ggplot(aes(inds, sdlog, color=factor(l), shape=factor(l)))+
+  geom_point()+
+  geom_line()+
+  facet_wrap(~SAD_ind, ncol=5)+
+  theme_classic()+scale_x_log10()+
+  theme(axis.text.x=element_text(angle=90))+
+  # geom_hline(yintercept=0.1)+
   labs(x="sample size", y="SD of log(asymptotic estimator) under random sampling")
 dev.off()
 #look at SDlog of estimates
@@ -505,11 +533,11 @@ pdf("figures/too_many_checkplots_asymptotic_diversity.pdf")
 map(1:20, function(SAD){
   map(-1:1, function(ell){
     try(getug %>% filter(SAD_ind==SAD, l==ell) %>% 
-      ggplot(aes(qtile/100))+
-      geom_histogram()+
-      theme_classic()+
-      facet_wrap(~inds)+
-      ggtitle(paste("SAD number", SAD, "ell =",ell))
+          ggplot(aes(qtile/100))+
+          geom_histogram()+
+          theme_classic()+
+          facet_wrap(~inds)+
+          ggtitle(paste("SAD number", SAD, "ell =",ell))
     )
   })
 })
@@ -617,8 +645,8 @@ dev.off()
 
 
 asycov<-getug%>% filter(SAD_ind==7) %>% 
-    group_by(l, inds) %>% 
-    summarize(outside=1-(sum(qtile>97.5)+sum(qtile<2.5))/(5000)) %>% left_join(inds)
+  group_by(l, inds) %>% 
+  summarize(outside=1-(sum(qtile>97.5)+sum(qtile<2.5))/(5000)) %>% left_join(inds)
 
 
 ###############################
@@ -632,26 +660,26 @@ comb_cov<-bind_rows("sample diversity"=tc %>% filter(SAD_index==7) %>% rename(in
 pdf(file="figures/CI_coverage_guide.pdf", height=6, width=6) #
 
 comb_cov %>% filter(inds<=10^4) %>% 
-    mutate(conserv=log(outside/(1-outside))) %>% 
-    ggplot(aes(inds, outside, color=conserv, shape=esttype))+
-    geom_point(size=2)+
-
-    geom_hline(yintercept=0.95)+
-    facet_grid(divind~esttype, switch="y" )+#strip.position=NULL
-    theme_classic()+
-    scale_shape_manual(values=c(17,15))+
-    scale_color_gradient2(low="red",mid="grey55", high="cyan", limits=c(-.6,6), midpoint=2.944, breaks=c(-.6,6), labels=c(" over-confident",  " conservative"))+
-    scale_y_continuous(trans="logit", limits=c(0.3, .995), breaks=c(0.3,0.5, 0.73, 0.88, 0.95, 0.98,0.99, 0.995), labels=c(30,50, 73, 88, 95, 98, 99, 99.5))+ #modify this so that it doesn't go quite as high
-    scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
-    labs(y="% samples for which 95% CI contains true value", x="individuals")+
-    theme(legend.title = element_blank()
-          , panel.spacing=unit(1.3, "lines")
-          , strip.placement.y = "outside"
-          , strip.background = element_blank()#element_rect(fill="lightgrey", linetype=0)
-          , strip.text=element_text(face="bold")
-          # , strip.text.y = element_text(angle = 180)
-          , legend.text=element_text(hjust=0.5)    )+
-    guides(shape=F)
+  mutate(conserv=log(outside/(1-outside))) %>% 
+  ggplot(aes(inds, outside, color=conserv, shape=esttype))+
+  geom_point(size=2)+
+  
+  geom_hline(yintercept=0.95)+
+  facet_grid(divind~esttype, switch="y" )+#strip.position=NULL
+  theme_classic()+
+  scale_shape_manual(values=c(17,15))+
+  scale_color_gradient2(low="red",mid="grey55", high="cyan", limits=c(-.6,6), midpoint=2.944, breaks=c(-.6,6), labels=c(" over-confident",  " conservative"))+
+  scale_y_continuous(trans="logit", limits=c(0.3, .995), breaks=c(0.3,0.5, 0.73, 0.88, 0.95, 0.98,0.99, 0.995), labels=c(30,50, 73, 88, 95, 98, 99, 99.5))+ #modify this so that it doesn't go quite as high
+  scale_x_log10(labels = trans_format("log10", math_format(10^.x)))+
+  labs(y="% samples for which 95% CI contains true value", x="individuals")+
+  theme(legend.title = element_blank()
+        , panel.spacing=unit(1.3, "lines")
+        , strip.placement.y = "outside"
+        , strip.background = element_blank()#element_rect(fill="lightgrey", linetype=0)
+        , strip.text=element_text(face="bold")
+        # , strip.text.y = element_text(angle = 180)
+        , legend.text=element_text(hjust=0.5)    )+
+  guides(shape=F)
 
 dev.off()
 
@@ -703,10 +731,9 @@ myres %>%
   scale_color_gradient2()+
   guides(color=guide_colorbar("tendency to break the rules"))+
   theme_classic()
-  
+
 
 dev.off()
 
 myres %>% ggplot(aes(inds, fill=rulebreaker))+geom_histogram(alpha=0.2, position="dodge")
 
-?guides
