@@ -8,7 +8,7 @@ plan(strategy=multiprocess, workers=nc)
 map(c(-1,0,1), function(ell){
 map(1:10, function(tryme){
         start<-Sys.time()
-nd<-trycheckingobs(flatten(flatten(SADs_list))[[10]], size, ell)
+nd<-trycheckingobs(flatten(flatten(SADs_list))[[10]], size)
 write.csv(nd, file=paste("data/new_trycheckingobs_SAD_10", "iter_", tryme, "size", size, ".csv", sep=""), row.names=F)
 print(Sys.time()-start)
 })
