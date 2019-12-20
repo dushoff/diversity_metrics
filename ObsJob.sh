@@ -16,4 +16,4 @@ module load intel/17.0.4
 
 module load R-Project/3.4.1
 
-srun Rscript scripts/obs_lowmem_SAD$SLURM_ARRAY_TASK_ID.R 
+srun Rscript scripts/obs_lowmemSAD$SLURM_ARRAY_TASK_ID.R 
