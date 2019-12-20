@@ -4,8 +4,8 @@ reps<-5e3
 Bnum<-2e3
 nc<-125#per Rob's recommendation
 plan(strategy=multiprocess, workers=nc)
- map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
-map_dfr(c(-1,0,1), function(ell){
+ map(round(10^seq(2, 5.5, 0.25)), function(size){
+map(c(-1,0,1), function(ell){
 map(1:10, function(tryme){
         start<-Sys.time()
 nd<-trycheckingobs(flatten(flatten(SADs_list))[[21]], size, ell)
