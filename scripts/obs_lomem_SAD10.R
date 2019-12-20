@@ -2,8 +2,8 @@ source("scripts/checkplot_initials.R")
 source("scripts/obscp_inf.R")
 reps<-5e3
 Bnum<-2e3
-nc<-24 #scaling this back to work on amarel... suspect memory issues
-plan(strategy=multisession, workers=nc)
+nc<-10 #scaling this back to work on amarel... suspect memory issues
+plan(strategy=multiprocess, workers=nc)
  map(round(10^seq(2, 5.5, 0.25)), function(size){
 map(c(-1,0,1), function(ell){
 map(1:10, function(tryme){
