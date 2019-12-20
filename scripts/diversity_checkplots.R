@@ -189,7 +189,9 @@ checkplot_inf<-function(SAD, B=2000, l, inds, reps){
 map(c(1:24), function(SAD){
   
 mycode<-c(
-  "reps<-125"
+  "source(\"scripts/checkplot_initials.R\")"
+,  "source(\"scripts/checkplot_inf.R\")"
+,  "reps<-125"
 , "outerreps<-400"
 , "nc<-125#per Rob's recommendation"
 , "plan(strategy=multiprocess, workers=nc)"
@@ -199,8 +201,7 @@ mycode<-c(
 , "        start<-Sys.time()"
         
 , paste0("out<-checkplot_inf(flatten(flatten(SADs_list))[[", SAD, "]], l=l, inds=size, reps=reps)")
-,         paste0("write.csv(out, paste(\"data/SAD", SAD
-, "\"l\", l, \"inds\", size, \"outer\",  x, \".csv\", sep=\"_\"), row.names=F)")
+,         paste0("write.csv(out, paste(\"data/SAD", SAD, "\",\"l\", l, \"inds\", size, \"outer\",  x, \".csv\", sep=\"_\"), row.names=F)")
 ,       "print(Sys.time()-start)"
 ,      "})"
    
@@ -306,28 +307,46 @@ quickout %>% ggplot(aes(p))+geom_histogram()+theme_classic()
 
 ####################
 #run this whole thing to get sample diversity checkplot-type info for sample diversity for a single community
-trycheckingobs<-function(SAD){
-  map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
+trycheckingobs<-function(SAD, size){
+ 
     map_dfr(c(-1,0,1), function(ell){
       truemun<-truemu_inf(SAD$rel_abundances, size=size, reps=reps, l=ell)
       future_map_dfr(1:reps, function(reps){obscp_inf(l=ell, size, SAD, truemun=truemun, B=Bnum)
 
-      })
+    
     })
   })
 }
 ##### apparently this was streamlined enough to store to a single .csv while running in parallel
-reps<-5e3
-Bnum<-2e3
-nc<-125
-plan(strategy=multiprocess, workers=nc)
-map(1:10, function(tryme){
-  map(1:24, function(SAD){
-    nd<-trycheckingobs(flatten(flatten(SADs_list))[[SAD]])
-      write.csv(nd
-                , file=paste("data/new_trycheckingobs_SAD_", SAD,"iter_", tryme, ".csv", sep=""), row.names=F)
-  })
+
+
+map(c(1:24), function(SAD){
+  
+  mycode<-c(
+    "source(\"scripts/checkplot_initials.R\")"
+    ,  "source(\"scripts/obscp_inf.R\")"
+    ,  "reps<-5e3"
+
+    , "Bnum<-2e3"
+    , "nc<-125#per Rob's recommendation"
+    , "plan(strategy=multiprocess, workers=nc)"
+    , " map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){"
+    , "map_dfr(c(-1,0,1), function(ell){"
+    , "map(1:10, function(tryme){"
+    , "        start<-Sys.time()"
+    , paste0("nd<-trycheckingobs(flatten(flatten(SADs_list))[[",SAD,"]], size, ell)")
+    , paste0("write.csv(nd, file=paste(\"data/new_trycheckingobs_SAD_", SAD,"\", \"iter_\", tryme, \"size\", size, \".csv\", sep=\"\"), row.names=F)")
+    ,       "print(Sys.time()-start)"
+    ,      "})"
+    , "})"
+    , "})"
+    )
+  
+  write_lines(mycode, paste0("scripts/obs_SAD", SAD, ".R"))
 })
+
+
+
 
 # write.csv(trycheckingobs_R, file="data/big_richness_checkplot.csv", row.names=F)
 
