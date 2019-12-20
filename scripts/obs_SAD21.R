@@ -1,7 +1,6 @@
 source("scripts/checkplot_initials.R")
 source("scripts/obscp_inf.R")
 reps<-5e3
-outerreps<-400
 Bnum<-2e3
 nc<-125#per Rob's recommendation
 plan(strategy=multiprocess, workers=nc)
