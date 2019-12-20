@@ -3,7 +3,7 @@ source("scripts/obscp_inf.R")
 reps<-5e3
 Bnum<-2e3
 nc<-125#per Rob's recommendation
-plan(strategy=multiprocess, workers=nc)
+plan(strategy=multisession, workers=nc)
  map(round(10^seq(2, 5.5, 0.25)), function(size){
 map(c(-1,0,1), function(ell){
 map(1:10, function(tryme){
