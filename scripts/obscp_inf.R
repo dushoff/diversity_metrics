@@ -37,10 +37,10 @@ obscp_inf <- function(l=l, size=size, SAD=SAD, B=2000, truemun=truemun, conf=0.9
 }
 
 #try checking obs uses obscp_inf
-trycheckingobs<-function(SAD, size, ell){
+trycheckingobs<-function(SAD, size, ell, rf){
     
    
-        truemun<-truemu_inf(SAD$rel_abundances, size=size, reps=reps, l=ell)
+        truemun<-truemu_inf(SAD$rel_abundances, size=size, reps=reps*rf, l=ell)
         future_map_dfr(1:reps, function(reps){obscp_inf(l=ell, size, SAD, truemun=truemun, B=Bnum)
             
             
