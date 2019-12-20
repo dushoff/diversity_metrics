@@ -37,7 +37,7 @@ obscp_inf <- function(l=l, size=size, SAD=SAD, B=2000, truemun=truemun, conf=0.9
 }
 
 #try checking obs uses obscp_inf
-trycheckingobs<-function(SAD, size){
+trycheckingobs<-function(SAD, size, ell){
     
    
         truemun<-truemu_inf(SAD$rel_abundances, size=size, reps=reps, l=ell)
