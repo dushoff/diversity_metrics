@@ -10,6 +10,7 @@ map(1:10, function(tryme){
         start<-Sys.time()
 nd<-trycheckingobs(flatten(flatten(SADs_list))[[12]], size, ell)
 write.csv(nd, file=paste("data/new_trycheckingobs_SAD_12", "iter_", tryme, "size", size, ".csv", sep=""), row.names=F)
+rm(nd)
 print(Sys.time()-start)
 })
 })
