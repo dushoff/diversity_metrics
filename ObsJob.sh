@@ -1,7 +1,7 @@
 #!/bin/bash 
 #SBATCH --partition=main 
 # Name of the partition 
-#SBATCH --job-name=LowMemFork # Name of the job 
+#SBATCH --job-name=VLowMem # Name of the job 
 #SBATCH --ntasks=1 # Number of tasks 
 #SBATCH --cpus-per-task=1 # Number of CPUs per task 
 #SBATCH --mem=192GB # Requested memory 
