@@ -328,21 +328,22 @@ map(c(1:24), function(SAD){
     ,  "reps<-5e3"
 
     , "Bnum<-2e3"
-    , "nc<-125#per Rob's recommendation"
+    , "nc<-28 #scaling this back to work on amarel... suspect memory issues"
     , "plan(strategy=multiprocess, workers=nc)"
-    , " map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){"
-    , "map_dfr(c(-1,0,1), function(ell){"
+    , " map(round(10^seq(2, 5.5, 0.25)), function(size){"
+    , "map(c(-1,0,1), function(ell){"
     , "map(1:10, function(tryme){"
     , "        start<-Sys.time()"
     , paste0("nd<-trycheckingobs(flatten(flatten(SADs_list))[[",SAD,"]], size, ell)")
     , paste0("write.csv(nd, file=paste(\"data/new_trycheckingobs_SAD_", SAD,"\", \"iter_\", tryme, \"size\", size, \".csv\", sep=\"\"), row.names=F)")
+    , "rm(nd)"
     ,       "print(Sys.time()-start)"
     ,      "})"
     , "})"
     , "})"
     )
   
-  write_lines(mycode, paste0("scripts/obs_SAD", SAD, ".R"))
+  write_lines(mycode, paste0("scripts/obs_lomemSAD", SAD, ".R"))
 })
 
 
