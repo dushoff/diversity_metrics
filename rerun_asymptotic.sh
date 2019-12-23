@@ -14,5 +14,5 @@
 module load intel/17.0.4
 
 module load R-Project/3.4.1
-at=$SLURM_ARRAY_TASK_ID+1
-srun Rscript scripts/asy_SAD$at.R 
+
+srun Rscript scripts/asy_SAD$SLURM_ARRAY_TASK_ID.R 
