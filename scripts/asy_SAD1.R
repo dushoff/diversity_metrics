@@ -3,7 +3,7 @@ source("scripts/checkplot_inf.R")
 reps<-125
 outerreps<-400
 nc<-125
-plan(strategy=multiprocess, workers=nc)
+plan(strategy=multicore, workers=nc)
 map(c(-1,0,1), function(l){
 map(1:outerreps, function(x){
     map(rev(round(10^seq(2, 5, 0.25))), function(size){
