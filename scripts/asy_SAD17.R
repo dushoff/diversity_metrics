@@ -8,7 +8,7 @@ map(c(-1,0,1), function(l){
 map(1:outerreps, function(x){
     map(rev(round(10^seq(2, 5, 0.25))), function(size){
         start<-Sys.time()
-out<-checkplot_inf(flatten(flatten(SADs_list))[[16]], l=l, inds=size, reps=reps)
+out<-checkplot_inf(flatten(flatten(SADs_list))[[17]], l=l, inds=size, reps=reps)
 write.csv(out, paste("data/SAD16","l", l, "inds", size, "outer",  x, ".csv", sep="_"), row.names=F)
 print(Sys.time()-start)
 })
