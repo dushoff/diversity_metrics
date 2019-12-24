@@ -1,9 +1,9 @@
 #!/bin/bash 
 #SBATCH --partition=main 
 # Name of the partition 
-#SBATCH --job-name=asymptot # Name of the job 
+#SBATCH --job-name=asyNew # Name of the job 
 #SBATCH --ntasks=1 # Number of tasks 
-#SBATCH --cpus-per-task=2 # Number of CPUs per task 
+#SBATCH --cpus-per-task=1 # Number of CPUs per task 
 #SBATCH --mem=192GB # Requested memory 
 #SBATCH --array=0-23 # Array job will submit 24 jobs
 #SBATCH --time=72:00:00 # Total run time limit (HH:MM:SS)
