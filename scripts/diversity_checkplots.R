@@ -193,22 +193,23 @@ mycode<-c(
 ,  "source(\"scripts/checkplot_inf.R\")"
 ,  "reps<-125"
 , "outerreps<-400"
-, "nc<-125#per Rob's recommendation"
-, "plan(strategy=multiprocess, workers=nc)"
-, "l<-0"
+, "nc<-12"
+, "plan(strategy=multicore, workers=nc)"
+, "map(c(-1,0,1), function(l){"
 , "map(1:outerreps, function(x){"
 , "    map(rev(round(10^seq(2, 5, 0.25))), function(size){"
 , "        start<-Sys.time()"
         
 , paste0("out<-checkplot_inf(flatten(flatten(SADs_list))[[", SAD, "]], l=l, inds=size, reps=reps)")
 ,         paste0("write.csv(out, paste(\"data/SAD", SAD, "\",\"l\", l, \"inds\", size, \"outer\",  x, \".csv\", sep=\"_\"), row.names=F)")
+, "rm(out)"
 ,       "print(Sys.time()-start)"
 ,      "})"
-   
+,"  })"  
 ,"  })"
 , "})")
 
-write_lines(mycode, paste0("scripts/asy_SAD", SAD, ".R"))
+write_lines(mycode, paste0("scripts/asy_SAD", SAD-1, ".R"))
 })
 
 
@@ -328,9 +329,9 @@ map(c(1:24), function(SAD){
     ,  "reps<-5e2"
 
     , "Bnum<-2e3"
-    , "nc<-16 #scaling this back to work on amarel... suspect memory issues"
-    , "plan(strategy=multiprocess, workers=nc)"
-    , " map(round(10^seq(2, 5.5, 0.25)), function(size){"
+    , "nc<-36 #scaling this back to work on amarel... suspect memory issues"
+    , "plan(strategy=multisession, workers=nc)"
+    , " map(round(10^seq(2, 3.5, 0.25)), function(size){"
     , "map(c(-1,0,1), function(ell){"
     , "map(1:100, function(tryme){"
     , "        start<-Sys.time()"
