@@ -187,30 +187,35 @@ checkplot_inf<-function(SAD, B=2000, l, inds, reps){
 
 
 map(c(1:24), function(SAD){
-  
+  map(c(-1,0,1), function(l){
+    p<-SAD*3-2+l
+
 mycode<-c(
   "source(\"scripts/checkplot_initials.R\")"
 ,  "source(\"scripts/checkplot_inf.R\")"
-,  "reps<-125"
-, "outerreps<-400"
+,  "reps<-50"
+, "outerreps<-1000"
 , "nc<-12"
-, "plan(strategy=multicore, workers=nc)"
-, "map(c(-1,0,1), function(l){"
+, "plan(strategy=multisession, workers=nc)"
+
 , "map(1:outerreps, function(x){"
 , "    map(rev(round(10^seq(2, 5, 0.25))), function(size){"
 , "        start<-Sys.time()"
         
-, paste0("out<-checkplot_inf(flatten(flatten(SADs_list))[[", SAD, "]], l=l, inds=size, reps=reps)")
-,         paste0("write.csv(out, paste(\"data/SAD", SAD, "\",\"l\", l, \"inds\", size, \"outer\",  x, \".csv\", sep=\"_\"), row.names=F)")
+, paste0("out<-checkplot_inf(flatten(flatten(SADs_list))[[", SAD, "]], l=", l, ", inds=size, reps=reps)")
+,         paste0("write.csv(out, paste(\"data/SAD", SAD, "\",\"l\",", l, ",\"inds\", size, \"outer\",  x, \".csv\", sep=\"_\"), row.names=F)")
 , "rm(out)"
 ,       "print(Sys.time()-start)"
 ,      "})"
-,"  })"  
+
 ,"  })"
 , "})")
 
-write_lines(mycode, paste0("scripts/asy_SAD", SAD-1, ".R"))
+write_lines(mycode, paste0("scripts/asy_",p, ".R"))
+
+  })
 })
+  
 
 
 # ########################
