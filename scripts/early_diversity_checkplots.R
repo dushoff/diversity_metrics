@@ -1,30 +1,65 @@
 ###############
 # file to read in checkplot data and make some CHECKPLOTS!
-
-mycps_sofar<-map_dfr(1:10, function(x){
+library(tidyverse)
+source("/Rstudio_Git/checkPlots/checkFuns.R")
+mycps_sofar<-map_dfr(1:100, function(x){
       map_dfr(1:24, function(SAD){
         map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
-          map_dfr(c(-1,1), function(l){
+          map_dfr(c(-1,0,1), function(l){
                 
-                out<-try(read.csv( paste("data/SAD", SAD, "_l_", l, "_inds_", size, "_outer_",  x, "_.csv", sep="")))
-                print(SAD, size, l)
+                out<-tryCatch(read.csv(paste(
+                    "data/SAD", SAD, "_l_", l, "_inds_", size, "_outer_",  x, "_.csv", sep="")
+                    )
+                    , error=function(e){data.frame(c(rep(size,8),x))}
+                  )
+                print(c(SAD, size, l))
                 return(data.frame(out, SAD=SAD))
           })
         })
       })
-})    
+})      
+
+
+my_obs_cps_sofar<-map_dfr(1:100, function(x){
+  map_dfr(1:24, function(SAD){
+    map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
+        
+        out<-tryCatch(read.csv(paste(
+          "data/new_trycheckingobs_SAD_", SAD,  "iter_",  x,"size", size, ".csv", sep="")
+        )
+        , error=function(e){c(rep(size,9),x)}
+        )
+        print(c(SAD, size, x))
+        return(data.frame(out, SAD=SAD))
+    })
+  })
+})      
+  
+mycps_sofar %>% filter(l!=0) %>% group_by(SAD, inds, l) %>% summarize(succeed=n()) %>% arrange(desc(succeed))
+
+View(my_obs_cps_sofar %>%  group_by(SAD, size, l) %>% summarize(succeed=n()) %>% arrange((succeed)))
+
+e2<-read.csv("data/new_trycheckingobs_SAD_10iter_100size100.csv")
+
+e2
+examp<-read.csv("data/SAD15_l_-1_inds_100_outer_1_.csv")
+  examp
 
 pdf("figures/first_new_cps.pdf", height=4.5, width=8)
-mycps_sofar %>% filter(!(inds %in% c(3162, 5623, 316,178, 1778, 31623, 56234, 17783, 10000))) %>% 
+map(1:24, function(SAD){
+  my_obs_cps_sofar %>% # filter(!(inds %in% c(3162, 5623, 316,178, 1778, 31623, 56234, 17783, 10000))) %>%
+    filter(SAD==SAD)  %>% 
     mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>% 
-    mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>% 
-    filter(hilld!="Hill-Shannon") %>% 
-    checkplot(facets=8)+
-    theme_classic()+
-    facet_grid(hilld~inds, scales="free")+
-    theme(panel.spacing.x = unit(2, "lines"))+
-    scale_x_continuous(expand=c(0,0))
-  
+      mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>% 
+      # filter(hilld!="Hill-Shannon") %>% 
+      checkplot(facets=8)+
+      theme_classic()+
+      facet_grid(hilld~size, scales="free")+
+      theme(panel.spacing.x = unit(2, "lines"))+
+      scale_x_continuous(expand=c(0,0))
+})
+
+my_obs_cps_sofar %>% filter(!is.na(p)) %>%  summarize(n_distinct(SAD)) 
 dev.off()
 m<-1
 pdf(file="figures/diversity_slugs_early.pdf", height=3.5, width=3.5)
