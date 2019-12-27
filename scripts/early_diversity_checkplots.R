@@ -2,13 +2,16 @@
 # file to read in checkplot data and make some CHECKPLOTS!
 
 mycps_sofar<-map_dfr(1:10, function(x){
-        map_dfr(rev(round(10^seq(2, 5, 0.25))), function(size){
+      map_dfr(1:24, function(SAD){
+        map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
           map_dfr(c(-1,1), function(l){
                 
-                out<-read.csv( paste("data/SAD_7", "l", l, "inds", size, "outer",  x, ".csv", sep="_"))
-                return(data.frame(out, SAD=7))
-                })
+                out<-try(read.csv( paste("data/SAD", SAD, "_l_", l, "_inds_", size, "_outer_",  x, "_.csv", sep="")))
+                print(SAD, size, l)
+                return(data.frame(out, SAD=SAD))
+          })
         })
+      })
 })    
 
 pdf("figures/first_new_cps.pdf", height=4.5, width=8)
