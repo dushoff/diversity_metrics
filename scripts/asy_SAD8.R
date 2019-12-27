@@ -1,7 +1,7 @@
 source("scripts/checkplot_initials.R")
 source("scripts/checkplot_inf.R")
-reps<-125
-outerreps<-400
+reps<-50
+outerreps<-1000
 nc<-12
 plan(strategy=multicore, workers=nc)
 map(c(-1,0,1), function(l){
