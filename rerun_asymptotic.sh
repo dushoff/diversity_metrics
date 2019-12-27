@@ -1,7 +1,7 @@
 #!/bin/bash 
 #SBATCH --partition=main 
 # Name of the partition 
-#SBATCH --job-name=asyNew # Name of the job 
+#SBATCH --job-name=asysock # Name of the job 
 #SBATCH --ntasks=1 # Number of tasks 
 #SBATCH --cpus-per-task=1 # Number of CPUs per task 
 #SBATCH --mem=255GB # Requested memory 
