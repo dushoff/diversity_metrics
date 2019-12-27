@@ -1,3 +1,4 @@
+
 .gitignore.R
 .RData
 .Rhistory
@@ -8,4 +9,6 @@
 /data/GUEsims*
 /data/fromR/
 makestuff/
+slurm*
+/data/SAD_7_l_0*
 makestuff
