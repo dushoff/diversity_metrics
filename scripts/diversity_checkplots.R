@@ -196,7 +196,7 @@ mycode<-c(
 ,  "reps<-50"
 , "outerreps<-1000"
 , "nc<-12"
-, "plan(strategy=multicore, workers=nc)"
+, "plan(strategy=multisession, workers=nc)"
 
 , "map(1:outerreps, function(x){"
 , "    map(rev(round(10^seq(2, 5, 0.25))), function(size){"
