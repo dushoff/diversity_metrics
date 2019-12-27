@@ -185,26 +185,32 @@ checkplot_inf<-function(SAD, B=2000, l, inds, reps){
 #   })
 # })
 
-reps<-125
-outerreps<-400
-nc<-128#per Rob's recommendation
-plan(strategy=multiprocess, workers=nc)
-l<-0
-map(c(7,19,10,22,12,24), function(SAD){
-  map(1:outerreps, function(x){
-    map(rev(round(10^seq(2, 5, 0.25))), function(size){
-     
-        start<-Sys.time()
+
+map(c(1:24), function(SAD){
+  
+mycode<-c(
+  "source(\"scripts/checkplot_initials.R\")"
+,  "source(\"scripts/checkplot_inf.R\")"
+,  "reps<-125"
+, "outerreps<-400"
+, "nc<-125#per Rob's recommendation"
+, "plan(strategy=multiprocess, workers=nc)"
+, "l<-0"
+, "map(1:outerreps, function(x){"
+, "    map(rev(round(10^seq(2, 5, 0.25))), function(size){"
+, "        start<-Sys.time()"
         
-        out<-checkplot_inf(flatten(flatten(SADs_list))[[SAD]], l=l, inds=size, reps=reps)
-        write.csv(out, paste("data/SAD", SAD, "l", l, "inds", size, "outer",  x, ".csv", sep="_"), row.names=F)
-        print(Sys.time()-start)
-      })
+, paste0("out<-checkplot_inf(flatten(flatten(SADs_list))[[", SAD, "]], l=l, inds=size, reps=reps)")
+,         paste0("write.csv(out, paste(\"data/SAD", SAD, "\",\"l\", l, \"inds\", size, \"outer\",  x, \".csv\", sep=\"_\"), row.names=F)")
+,       "print(Sys.time()-start)"
+,      "})"
    
-    # write.csv(ug_asy, paste("data/SAD_7_asy",  x, ".csv", sep="_"), row.names=F)
-    # return(ug_asy)
-  })
+,"  })"
+, "})")
+
+write_lines(mycode, paste0("scripts/asy_SAD", SAD, ".R"))
 })
+
 
 # ########################
 # # to make QQ plot
@@ -301,28 +307,47 @@ quickout %>% ggplot(aes(p))+geom_histogram()+theme_classic()
 
 ####################
 #run this whole thing to get sample diversity checkplot-type info for sample diversity for a single community
-trycheckingobs<-function(SAD){
-  map_dfr(round(10^seq(2, 5.5, 0.25)), function(size){
+trycheckingobs<-function(SAD, size){
+ 
     map_dfr(c(-1,0,1), function(ell){
       truemun<-truemu_inf(SAD$rel_abundances, size=size, reps=reps, l=ell)
       future_map_dfr(1:reps, function(reps){obscp_inf(l=ell, size, SAD, truemun=truemun, B=Bnum)
 
-      })
+    
     })
   })
 }
 ##### apparently this was streamlined enough to store to a single .csv while running in parallel
-reps<-5e3
-Bnum<-2e3
-nc<-125
-plan(strategy=multiprocess, workers=nc)
-map(1:10, function(tryme){
-  map(1:24, function(SAD){
-    nd<-trycheckingobs(flatten(flatten(SADs_list))[[SAD]])
-      write.csv(nd
-                , file=paste("data/new_trycheckingobs_SAD_", SAD,"iter_", tryme, ".csv", sep=""), row.names=F)
-  })
+
+
+map(c(1:24), function(SAD){
+  
+  mycode<-c(
+    "source(\"scripts/checkplot_initials.R\")"
+    ,  "source(\"scripts/obscp_inf.R\")"
+    ,  "reps<-5e2"
+
+    , "Bnum<-2e3"
+    , "nc<-16 #scaling this back to work on amarel... suspect memory issues"
+    , "plan(strategy=multiprocess, workers=nc)"
+    , " map(round(10^seq(2, 5.5, 0.25)), function(size){"
+    , "map(c(-1,0,1), function(ell){"
+    , "map(1:100, function(tryme){"
+    , "        start<-Sys.time()"
+    , paste0("nd<-trycheckingobs(flatten(flatten(SADs_list))[[",SAD,"]], size, ell)")
+    , paste0("write.csv(nd, file=paste(\"data/new_trycheckingobs_SAD_", SAD,"\", \"iter_\", tryme, \"size\", size, \".csv\", sep=\"\"), row.names=F)")
+    , "rm(nd)"
+    ,       "print(Sys.time()-start)"
+    ,      "})"
+    , "})"
+    , "})"
+    )
+  
+  write_lines(mycode, paste0("scripts/obs_lomemSAD", SAD, ".R"))
 })
+
+
+
 
 # write.csv(trycheckingobs_R, file="data/big_richness_checkplot.csv", row.names=F)
 
