@@ -4,7 +4,7 @@
 #SBATCH --job-name=asysock # Name of the job 
 #SBATCH --ntasks=1 # Number of tasks 
 #SBATCH --cpus-per-task=1 # Number of CPUs per task 
-#SBATCH --mem=255GB # Requested memory 
+#SBATCH --mem=192GB # Requested memory 
 #SBATCH --array=0-71 # Array job will submit 71 jobs
 #SBATCH --time=72:00:00 # Total run time limit (HH:MM:SS)
 #SBATCH --output=slurm.%N.%j.out # STDOUT file 
