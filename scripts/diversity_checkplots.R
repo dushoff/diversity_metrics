@@ -186,7 +186,7 @@ checkplot_inf<-function(SAD, B=2000, l, inds, reps){
 # })
 
 
-map(c(1:24), function(SAD){
+map(c(rev(1:24)), function(SAD){
   map(c(-1,0,1), function(l){
     p<-SAD*3-2+l
 
@@ -198,17 +198,16 @@ mycode<-c(
 , "nc<-12"
 , "plan(strategy=multisession, workers=nc)"
 
-, "map(1:outerreps, function(x){"
+, "map(rev(1:outerreps), function(x){"
 , "    map(rev(round(10^seq(2, 5, 0.25))), function(size){"
 , "        start<-Sys.time()"
         
 , paste0("out<-checkplot_inf(flatten(flatten(SADs_list))[[", SAD, "]], l=", l, ", inds=size, reps=reps)")
-,         paste0("write.csv(out, paste(\"data/SAD", SAD, "\",\"l\",", l, ",\"inds\", size, \"outer\",  x, \".csv\", sep=\"_\"), row.names=F)")
+,         paste0("write.csv(out, paste(\"data/SAD", SAD, "\",\"l\",", l, ",\"inds\", size, \"outernew\",  x, \".csv\", sep=\"_\"), row.names=F)")
 , "rm(out)"
 ,       "print(Sys.time()-start)"
 ,      "})"
 
-,"  })"
 , "})")
 
 write_lines(mycode, paste0("scripts/asy_",p, ".R"))
