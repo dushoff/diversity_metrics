@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1 # Number of tasks 
 #SBATCH --cpus-per-task=2 # Number of CPUs per task 
 #SBATCH --mem=192GB # Requested memory 
-#SBATCH --time=72:00:00 # Total run time limit (HH:MM:SS)
+#SBATCH --time=4:00:00 # Total run time limit (HH:MM:SS)
 #SBATCH --output=slurm.%N.%j.out # STDOUT file 
 #SBATCH --error=slurm.%N.%j.err  # STDERR file 
 
