@@ -13,10 +13,17 @@ Obs_SAD23<-read.csv("obs_SAD23.csv")
 head(Obs_SAD23)
 
 
-Obs_SAD1<-read.csv("obs_SAD1.csv")
+Obs_SAD6<-read.csv("obs_SAD6.csv")
 
 
-Obs_SAD1 %>% group_by(l) %>% summarize(n())
+Obs_SAD6 %>% group_by(l) %>% summarize(n())
+
+
+
+read_bigs<-function(etype, x){read.csv(paste0(etype, "_SAD", x, ".csv"))}
+byl<-function(x){x %>% group_by(l) %>% summarize(n())}
+
+byl(read_bigs("asy", 2))
 
 Obs_SAD23 %>% 
   mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
