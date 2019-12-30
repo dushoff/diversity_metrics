@@ -5,6 +5,10 @@ library(tidyverse)
 library(furrr)
 plan(strategy=multiprocess, workers=7)
 
+
+one_obs<-read.csv("data/new_trycheckingobs_SAD_10iter_1.csv")
+
+byl(one_obs)
 map(1:24, function(SAD){
   write.csv(future_map_dfr(1:1000, function(x){
     
@@ -32,36 +36,36 @@ map(1:24, function(SAD){
   , paste0("asy_SAD", SAD, ".csv"), row.names=F)
 })      
 
-
+############## this is kind of nice there was no size on the new trycheckingobs ones so I think I can try this again and get it right. #######
 
 map(1:24, function(SAD){
     write.csv(
       future_map_dfr(1:100, function(x){
-        map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
+        # map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
         
           out<-tryCatch(read.csv(paste(
-            "data/new_trycheckingobs_SAD_", SAD,  "iter_",  x,"size", size, ".csv", sep="")
+            "data/new_trycheckingobs_SAD_", SAD,  "iter_",  x,".csv", sep="")
             )
-          , error=function(e){data.frame(c(rep(size,9),x))}
+          , error=function(e){data.frame(c(rep(SAD,9),x))}
           )
           
-          print(c(SAD, size, x))
+          print(c(SAD, x))
           
           out<-out[!is.na(out$p),]
           
           tryCatch(file.remove(paste(
-            "data/new_trycheckingobs_SAD_", SAD,  "iter_",  x,"size", size, ".csv", sep="")
+            "data/new_trycheckingobs_SAD_", SAD,  "iter_",  x, ".csv", sep="")
             )
           , error=function(e){print(paste(
-              "data/new_trycheckingobs_SAD_", SAD,  "iter_",  x,"size", size, ".csv", sep="")
+              "data/new_trycheckingobs_SAD_", SAD,  "iter_",  x, ".csv", sep="")
               , "does not exist")
             }
           )
           
           return(data.frame(out))
       })
-  })
-    , paste0("obs_SAD", SAD, ".csv"), row.names=F)
+  # })
+    , paste0("data/obs_SAD", SAD, ".csv"), row.names=F)
   })      
 
 
