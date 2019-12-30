@@ -3,9 +3,9 @@
 library(tidyverse)
 # source("/Rstudio_Git/checkPlots/checkFuns.R")
 library(furrr)
-plan(strategy=multiprocess, workers=56)
+plan(strategy=multiprocess, workers=7)
 
-the_asy_data<-map(1:24, function(SAD){
+map(1:24, function(SAD){
   write.csv(future_map_dfr(1:1000, function(x){
     
         map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
@@ -19,8 +19,10 @@ the_asy_data<-map(1:24, function(SAD){
                 tryCatch(file.remove(paste(
                   "data/SAD", SAD, "_l_", l, "_inds_", size, "_outernew_",  x, "_.csv", sep="")
                 )
-                , error=function(e){print("file", paste(
-                  "data/SAD", SAD, "_l_", l, "_inds_", size, "_outernew_",  x, "_.csv", sep=""), "does not exist")))}
+                , error=function(e){
+                  print( paste(
+                  "data/SAD", SAD, "_l_", l, "_inds_", size
+                  , "_outernew_",  x, "_.csv   does not exist", sep=""))}
                 )
           
                 return(data.frame(out))
@@ -34,13 +36,13 @@ the_asy_data<-map(1:24, function(SAD){
 
 map(1:24, function(SAD){
     write.csv(
-      map_dfr(1:100, function(x){
+      future_map_dfr(1:100, function(x){
         map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
         
           out<-tryCatch(read.csv(paste(
             "data/new_trycheckingobs_SAD_", SAD,  "iter_",  x,"size", size, ".csv", sep="")
             )
-          , error=function(e){c(rep(size,9),x)}
+          , error=function(e){data.frame(c(rep(size,9),x))}
           )
           
           print(c(SAD, size, x))
@@ -56,7 +58,7 @@ map(1:24, function(SAD){
             }
           )
           
-          return(out)
+          return(data.frame(out))
       })
   })
     , paste0("obs_SAD", SAD, ".csv"), row.names=F)
