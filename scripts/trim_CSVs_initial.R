@@ -8,10 +8,15 @@ plan(strategy=multiprocess, workers=7)
 
 one_obs<-read.csv("data/new_trycheckingobs_SAD_10iter_1.csv")
 
+
 byl(one_obs)
+
+#next step is to repeat this but sending the newer .csvs to the data directory, then will bind rows from the ones in the home directory.
+
 map(1:24, function(SAD){
-  write.csv(future_map_dfr(1:1000, function(x){
-    
+  write.csv(bind_rows(
+    read.csv(paste0("data/asy_SAD", SAD,  ".csv"))
+             , future_map_dfr(1:1000, function(x){
         map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
           map_dfr(c(-1,0,1), function(l){
                 
@@ -32,9 +37,43 @@ map(1:24, function(SAD){
                 return(data.frame(out))
           })
       })
-  })
-  , paste0("asy_SAD", SAD, ".csv"), row.names=F)
-})      
+  }))
+  , paste0("data/asy_SAD", SAD, ".csv"), row.names=F)
+})     
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+)
+  
+  
+  
+  
+  
+  
+
+#thsi combine: try bind rows of the old and the new. If it works sesms easy to recycles in the loop
+future_map(1:24, function(SAD){
+  tryCatch(expr={
+    curr<-read.csv(paste0("data/asy_SAD", SAD, ".csv"))
+    toadd<-read.csv(paste0("asy_SAD", SAD, ".csv"))
+    out<-bind_rows(curr, toadd)
+    write.csv(out, paste0("data/asy_SAD", SAD, ".csv"))
+    file.remove(paste0("asy_SAD", SAD, ".csv"))
+  }
+  )
+})
 
 ############## this is kind of nice there was no size on the new trycheckingobs ones so I think I can try this again and get it right. #######
 
