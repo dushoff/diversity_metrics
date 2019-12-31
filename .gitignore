@@ -14,4 +14,4 @@ slurm*
 makestuff
 data/obs*
 data/asy*
-/data/asy*
+data/asy_SAD*.csv
