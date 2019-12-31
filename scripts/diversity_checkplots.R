@@ -217,32 +217,7 @@ write_lines(mycode, paste0("scripts/asy_",p, ".R"))
   
 
 
-# ########################
-# # to make QQ plot
-# checkplot_QQ<-function(SAD, B=2000, l, inds, reps){
-#   hillname<-ifelse(l==-1, "Hill-Simpson", ifelse(l==0, "Hill-Shannon", "richness"))
-#   td<-SAD$community_info[hillname] #grab true diversity from SAD object
-#   #truemu_n<-mean(replicate(B,dfun(subsam(abs, inds),l)))
-#   future_map(1:reps,function(x){
-#     # obs<-subsam(abs, size=inds) #subsample true community within each replicate
-#     
-#     obs <- sample_infinite(SAD$rel_abundances,size=inds) #subsample the whole community with # individuals=size
-#     chaotile<-checkchao(obs, B, l, td) #then do B bootstrap samples for the augmented community based on that sample
-#     return(list(chaotile=data.frame(qtile=chaotile[[2]][1], truediv=chaotile[[2]][2], chaoest=chaotile[[2]][3], obsD=chaotile[[2]][4], l=l, inds=inds, reps=reps), bs=chaotile[[1]]))
-#     
-#   })
-# }
 
-
-# quick_asy_QQ<-checkplot_QQ(SADs_list[[1]][[2]][[3]], l=0, inds=200, reps=5e2)
-# 
-# my_bs<-quick_asy_QQ %>% map(function(x){x$bs})
-# my_bs
-
-quick_asy<-checkplot_inf(SADs_list[[1]][[2]][[3]], l=0, inds=200, reps=5e2)
-
-quick_asy
-quick_asy %>% ggplot(aes(p))+geom_histogram()+theme_classic()
 
 
 #########################
@@ -498,22 +473,32 @@ min(tc$outside)
 #######################################
 # extract data from files for use
 
-outerreps<-10
-sad_list_length<-20
-getug<-future_map_dfr(1:sad_list_length, function(x){
-  map_dfr(1:outerreps, function(y){
-    mydf<-tryCatch(read.csv(paste("data/SAD", x, "asy",  y, ".csv", sep="_")), error=function(e){
-      data.frame(qtile=NA, truediv=NA, chaoest=NA, obsD=NA, l=NA, inds=NA, reps=NA)})
-    mydf<-data.frame(mydf, SAD_ind=x)
-    return(mydf)
-    
-  })
-  
+# outerreps<-10
+# sad_list_length<-20
+# getug<-future_map_dfr(1:sad_list_length, function(x){
+#   map_dfr(1:outerreps, function(y){
+#     mydf<-tryCatch(read.csv(paste("data/SAD", x, "asy",  y, ".csv", sep="_")), error=function(e){
+#       data.frame(qtile=NA, truediv=NA, chaoest=NA, obsD=NA, l=NA, inds=NA, reps=NA)})
+#     mydf<-data.frame(mydf, SAD_ind=x)
+#     return(mydf)
+#     
+#   })
+#   
+# })
+
+getug<-future_map_dfr(1:24, function(SAD){
+ read.csv(paste0("data/asy_SAD", SAD, ".csv"))
 })
 
-#summarize SDlog(diversity)
-sdlogs<-getug %>% gather(etype, div, chaoest, obsD )%>% group_by(l, inds, SAD_ind, etype) %>% summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
 
+#summarize SDlog(diversity)
+sdlogs<-getug %>% mutate(SAD_ind=X) %>% 
+  gather(etype, div, chaoest, obsD ) %>% 
+  group_by(l, inds, SAD_ind, etype) %>% 
+  summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
+
+
+#maybe useful combining 
 #figure for MS possibly, showing how this works for even and uneven comms 
 pdf("figures/variability_in_asymptotic_diversity_extremes.pdf")
 sdlogs %>% 
