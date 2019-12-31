@@ -41,6 +41,16 @@ map(1:24, function(SAD){
 })     
 
 #thsi combine: try bind rows of the old and the new. If it works sesms easy to recycles in the loop
+future_map(1:24, function(SAD){
+  tryCatch(expr={
+    curr<-read.csv(paste0("data/asy_SAD", SAD, ".csv"))
+    toadd<-read.csv(paste0("asy_SAD", SAD, ".csv"))
+    out<-bind_rows(curr, toadd)
+    write.csv(out, paste0("data/asy_SAD", SAD, ".csv"))
+    file.remove(paste0("asy_SAD", SAD, ".csv"))
+  }
+  )
+})
 
 ############## this is kind of nice there was no size on the new trycheckingobs ones so I think I can try this again and get it right. #######
 
