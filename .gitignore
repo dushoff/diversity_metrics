@@ -1,4 +1,3 @@
-
 .gitignore.R
 .RData
 .Rhistory
@@ -14,4 +13,4 @@ slurm*
 makestuff
 data/obs*
 data/asy*
-data/asy_SAD*.csv
+data/asy_SAD*
