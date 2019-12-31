@@ -9,9 +9,14 @@ library(furrr)
 plan(strategy=multiprocess, workers=7)
 
 
-read_bigs<-function(etype, x){read.csv(paste0("data/",etype, "_SAD", x, ".csv"))}
+read_bigs<-function(etype, x){read.csv(paste0(etype, "_SAD", x, ".csv"))}
 byl<-function(x){x %>% group_by(l) %>% summarize(n())}
-pst_names<-function(x){paste(map(1:length(x), function(y){paste0(names(x)[y], ": ",x[y])}),collapse = ", ")}
+pst_names<-function(x){paste(map(1:length(x)
+                                 , function(y){
+                                    paste0(names(x)[y]
+                                      , ": "
+                                      ,ifelse(is.numeric(x[y]), round(x[y],2), x[y]))})
+                                   ,collapse = ", ")}
 
 
 
@@ -36,13 +41,15 @@ byl(read_bigs("obs", 2))
 #will turn into a function if it works and make a pile of these.
 
 ##tester params
-SAD<-1
+SAD<-6
 ell<--1
-pdf("figures/SAD_2_obs_cp.pdf", width=11, height=8.5)
+
+
+pdf("figures/obs_cp.pdf", width=11, height=8.5)
 future_map(1:24, function(SAD){
   map(c(-1,0,1), function(ell){
     SADinfo<-flatten(flatten(SADs_list))[[SAD]]
-    read_bigs("obs", SAD) %>% 
+    read_bigs("data/obs", SAD) %>% 
       mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
       mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>%
       filter(l==ell) %>%
@@ -51,7 +58,39 @@ future_map(1:24, function(SAD){
       facet_wrap(~size, scales="free", nrow=3)+
       theme(panel.spacing.x = unit(1, "lines"))+
       scale_x_continuous(expand=c(0,0))+
-      ggtitle(paste0(pst_names(SADinfo$distribution_info), pst_names(SADinfo$community_info),collapse = ", "))
+      ggtitle(paste(paste0(
+                     c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell], " Checkplot")
+                    , pst_names(SADinfo$distribution_info)
+                    , pst_names(SADinfo$community_info) 
+                    , collapse = ", "
+                    , sep = ", "))
+  })
+})
+dev.off()
+
+pdf("figures/asy_cp.pdf", width=11, height=8.5)
+future_map(1:24, function(SAD){
+  myd<-read_bigs("asy", SAD) %>% 
+    mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
+    mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson")))
+  SADinfo<-flatten(flatten(SADs_list))[[SAD]]
+  map(c(-1,0,1), function(ell){
+    mydl<-myd %>% filter(l==ell)
+    if(sum(mydl$p[!is.na(mydl$p)])>0){
+       tryCatch(mydl %>% filter(!is.na(p))  %>%
+        checkplot(facets=9)+
+        theme_classic()+
+        facet_wrap(~inds, scales="free", nrow=3)+
+        theme(panel.spacing.x = unit(1, "lines"))+
+        scale_x_continuous(expand=c(0,0))+
+        ggtitle(paste(paste0("asymptotic "
+          , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell], " checkplot")
+          ,"\n"
+          , pst_names(SADinfo$distribution_info)
+          , pst_names(SADinfo$community_info) 
+          , collapse = ", "
+          , sep = ", ")))
+        }
   })
 })
 dev.off()
