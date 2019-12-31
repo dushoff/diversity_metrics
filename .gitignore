@@ -13,3 +13,5 @@ slurm*
 /data/SAD_7_l_0*
 makestuff
 data/obs*
+data/asy*
+data/asy_SAD*.csv
