@@ -20,20 +20,7 @@ pst_names<-function(x){paste(map(1:length(x)
 
 
 
-###########
-# first look at the simple case. Read 1 .csv in and check it out. It looks like SAD 23 is the biggest file
 
-Obs_SAD23<-read.csv("obs_SAD23.csv")
-head(Obs_SAD23)
-
-
-Obs_SAD6<-read.csv("obs_SAD6.csv")
-
-
-Obs_SAD6 %>% group_by(l) %>% summarize(n())
-
-
-byl(read_bigs("obs", 2))
 
 ###########
 # going slow, figuring out how to make checkplot results look ok for all SADS, 
@@ -41,8 +28,8 @@ byl(read_bigs("obs", 2))
 #will turn into a function if it works and make a pile of these.
 
 ##tester params
-SAD<-6
-ell<--1
+# SAD<-6
+# ell<--1
 
 
 pdf("figures/obs_cp.pdf", width=11, height=8.5)
@@ -70,7 +57,7 @@ dev.off()
 
 pdf("figures/asy_cp.pdf", width=11, height=8.5)
 future_map(1:24, function(SAD){
-  myd<-read_bigs("asy", SAD) %>% 
+  myd<-read_bigs("data/asy", SAD) %>% 
     mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
     mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson")))
   SADinfo<-flatten(flatten(SADs_list))[[SAD]]
