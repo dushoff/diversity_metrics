@@ -485,180 +485,72 @@ min(tc$outside)
 #   })
 #   
 # })
-
+plan(strategy=multiprocess, workers=7)
 getug<-future_map_dfr(1:24, function(SAD){
- read.csv(paste0("data/asy_SAD", SAD, ".csv"))
+ x<-read.csv(paste0("data/asy_SAD", SAD, ".csv")) 
+ x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
 })
 
 
-#summarize SDlog(diversity)
-sdlogs<-getug %>% mutate(SAD_ind=X) %>% 
+#summarize SDlog(diversity) # for some reason this seems to be taking a long time isn't THAT much data is it?
+sdlogs<-getug  %>% 
   gather(etype, div, chaoest, obsD ) %>% 
   group_by(l, inds, SAD_ind, etype) %>% 
   summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
 
 
-#maybe useful combining 
-#figure for MS possibly, showing how this works for even and uneven comms 
-pdf("figures/variability_in_asymptotic_diversity_extremes.pdf")
-sdlogs %>% 
-  filter(etype=="chaoest") %>%
-  left_join(data.frame(l=c(-1,0,1)
-                       , hill=factor(c("Hill-Simpson", "Hill-Shannon", "Richness")
-                                     , levels=c("Hill-Simpson", "Hill-Shannon", "Richness")))) %>% 
-  left_join(data.frame(
-    SAD_ind=1:20
-    , skew=factor(c("uneven", "int", "int","int", "even"), levels=c("uneven", "int", "even"))
-    , dist=factor(c(rep("lognormal", 10), rep("gamma", 10)), levels=c("lognormal", "gamma"))
-  )) %>% 
-  filter(SAD_ind %in% c(1, 11, 5, 15) )%>% 
-  group_by(hill, inds, skew, dist, SAD_ind) %>% 
-  ggplot(aes(inds, sdlog, color=hill, shape=hill))+
-  geom_point(alpha=0.8)+
-  geom_line(alpha=0.8)+
-  scale_x_log10(breaks=trans_breaks("log10", function(x) 10^x),
-                labels = trans_format("log10", math_format(10^.x)))+
-  theme_classic()+
-  # geom_hline(yintercept=0.1)+
-  labs(x="sample size (individuals)"
-       , y="SD of log(asymtptotic diversity) under random sampling"
-       , color="", shape="" )+
-  facet_grid(dist~skew)+
-  theme(text=element_text(size=16))
-dev.off()
-
-
-plot(sdlogs$sdlog, sdlogs$cv)
-pdf(file="figures/sampling_variability_asymptotic.pdf")
-sdlogs %>%
-  filter(etype=="chaoest") %>%  
-  ggplot(aes(inds, sdlog, color=factor(l), shape=factor(l)))+
-  geom_point()+
-  geom_line()+
-  facet_wrap(~SAD_ind, ncol=5)+
-  theme_classic()+scale_x_log10()+
-  theme(axis.text.x=element_text(angle=90))+
-  # geom_hline(yintercept=0.1)+
-  labs(x="sample size", y="SD of log(asymptotic estimator) under random sampling")
-dev.off()
+# #maybe useful combining 
+# #figure for MS possibly, showing how this works for even and uneven comms 
+# pdf("figures/variability_in_asymptotic_diversity_extremes_test.pdf")
+# sdlogs %>% 
+#   filter(etype=="chaoest") %>%
+#   left_join(data.frame(l=c(-1,0,1)
+#                        , hill=factor(c("Hill-Simpson", "Hill-Shannon", "Richness")
+#                                      , levels=c("Hill-Simpson", "Hill-Shannon", "Richness")))) %>% 
+#   # left_join(data.frame(
+#   #   SAD_ind=1:20
+#   #   , skew=factor(c("uneven", "int", "int","int", "even"), levels=c("uneven", "int", "even"))
+#   #   , dist=factor(c(rep("lognormal", 10), rep("gamma", 10)), levels=c("lognormal", "gamma"))
+#   # )) %>% 
+#   # filter(SAD_ind %in% c(1, 11, 5, 15) )%>% 
+#   group_by(hill, inds, SAD_ind) %>% # skew, dist,
+#   ggplot(aes(inds, sdlog, color=hill, shape=hill))+
+#   geom_point(alpha=0.8)+
+#   geom_line(alpha=0.8)+
+#   scale_x_log10(breaks=trans_breaks("log10", function(x) 10^x),
+#                 labels = trans_format("log10", math_format(10^.x)))+
+#   theme_classic()+
+#   # geom_hline(yintercept=0.1)+
+#   labs(x="sample size (individuals)"
+#        , y="SD of log(asymtptotic diversity) under random sampling"
+#        , color="", shape="" )+
+#   facet_grid(~SAD_ind)+
+#   theme(text=element_text(size=16))
+# dev.off()
+# 
+# 
+# plot(sdlogs$sdlog, sdlogs$cv)
+pdf(file="figures/sampling_variabilit.pdf")
+# future_map(c(1:4, 5:8, 9:12, 13:16, 17:20, 21:24), function(x){SAD_ind %in%x &
+map(c("chaoest", "obsD"), function(et){
+  dat<-sdlogs %>%
+    filter(etype==et)
+    tryCatch({
+    dat %>% ggplot(aes(inds, sdlog, color=factor(l), shape=factor(l)))+
+    geom_point()+
+    geom_line()+
+    facet_wrap(~SAD_ind, ncol=5)+
+    theme_classic()+scale_x_log10()+
+    theme(axis.text.x=element_text(angle=90))+
+    # geom_hline(yintercept=0.1)+
+    labs(x="sample size", y="SD of log(asymptotic estimator) under random sampling")
+    })
+})
+  dev.off()
 #look at SDlog of estimates
 
 
-pdf("figures/too_many_checkplots_asymptotic_diversity.pdf")
-map(1:20, function(SAD){
-  map(-1:1, function(ell){
-    try(getug %>% filter(SAD_ind==SAD, l==ell) %>% 
-          ggplot(aes(qtile/100))+
-          geom_histogram()+
-          theme_classic()+
-          facet_wrap(~inds)+
-          ggtitle(paste("SAD number", SAD, "ell =",ell))
-    )
-  })
-})
-dev.off()
-#########################
-# A few checkplots for asymptotic diversity
-
-pdf("figures/checkplots_asymptotic_limited.pdf")
-map(-1:1, function(ell){
-  map(1:4, function(SAD){
-    getug %>% filter(SAD_ind==c(1,5,11,15)[SAD], l==ell, inds %in% round(10^seq(2, 4, .5))) %>% 
-      ggplot(aes(qtile/100))+
-      geom_histogram()+
-      theme_classic()+
-      facet_wrap(~inds)+
-      ggtitle(paste("checkplot for asymptotic "
-                    , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell]
-                    ,"; "
-                    , c("lognormal; uneven","lognormal; even", "gamma; uneven", "gamma; even")[SAD] 
-                    , sep=""
-      ))+
-      labs(x="p-value")
-  })
-})
-dev.off()
-#############
-# make a few checkplots for draft
-pdf("figures/asymptotic_richness_checkplot.pdf")
-getug %>% filter(SAD_ind==6, l==1, inds %in% 10^c(2:5)) %>% 
-  ggplot(aes(qtile/100))+
-  geom_histogram()+
-  theme_classic()+
-  facet_wrap(~inds, nrow=1)+
-  labs(x="p-value")+
-  ggtitle("Richness = 200, Hill-Simpson=30, checkplot for asymptotic richness")
-
-dev.off()
-
-pdf("figures/asymptotic_Shannon_checkplot.pdf")
-getug %>% filter(SAD_ind==6, l==0, inds %in% 10^c(2:5)) %>% 
-  ggplot(aes(qtile/100))+
-  geom_histogram()+
-  theme_classic()+
-  facet_wrap(~inds, nrow=1)+
-  labs(x="p-value")+
-  ggtitle("Richness = 200, Hill-Simpson=30, checkplot for asymptotic Hill-Shannon")
-
-dev.off()
-
-pdf("figures/asymptotic_Simpson_checkplot.pdf")
-getug %>% filter(SAD_ind==6, l==-1, inds %in% 10^c(2:5)) %>% 
-  ggplot(aes(qtile/100))+
-  geom_histogram()+
-  theme_classic()+
-  facet_wrap(~inds, nrow=1)+
-  labs(x="p-value")+
-  ggtitle("Richness = 200, Hill-Simpson=30, checkplot for asymptotic Hill-Simpson")
-
-dev.off()
-
-
-pdf("figures/asymptotic_richness_checkplot_gamma.pdf")
-getug %>% filter(SAD_ind==11, l==1, inds %in% 10^c(2:5)) %>% 
-  ggplot(aes(qtile/100))+
-  geom_histogram()+
-  theme_classic()+
-  facet_wrap(~inds, nrow=1)+
-  labs(x="p-value")+
-  ggtitle("Richness = 100, Hill-Simpson=15, checkplot for asymptotic richness")
-
-dev.off()
-
-pdf("figures/asymptotic_Shannon_checkplot_gamma.pdf")
-getug %>% filter(SAD_ind==11, l==0, inds %in% 10^c(2:5)) %>% 
-  ggplot(aes(qtile/100))+
-  geom_histogram()+
-  theme_classic()+
-  facet_wrap(~inds, nrow=1)+
-  labs(x="p-value")+
-  ggtitle("Richness = 100, Hill-Simpson=15, checkplot for asymptotic Hill-Shannon")
-
-dev.off()
-
-pdf("figures/asymptotic_Simpson_checkplot_gamma.pdf")
-getug %>% filter(SAD_ind==11, l==-1, inds %in% 10^c(2:5)) %>% 
-  ggplot(aes(qtile/100))+
-  geom_histogram()+
-  theme_classic()+
-  facet_wrap(~inds, nrow=1)+
-  labs(x="p-value")+
-  ggtitle("Richness = 100, Hill-Simpson=15, checkplot for asymptotic Hill-Simpson")
-
-dev.off()
-
-pdf("figures/asymptotic_even_Simpson_checkplot.pdf")
-getug %>% filter(SAD_ind==5, l==-1, inds %in% 10^c(2:5)) %>% 
-  ggplot(aes(qtile/100))+
-  geom_histogram()+
-  theme_classic()+
-  facet_wrap(~inds, nrow=1)+
-  labs(x="p-value")+
-  ggtitle("Richness = 100, Hill-Simpson=85, checkplot for asymptotic Hill-Simpson")
-
-dev.off()
-
-
+#this is a think to repeat probably. Note that code below is for users' guide. should clean up and separate
 asycov<-getug%>% filter(SAD_ind==7) %>% 
   group_by(l, inds) %>% 
   summarize(outside=1-(sum(qtile>97.5)+sum(qtile<2.5))/(5000)) %>% left_join(inds)
