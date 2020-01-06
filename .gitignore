@@ -10,6 +10,7 @@
 makestuff/
 slurm*
 /data/SAD_7_l_0*
+data/big*
 makestuff
 data/obs*
 data/asy*
