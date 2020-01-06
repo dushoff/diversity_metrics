@@ -99,7 +99,7 @@ future_map(1:24, function(SAD){
                  theme_classic()+
                  facet_wrap(~inds, scales="free", nrow=3)+
                  theme(panel.spacing.x = unit(1, "lines"))+
-                 scale_x_continuous(expand=c(0,0))+
+                 scale_x_continuous(expand=c(0,0) limits=c(0,1))+
                  ggtitle(paste(paste0("asymptotic "
                                       , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell], " slugplot")
                                ,"\n"
@@ -117,19 +117,20 @@ pdf("figures/obs_SlugPlot.pdf", width=11, height=8.5)
 future_map(1:24, function(SAD){
   bigdl<-read_bigs("data/obs", SAD) %>% 
     mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
-    mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson")))
+    mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>% 
+    mutate(est=obsD)
+  yodl<-bigdl[seq(25, length(bigdl$p), 25),]
   map(c(-1,0,1), function(ell){
     SADinfo<-flatten(flatten(SADs_list))[[SAD]]
-     mydl<-bigdl%>%
-      filter(l==ell) %>% 
-      mutate(est=obsD)
-    mydl[seq(200, length(mydl$p), 200),] %>%
+    mydl<-yodl%>%
+      filter(l==ell) 
+    mydl %>%
       # checkplot(facets=15)+
       rangePlot()+
       theme_classic()+
       facet_wrap(~size, scales="free", nrow=3)+
       theme(panel.spacing.x = unit(1, "lines"))+
-      scale_x_continuous(expand=c(0,0))+
+      scale_x_continuous(expand=c(0,0), limits=c(0,1))+
       ggtitle(paste(paste0(
         c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell], " slugplot")
         ,"\n"

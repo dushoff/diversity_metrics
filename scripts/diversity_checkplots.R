@@ -491,13 +491,18 @@ getug<-future_map_dfr(1:24, function(SAD){
  x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
 })
 
+getug2<-future_map_dfr(1:24, function(SAD){
+  x<-read.csv(paste0("data/asy_SAD", SAD, "_other.csv")) 
+  x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
+})
+
 getobs<-future_map_dfr(1:24, function(SAD){
   x<-read.csv(paste0("data/obs_SAD", SAD, ".csv")) 
   x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
 })
 
 #summarize SDlog(diversity) # for some reason this seems to be taking a long time isn't THAT much data is it?
-sdlogs<-getug  %>% 
+sdlogs<-getug2  %>% 
   gather(etype, div, chaoest, obsD ) %>% 
   group_by(l, inds, SAD_ind, etype) %>% 
   summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
@@ -539,7 +544,7 @@ sdlogs_O<-getobs  %>%
 # 
 # 
 # plot(sdlogs$sdlog, sdlogs$cv)
-pdf(file="figures/sampling_variability.pdf")
+pdf(file="figures/sampling_variability_2.pdf")
 # future_map(c(1:4, 5:8, 9:12, 13:16, 17:20, 21:24), function(x){SAD_ind %in%x &
 map(c("chaoest", "obsD"), function(et){
   dat<-sdlogs %>%
@@ -557,8 +562,17 @@ map(c("chaoest", "obsD"), function(et){
 })
   dev.off()
 #look at SDlog of estimates
-
-
+pdf("figures/ugly_variability_in_obsD.pdf")
+sdlogs_O %>% ggplot(aes(size, sdlog, color=factor(l), shape=factor(l)))+
+      geom_point()+
+      geom_line()+
+      facet_wrap(~SAD_ind, ncol=5)+
+      theme_classic()+scale_x_log10()+
+      theme(axis.text.x=element_text(angle=90))+
+      # geom_hline(yintercept=0.1)+
+      labs(x="sample size", y=paste0("SD of log(observed diversity) under random sampling"))
+ 
+dev.off()
 #this is a think to repeat probably. Note that code below is for users' guide. should clean up and separate
 asycov<-getug%>% filter(SAD_ind==7) %>% 
   group_by(l, inds) %>% 
