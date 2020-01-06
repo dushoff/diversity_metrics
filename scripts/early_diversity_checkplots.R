@@ -47,6 +47,7 @@ future_map(1:24, function(SAD){
       scale_x_continuous(expand=c(0,0))+
       ggtitle(paste(paste0(
                      c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell], " Checkplot")
+                    ,"\n"
                     , pst_names(SADinfo$distribution_info)
                     , pst_names(SADinfo$community_info) 
                     , collapse = ", "
@@ -82,7 +83,63 @@ future_map(1:24, function(SAD){
 })
 dev.off()
   
+############ make a few range plots???
+pdf('figures/try_ASY_slugs.pdf')
+future_map(1:24, function(SAD){
+  myd<-read_bigs("data/asy", SAD) %>% 
+    mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
+    mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>% 
+    mutate(est=chaoest)
+  SADinfo<-flatten(flatten(SADs_list))[[SAD]]
+  map(c(-1,0,1), function(ell){
+    mydl<-myd %>% filter(l==ell)
+    if(sum(mydl$p[!is.na(mydl$p)])>0){
+      tryCatch(mydl[seq(25, length(mydl$p), 25),] %>% filter(!is.na(p))  %>%
+                 rangePlot()+
+                 theme_classic()+
+                 facet_wrap(~inds, scales="free", nrow=3)+
+                 theme(panel.spacing.x = unit(1, "lines"))+
+                 scale_x_continuous(expand=c(0,0))+
+                 ggtitle(paste(paste0("asymptotic "
+                                      , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell], " slugplot")
+                               ,"\n"
+                               , pst_names(SADinfo$distribution_info)
+                               , pst_names(SADinfo$community_info) 
+                               , collapse = ", "
+                               , sep = ", ")))
+    }
+  })
+})
+dev.off()
 
+# slugs for obs as well
+pdf("figures/obs_SlugPlot.pdf", width=11, height=8.5)
+future_map(1:24, function(SAD){
+  bigdl<-read_bigs("data/obs", SAD) %>% 
+    mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
+    mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson")))
+  map(c(-1,0,1), function(ell){
+    SADinfo<-flatten(flatten(SADs_list))[[SAD]]
+     mydl<-bigdl%>%
+      filter(l==ell) %>% 
+      mutate(est=obsD)
+    mydl[seq(200, length(mydl$p), 200),] %>%
+      # checkplot(facets=15)+
+      rangePlot()+
+      theme_classic()+
+      facet_wrap(~size, scales="free", nrow=3)+
+      theme(panel.spacing.x = unit(1, "lines"))+
+      scale_x_continuous(expand=c(0,0))+
+      ggtitle(paste(paste0(
+        c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell], " slugplot")
+        ,"\n"
+        , pst_names(SADinfo$distribution_info)
+        , pst_names(SADinfo$community_info) 
+        , collapse = ", "
+        , sep = ", "))
+  })
+})
+dev.off()
 
 
 pdf("figures/first_new_cps.pdf", height=4.5, width=8)
@@ -121,7 +178,7 @@ my_obs_cps_sofar %>% filter(!is.na(p)) %>%  summarize(n_distinct(SAD))
 dev.off()
 m<-1
 pdf(file="figures/diversity_slugs_early.pdf", height=3.5, width=3.5)
-map(c(-1, 1), function(m){
+map(c(-1,0, 1), function(m){
         k<-mycps_sofar[seq(25, length(mycps_sofar$p), 25),] %>%
             filter(inds==100& l==m) %>%
             mutate(est=chaoest)
@@ -136,6 +193,12 @@ map(c(-1, 1), function(m){
 })
 
 dev.off()
+
+
+#figure out why some slugplots are funny looking, save changes
+myp<-mydl %>% filter(size==1778, l==0) %>% mutate(est=obsD)
+
+myp[seq(25, length(myp$p), 25),] %>% rangePlot()
 
 pdf(file="figures/diversity_slugs_early_Simp_10000.pdf", height=3.5, width=3.5)
 rangePlot(mycps_sofar[seq(25, length(mycps_sofar$p), 25),] %>%

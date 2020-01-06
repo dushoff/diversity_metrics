@@ -491,6 +491,10 @@ getug<-future_map_dfr(1:24, function(SAD){
  x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
 })
 
+getobs<-future_map_dfr(1:24, function(SAD){
+  x<-read.csv(paste0("data/obs_SAD", SAD, ".csv")) 
+  x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
+})
 
 #summarize SDlog(diversity) # for some reason this seems to be taking a long time isn't THAT much data is it?
 sdlogs<-getug  %>% 
@@ -498,6 +502,11 @@ sdlogs<-getug  %>%
   group_by(l, inds, SAD_ind, etype) %>% 
   summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
 
+
+#repeat for obs only
+sdlogs_O<-getobs  %>% 
+  group_by(l, size, SAD_ind) %>% 
+  summarize(sdlog=sd(log(obsD), na.rm=T), cv=sd(obsD, na.rm=T)/mean(obsD, na.rm=T))
 
 # #maybe useful combining 
 # #figure for MS possibly, showing how this works for even and uneven comms 
@@ -530,7 +539,7 @@ sdlogs<-getug  %>%
 # 
 # 
 # plot(sdlogs$sdlog, sdlogs$cv)
-pdf(file="figures/sampling_variabilit.pdf")
+pdf(file="figures/sampling_variability.pdf")
 # future_map(c(1:4, 5:8, 9:12, 13:16, 17:20, 21:24), function(x){SAD_ind %in%x &
 map(c("chaoest", "obsD"), function(et){
   dat<-sdlogs %>%
@@ -543,7 +552,7 @@ map(c("chaoest", "obsD"), function(et){
     theme_classic()+scale_x_log10()+
     theme(axis.text.x=element_text(angle=90))+
     # geom_hline(yintercept=0.1)+
-    labs(x="sample size", y="SD of log(asymptotic estimator) under random sampling")
+    labs(x="sample size", y=paste0("SD of log(", et, ") under random sampling"))
     })
 })
   dev.off()
