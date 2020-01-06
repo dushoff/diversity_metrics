@@ -47,7 +47,10 @@ future_map(1:24, function(SAD){
       scale_x_continuous(expand=c(0,0))+
       ggtitle(paste(paste0(
                      c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell], " Checkplot")
+<<<<<<< HEAD
                     ,"\n"
+=======
+>>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
                     , pst_names(SADinfo$distribution_info)
                     , pst_names(SADinfo$community_info) 
                     , collapse = ", "
@@ -83,6 +86,7 @@ future_map(1:24, function(SAD){
 })
 dev.off()
   
+<<<<<<< HEAD
 ############ make a few range plots???
 pdf('figures/try_ASY_slugs.pdf')
 future_map(1:24, function(SAD){
@@ -141,6 +145,9 @@ future_map(1:24, function(SAD){
   })
 })
 dev.off()
+=======
+
+>>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
 
 
 pdf("figures/first_new_cps.pdf", height=4.5, width=8)
@@ -179,7 +186,11 @@ my_obs_cps_sofar %>% filter(!is.na(p)) %>%  summarize(n_distinct(SAD))
 dev.off()
 m<-1
 pdf(file="figures/diversity_slugs_early.pdf", height=3.5, width=3.5)
+<<<<<<< HEAD
 map(c(-1,0, 1), function(m){
+=======
+map(c(-1, 1), function(m){
+>>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
         k<-mycps_sofar[seq(25, length(mycps_sofar$p), 25),] %>%
             filter(inds==100& l==m) %>%
             mutate(est=chaoest)
@@ -195,12 +206,15 @@ map(c(-1,0, 1), function(m){
 
 dev.off()
 
+<<<<<<< HEAD
 
 #figure out why some slugplots are funny looking, save changes
 myp<-mydl %>% filter(size==1778, l==0) %>% mutate(est=obsD)
 
 myp[seq(25, length(myp$p), 25),] %>% rangePlot()
 
+=======
+>>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
 pdf(file="figures/diversity_slugs_early_Simp_10000.pdf", height=3.5, width=3.5)
 rangePlot(mycps_sofar[seq(25, length(mycps_sofar$p), 25),] %>%
     filter(inds==10000& l==-1) %>%
