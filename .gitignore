@@ -10,7 +10,7 @@
 makestuff/
 slurm*
 /data/SAD_7_l_0*
-data/big_richness_checkplot.csv
+/data/big_richness_checkplot.csv
 makestuff
 data/obs*
 data/asy*
