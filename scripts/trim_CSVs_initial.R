@@ -6,63 +6,45 @@ library(furrr)
 plan(strategy=multiprocess, workers=7)
 
 
-<<<<<<< HEAD
-=======
-one_obs<-read.csv("data/new_trycheckingobs_SAD_10iter_1.csv")
-
-
-byl(one_obs)
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
 
 #next step is to repeat this but sending the newer .csvs to the data directory, then will bind rows from the ones in the home directory.
 
 map(1:24, function(SAD){
-<<<<<<< HEAD
-  write.csv(future_map_dfr(1:1000, function(x){
-=======
+
   write.csv(bind_rows(
     read.csv(paste0("data/asy_SAD", SAD,  ".csv"))
              , future_map_dfr(1:1000, function(x){
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
+
         map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
           map_dfr(c(-1,0,1), function(l){
                 
                 out<-tryCatch(read.csv(paste(
-<<<<<<< HEAD
-                    "data/SAD", SAD, "_l_", l, "_inds_", size, "_outer_",  x, "_.csv", sep="")
-=======
+
                     "data/SAD", SAD, "_l_", l, "_inds_", size, "_outernew_",  x, "_.csv", sep="")
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
+
                     )
                     , error=function(e){data.frame(c(rep(size,8),x))}
                   )
                 tryCatch(file.remove(paste(
-<<<<<<< HEAD
-                  "data/SAD", SAD, "_l_", l, "_inds_", size, "_outer_",  x, "_.csv", sep="")
-=======
+
                   "data/SAD", SAD, "_l_", l, "_inds_", size, "_outernew_",  x, "_.csv", sep="")
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
+
                 )
                 , error=function(e){
                   print( paste(
                   "data/SAD", SAD, "_l_", l, "_inds_", size
-<<<<<<< HEAD
-                  , "_outer_",  x, "_.csv   does not exist", sep=""))}
-=======
+
                   , "_outernew_",  x, "_.csv   does not exist", sep=""))}
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
+
                 )
           
                 return(data.frame(out))
           })
       })
-<<<<<<< HEAD
-  })
-  , paste0("data/asy_SAD", SAD, "_other.csv"), row.names=F)
-=======
+
   }))
   , paste0("data/asy_SAD", SAD, ".csv"), row.names=F)
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
+
 })     
   
   
