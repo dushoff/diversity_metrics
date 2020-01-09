@@ -47,10 +47,9 @@ future_map(1:24, function(SAD){
       scale_x_continuous(expand=c(0,0))+
       ggtitle(paste(paste0(
                      c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell], " Checkplot")
-<<<<<<< HEAD
+
                     ,"\n"
-=======
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
+
                     , pst_names(SADinfo$distribution_info)
                     , pst_names(SADinfo$community_info) 
                     , collapse = ", "
@@ -85,25 +84,62 @@ future_map(1:24, function(SAD){
   })
 })
 dev.off()
+
+
+
   
-<<<<<<< HEAD
+
 ############ make a few range plots???
 pdf('figures/try_ASY_slugs.pdf')
-future_map(1:24, function(SAD){
+map(1:24, function(SAD){
   myd<-read_bigs("data/asy", SAD) %>% 
     mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
     mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>% 
     mutate(est=chaoest)
   SADinfo<-flatten(flatten(SADs_list))[[SAD]]
   map(c(-1,0,1), function(ell){
-    mydl<-myd %>% filter(l==ell)
+    map(unique(myd$inds), function(inds){
+    mydl<-myd %>% filter(l==ell, inds==inds)
     if(sum(mydl$p[!is.na(mydl$p)])>0){
-      tryCatch(mydl[seq(25, length(mydl$p), 25),] %>% filter(!is.na(p))  %>%
+      tryCatch(mydl %>% filter(!is.na(p))  %>%
                  rangePlot()+
                  theme_classic()+
+                 scale_x_continuous(expand=c(0,0), limits=c(0,1))+
+                 ggtitle(paste(paste0("asymptotic "
+                                      , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell]
+                                      , " slugplot for ", inds, " individuals")
+                               ,"\n"
+                               , pst_names(SADinfo$distribution_info)
+                               , pst_names(SADinfo$community_info) 
+                               , collapse = ", "
+                               , sep = ", ")))
+    }
+    })
+  })
+})
+dev.off()
+#############################
+# spend a few minutes on the very skewed SADS I have been playing with on my computer. 
+
+pdf('figures/try_ASY_slugs_special.pdf')
+map(c(7,15), function(x){
+  #########
+  # going to see what goes wrong here
+  x<-15
+  
+  myd<-read.csv(paste0("data/asy_SAD_special", x, ".csv")) %>% 
+    mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
+    mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>% 
+    mutate(est=chaoest)
+  SADinfo<-flatten(flatten(SADs_list))[[x]]
+  map(c(-1,0,1), function(ell){
+    ell<-0
+    mydl<-myd %>% filter(l==ell)
+    if(sum(mydl$p[!is.na(mydl$p)])>0){
+      tryCatch(mydl %>% filter(!is.na(p), inds<5000)  %>%
+                 rangePlot(facet_num=unique(mydl$inds), orderFun=milli)+
                  facet_wrap(~inds, scales="free", nrow=3)+
                  theme(panel.spacing.x = unit(1, "lines"))+
-                 scale_x_continuous(expand=c(0,0) limits=c(0,1))+
                  ggtitle(paste(paste0("asymptotic "
                                       , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell], " slugplot")
                                ,"\n"
@@ -145,9 +181,6 @@ future_map(1:24, function(SAD){
   })
 })
 dev.off()
-=======
-
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
 
 
 pdf("figures/first_new_cps.pdf", height=4.5, width=8)
