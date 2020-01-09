@@ -239,29 +239,89 @@ map(c(-1, 1), function(m){
 
 dev.off()
 
+
+
+##########
+# code to look at actual sampling uncertainty
+
+plan(strategy=multiprocess, workers=7)
+getug<-future_map_dfr(1:24, function(SAD){
+  x<-read.csv(paste0("data/asy_SAD", SAD, ".csv")) 
+  x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
+})
+
+
+getug2<-future_map_dfr(1:24, function(SAD){
+  x<-read.csv(paste0("data/asy_SAD", SAD, "_other.csv")) 
+  x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
+})
+
+getobs<-future_map_dfr(1:24, function(SAD){
+  x<-read.csv(paste0("data/obs_SAD", SAD, ".csv")) 
+  x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
+})
+
+getnewSADs<-map_dfr(c(7,15), function(SAD){
+  x<-read.csv(paste0("data/obs_SAD", SAD, ".csv")) 
+  x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
+})
+
+#summarize SDlog(diversity) # for some reason this seems to be taking a long time isn't THAT much data is it?
+sdlogs<-getug2  %>% 
+  gather(etype, div, chaoest, obsD ) %>% 
+  group_by(l, inds, SAD_ind, etype) %>% 
+  summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
+
+sdlogs<-function(x){
+  x  %>% 
+  gather(etype, div, chaoest, obsD ) %>% 
+  group_by(l, inds, SAD_ind, etype) %>% 
+  summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
+}
+newsdlogs<-sdlogs(getnewSADs)
+
+
+#repeat for obs only
+sdlogs_O<-getobs  %>% 
+  group_by(l, size, SAD_ind) %>% 
+  summarize(sdlog=sd(log(obsD), na.rm=T), cv=sd(obsD, na.rm=T)/mean(obsD, na.rm=T))
+
+
+pdf(file="figures/sampling_variability_2.pdf")
+
+  # pdf(file="figures/sampling_variabilit.pdf")
+
+# future_map(c(1:4, 5:8, 9:12, 13:16, 17:20, 21:24), function(x){SAD_ind %in%x &
+map(c("chaoest", "obsD"), function(et){
+  dat<-sdlogs %>%
+    filter(etype==et)
+  tryCatch({
+    dat %>% ggplot(aes(inds, sdlog, color=factor(l), shape=factor(l)))+
+      geom_point()+
+      geom_line()+
+      facet_wrap(~SAD_ind, ncol=5)+
+      theme_classic()+scale_x_log10()+
+      theme(axis.text.x=element_text(angle=90))+
+      # geom_hline(yintercept=0.1)+
+     
+    labs(x="sample size", y=paste0("SD of log(", et, ") under random sampling"))
+    })
+})
+dev.off()
+#look at SDlog of estimates
 <<<<<<< HEAD
+pdf("figures/ugly_variability_in_obsD.pdf")
+sdlogs_O %>% ggplot(aes(size, sdlog, color=factor(l), shape=factor(l)))+
+  geom_point()+
+  geom_line()+
+  facet_wrap(~SAD_ind, ncol=5)+
+  theme_classic()+scale_x_log10()+
+  theme(axis.text.x=element_text(angle=90))+
+  # geom_hline(yintercept=0.1)+
+  labs(x="sample size", y=paste0("SD of log(observed diversity) under random sampling"))
 
-#figure out why some slugplots are funny looking, save changes
-myp<-mydl %>% filter(size==1778, l==0) %>% mutate(est=obsD)
-
-myp[seq(25, length(myp$p), 25),] %>% rangePlot()
-
+dev.off()
 =======
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
-pdf(file="figures/diversity_slugs_early_Simp_10000.pdf", height=3.5, width=3.5)
-rangePlot(mycps_sofar[seq(25, length(mycps_sofar$p), 25),] %>%
-    filter(inds==10000& l==-1) %>%
-    mutate(est=chaoest) ,
-    target=10
-    , title=c("richness", "Hill-Shannon", "Hill-Simpson")[3], opacity=0.05)+
-    theme_classic()
-dev.off()
-
-pdf(file="figures/diversity_slugs_early_RICH_10000.pdf", height=3.5, width=3.5)
-rangePlot(mycps_sofar[seq(25, length(mycps_sofar$p), 25),] %>%
-              filter(inds==10000& l==1) %>%
-              mutate(est=chaoest) ,
-          target=200
-          , title=c("richness", "Hill-Shannon", "Hill-Simpson")[1], opacity=0.05)+
-    theme_classic()
-dev.off()
+  
+  
+  >>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
