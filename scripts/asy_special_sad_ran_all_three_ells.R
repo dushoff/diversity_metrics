@@ -2,7 +2,7 @@ source("scripts/checkplot_initials.R")
 source("scripts/checkplot_inf.R")
 reps<-50
 outerreps<-1000
-nc<-55
+nc<-50
 plan(strategy=multisession, workers=nc)
 map(rev(1000+1:1000+outerreps), function(x){
     map(rev(round(10^seq(2, 5, 0.25))), function(size){
