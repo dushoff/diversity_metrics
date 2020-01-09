@@ -6,6 +6,8 @@ source("/Rstudio_Git/checkPlots/checkFuns.R")
 #to get info about each SAD
 source("scripts/checkplot_initials.R")
 library(furrr)
+library(gridExtra)
+library(grid)
 plan(strategy=multiprocess, workers=7)
 
 
@@ -92,29 +94,32 @@ dev.off()
 ############ make a few range plots???
 pdf('figures/try_ASY_slugs.pdf')
 map(1:24, function(SAD){
+  SAD<-3
   myd<-read_bigs("data/asy", SAD) %>% 
     mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
     mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>% 
     mutate(est=chaoest)
   SADinfo<-flatten(flatten(SADs_list))[[SAD]]
   map(c(-1,0,1), function(ell){
-    map(unique(myd$inds), function(inds){
+    #store a bunch of slugs as a list
+   slugs<- map(unique(myd$inds), function(inds){
     mydl<-myd %>% filter(l==ell, inds==inds)
     if(sum(mydl$p[!is.na(mydl$p)])>0){
       tryCatch(mydl %>% filter(!is.na(p))  %>%
-                 rangePlot()+
-                 theme_classic()+
-                 scale_x_continuous(expand=c(0,0), limits=c(0,1))+
-                 ggtitle(paste(paste0("asymptotic "
-                                      , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell]
-                                      , " slugplot for ", inds, " individuals")
-                               ,"\n"
-                               , pst_names(SADinfo$distribution_info)
-                               , pst_names(SADinfo$community_info) 
-                               , collapse = ", "
-                               , sep = ", ")))
-    }
+                 rangePlot(title=paste0("sample of ", inds, " individuals")))
+      }
     })
+   #plot all sample sizes for each ell
+   grid.arrange(grobs=slugs, nrow=3, top = textGrob(paste(paste0("asymptotic "
+                                                  , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell]
+                                                  , " slugplot")
+                                           ,"\n"
+                                           , pst_names(SADinfo$distribution_info)
+                                           ,"\n"
+                                           , pst_names(SADinfo$community_info) 
+                                           , collapse = ", "
+                                           , sep = " ")
+                                           , gp=gpar(fontsize=20,font=3)))
   })
 })
 dev.off()
