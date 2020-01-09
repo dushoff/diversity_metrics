@@ -49,43 +49,46 @@ map(1:24, function(SAD){
   
   
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-<<<<<<< HEAD
+#now do the 2 special SADS
 
-=======
-)
+map(c(7,15), function(SAD){
+    write.csv(
+      future_map_dfr(1:1000, function(x){
+            map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
+              map_dfr(c(-1,0,1), function(l){
+      out<-tryCatch(read.csv(paste(
+          "data/SAD_special_", SAD, "_l_", l, "_inds_", size, "_outernew_",  x, "_.csv", sep="")
+          )
+          , error=function(e){data.frame(c(rep(size,8),x))}
+          )
+          
+      tryCatch(file.remove(paste(
+            "data/SAD_special_", SAD, "_l_", l, "_inds_", size, "_outernew_",  x, "_.csv", sep="")
+            )
+            , error=function(e){
+              print( paste(
+              "data/SAD_special_", SAD, "_l_", l, "_inds_", size
+              , "_outernew_",  x, "_.csv   does not exist", sep=""))}
+              )
+                    return(data.frame(out))
+        })
+      })
+  })
+, paste0("data/asy_SAD_special", SAD, ".csv"), row.names=F)
+  })    
   
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
+  
+  
+  
+  
+  
   
   
   
   
   
 
-<<<<<<< HEAD
-# #thsi combine: try bind rows of the old and the new. If it works sesms easy to recycles in the loop
-# future_map(1:24, function(SAD){
-#   tryCatch(expr={
-#     curr<-read.csv(paste0("data/asy_SAD", SAD, ".csv"))
-#     toadd<-read.csv(paste0("asy_SAD", SAD, ".csv"))
-#     out<-bind_rows(curr, toadd)
-#     write.csv(out, paste0("data/asy_SAD", SAD, ".csv"))
-#     file.remove(paste0("asy_SAD", SAD, ".csv"))
-#   }
-#   )
-# })
-=======
+
 #thsi combine: try bind rows of the old and the new. If it works sesms easy to recycles in the loop
 future_map(1:24, function(SAD){
   tryCatch(expr={
@@ -97,16 +100,14 @@ future_map(1:24, function(SAD){
   }
   )
 })
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
+
 
 ############## this is kind of nice there was no size on the new trycheckingobs ones so I think I can try this again and get it right. #######
 
 map(1:24, function(SAD){
-<<<<<<< HEAD
+
     write.csv(bind_rows(
-=======
-    write.csv(
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
+
       future_map_dfr(1:100, function(x){
         # map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
         
@@ -130,19 +131,16 @@ map(1:24, function(SAD){
           )
           
           return(data.frame(out))
-<<<<<<< HEAD
+
       }),
       read.csv(paste0("data/obs_SAD", SAD, ".csv"))
     )
   # })
     , paste0("data/obs_SAD", SAD, ".csv"),
   row.names=F)
-=======
-      })
-  # })
-    , paste0("data/obs_SAD", SAD, ".csv"), row.names=F)
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
-  })      
+})      
+
+
 
 
 
