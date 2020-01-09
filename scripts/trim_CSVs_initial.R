@@ -52,8 +52,9 @@ map(1:24, function(SAD){
 #now do the 2 special SADS
 
 map(c(7,15), function(SAD){
-    write.csv(
-      future_map_dfr(1:1000, function(x){
+  write.csv(bind_rows(
+    read.csv(paste0("data/asy_SAD_special", SAD,  ".csv"))
+    , map_dfr(1:1000, function(x){
             map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
               map_dfr(c(-1,0,1), function(l){
       out<-tryCatch(read.csv(paste(
@@ -73,8 +74,9 @@ map(c(7,15), function(SAD){
                     return(data.frame(out))
         })
       })
-  })
+  }))
 , paste0("data/asy_SAD_special", SAD, ".csv"), row.names=F)
+
   })    
   
   
