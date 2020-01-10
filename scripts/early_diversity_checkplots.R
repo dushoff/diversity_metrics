@@ -17,7 +17,11 @@ pst_names<-function(x){paste(map(1:length(x)
                                  , function(y){
                                     paste0(names(x)[y]
                                       , ": "
-                                      ,ifelse(is.numeric(x[y]), round(x[y],2), x[y]))})
+                                      ,ifelse(is.na(as.numeric(x[y]))
+                                                    , x[y]
+                                                    , round(as.numeric(x[y]), 2)
+                                                    )
+                                              )})
                                    ,collapse = ", ")}
 
 
@@ -91,98 +95,71 @@ dev.off()
 
   
 
+#########################
+# spend a few minutes on the very skewed SADS I have been playing with on my computer. 
+
 ############ make a few range plots???
-pdf('figures/try_ASY_slugs.pdf')
+pdf('figures/try_ASY_slugs_impoved_ti.pdf')
 map(1:24, function(SAD){
-  SAD<-3
   myd<-read_bigs("data/asy", SAD) %>% 
     mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
     mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>% 
-    mutate(est=chaoest)
+    mutate(est=chaoest) %>% 
+    filter(inds<3000)
   SADinfo<-flatten(flatten(SADs_list))[[SAD]]
   map(c(-1,0,1), function(ell){
     #store a bunch of slugs as a list
-   slugs<- map(unique(myd$inds), function(inds){
-    mydl<-myd %>% filter(l==ell, inds==inds)
-    if(sum(mydl$p[!is.na(mydl$p)])>0){
-      tryCatch(mydl %>% filter(!is.na(p))  %>%
-                 rangePlot(title=paste0("sample of ", inds, " individuals")))
-      }
+    slugs<- map(rev(unique(myd$inds[!is.na(myd$inds>0)])), function(inds){
+      mydl<-myd %>% filter(l==ell, inds==inds)
+      print(c(ell, SAD, inds))
+        tryCatch(mydl %>%
+                   rangePlot(title=paste0("sample N = ", inds), target=as.numeric(SADinfo$community_info[2-ell]))+
+                   theme(title=element_text(size=7)),
+                 error=function(e){ggplot(data.frame(x=seq(0,1, 0.1), y=0:10),aes(x,y))})
+      
+      
     })
-   #plot all sample sizes for each ell
-   grid.arrange(grobs=slugs, nrow=3, top = textGrob(paste(paste0("asymptotic "
-                                                  , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell]
-                                                  , " slugplot")
-                                           ,"\n"
-                                           , pst_names(SADinfo$distribution_info)
-                                           ,"\n"
-                                           , pst_names(SADinfo$community_info) 
-                                           , collapse = ", "
-                                           , sep = " ")
-                                           , gp=gpar(fontsize=20,font=3)))
+    #plot all sample sizes for each ell
+    grid.arrange(grobs=slugs, ncol=2
+                          , top = textGrob(paste(paste0("asymptotic "
+                                                                  , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell]
+                                                                  , " slugplot")
+                                                           ,"\n"
+                                                           , pst_names(SADinfo$distribution_info)
+                                                           ,"\n"
+                                                           , pst_names(SADinfo$community_info) 
+                                                           , collapse = ", "
+                                                           , sep = " ")
+                                                     , gp=gpar(fontsize=12,font=3)))
   })
 })
 dev.off()
-#############################
-# spend a few minutes on the very skewed SADS I have been playing with on my computer. 
-
-pdf('figures/try_ASY_slugs_special.pdf')
-map(c(7,15), function(x){
-  #########
-  # going to see what goes wrong here
-  x<-15
-  
-  myd<-read.csv(paste0("data/asy_SAD_special", x, ".csv")) %>% 
-    mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
-    mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>% 
-    mutate(est=chaoest)
-  SADinfo<-flatten(flatten(SADs_list))[[x]]
-  map(c(-1,0,1), function(ell){
-    ell<-0
-    mydl<-myd %>% filter(l==ell)
-    if(sum(mydl$p[!is.na(mydl$p)])>0){
-      tryCatch(mydl %>% filter(!is.na(p), inds<5000)  %>%
-                 rangePlot(facet_num=unique(mydl$inds), orderFun=milli)+
-                 facet_wrap(~inds, scales="free", nrow=3)+
-                 theme(panel.spacing.x = unit(1, "lines"))+
-                 ggtitle(paste(paste0("asymptotic "
-                                      , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell], " slugplot")
-                               ,"\n"
-                               , pst_names(SADinfo$distribution_info)
-                               , pst_names(SADinfo$community_info) 
-                               , collapse = ", "
-                               , sep = ", ")))
-    }
-  })
-})
-dev.off()
-
 # slugs for obs as well
-pdf("figures/obs_SlugPlot.pdf", width=11, height=8.5)
-future_map(1:24, function(SAD){
+pdf("figures/obs_SlugPlot.pdf", height=8.5, width=11)
+map(1:24, function(SAD){
+  SADinfo<-flatten(flatten(SADs_list))[[SAD]]
   bigdl<-read_bigs("data/obs", SAD) %>% 
     mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
     mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>% 
     mutate(est=obsD)
-  yodl<-bigdl[seq(25, length(bigdl$p), 25),]
   map(c(-1,0,1), function(ell){
-    SADinfo<-flatten(flatten(SADs_list))[[SAD]]
-    mydl<-yodl%>%
-      filter(l==ell) 
-    mydl %>%
-      # checkplot(facets=15)+
-      rangePlot()+
-      theme_classic()+
-      facet_wrap(~size, scales="free", nrow=3)+
-      theme(panel.spacing.x = unit(1, "lines"))+
-      scale_x_continuous(expand=c(0,0), limits=c(0,1))+
-      ggtitle(paste(paste0(
-        c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell], " slugplot")
-        ,"\n"
-        , pst_names(SADinfo$distribution_info)
-        , pst_names(SADinfo$community_info) 
-        , collapse = ", "
-        , sep = ", "))
+   
+    slugs<- map(unique(bigdl$size[bigdl$size<3000]), function(inds){
+      mydl<-bigdl %>% filter(l==ell, size==inds)
+    mydl %>% filter(!is.na(p))  %>%
+      rangePlot(title=paste0("sample N = ", inds))+
+      theme(title=element_text(size=7))
+  })
+    grid.arrange(grobs=slugs, ncol=2, top = textGrob(paste(paste0("observed "
+                                                                  , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell]
+                                                                  , " slugplot")
+                                                           ,"\n"
+                                                           , pst_names(SADinfo$distribution_info)
+                                                           ,"\n"
+                                                           , pst_names(SADinfo$community_info) 
+                                                           , collapse = ", "
+                                                           , sep = " ")
+                                                     , gp=gpar(fontsize=12,font=3)))
   })
 })
 dev.off()
@@ -267,7 +244,7 @@ getobs<-future_map_dfr(1:24, function(SAD){
 })
 
 getnewSADs<-map_dfr(c(7,15), function(SAD){
-  x<-read.csv(paste0("data/obs_SAD", SAD, ".csv")) 
+  x<-read.csv(paste0("data/asy_SAD_special", SAD, ".csv")) 
   x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
 })
 
@@ -277,12 +254,14 @@ sdlogs<-getug2  %>%
   group_by(l, inds, SAD_ind, etype) %>% 
   summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
 
+#sdlogs as a function
 sdlogs<-function(x){
   x  %>% 
   gather(etype, div, chaoest, obsD ) %>% 
   group_by(l, inds, SAD_ind, etype) %>% 
   summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
 }
+#just look at the two new SADs
 newsdlogs<-sdlogs(getnewSADs)
 
 
@@ -292,13 +271,13 @@ sdlogs_O<-getobs  %>%
   summarize(sdlog=sd(log(obsD), na.rm=T), cv=sd(obsD, na.rm=T)/mean(obsD, na.rm=T))
 
 
-pdf(file="figures/sampling_variability_2.pdf")
+pdf(file="figures/sampling_variability_skewed.pdf")
 
   # pdf(file="figures/sampling_variabilit.pdf")
 
 # future_map(c(1:4, 5:8, 9:12, 13:16, 17:20, 21:24), function(x){SAD_ind %in%x &
 map(c("chaoest", "obsD"), function(et){
-  dat<-sdlogs %>%
+  dat<-newsdlogs %>%
     filter(etype==et)
   tryCatch({
     dat %>% ggplot(aes(inds, sdlog, color=factor(l), shape=factor(l)))+
@@ -313,6 +292,9 @@ map(c("chaoest", "obsD"), function(et){
     })
 })
 dev.off()
+
+flatten(flatten(SADs_list))[22]
+
 #look at SDlog of estimates
 <<<<<<< HEAD
 pdf("figures/ugly_variability_in_obsD.pdf")
