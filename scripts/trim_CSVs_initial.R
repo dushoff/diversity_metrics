@@ -51,11 +51,10 @@ map(1:24, function(SAD){
   
 #now do the 2 special SADS
 
-map(c(7,8,15,22), function(SAD){
-  bleh<-tryCatch(read.csv(paste0("data/asy_SAD_special", SAD,  ".csv")), error=function(e){NULL})
+map(c(1,7,8,15,22), function(SAD){
   
-  write.csv(bind_rows( bleh
-        , map_dfr(1:1000, function(x){
+  
+        new<-map_dfr(1:10000, function(x){
             map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
               map_dfr(c(-1,0,1), function(l){
       out<-tryCatch(read.csv(paste(
@@ -64,19 +63,21 @@ map(c(7,8,15,22), function(SAD){
           , error=function(e){data.frame(c(rep(size,8),x))}
           )
           
-      tryCatch(file.remove(paste(
-            "data/SAD_special_", SAD, "_l_", l, "_inds_", size, "_outernew_",  x, "_.csv", sep="")
-            )
-            , error=function(e){
-              print( paste(
-              "data/SAD_special_", SAD, "_l_", l, "_inds_", size
-              , "_outernew_",  x, "_.csv   does not exist", sep=""))}
-              )
+      # tryCatch(file.remove(paste(
+      #       "data/SAD_special_", SAD, "_l_", l, "_inds_", size, "_outernew_",  x, "_.csv", sep="")
+      #       )
+      #       , error=function(e){
+      #         print( paste(
+      #         "data/SAD_special_", SAD, "_l_", l, "_inds_", size
+      #         , "_outernew_",  x, "_.csv   does not exist", sep=""))}
+      #         )
+      out
                     return(data.frame(out))
         })
       })
-  }))
-, paste0("data/asy_SAD_special", SAD, ".csv"), row.names=F)
+  })
+        new<-new[!is.null(new[,2])]
+write.csv(new, paste0("data/asy_SAD_special", SAD, ".csv"), row.names=F)
 
   })    
   
