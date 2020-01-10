@@ -49,7 +49,7 @@ future_map(1:24, function(SAD){
       checkplot(facets=15)+
       theme_classic()+
       facet_wrap(~size, scales="free", nrow=3, labeller=function(x){paste0("N = ", x)})+
-      theme(panel.spacing.x = unit(1, "lines"), title=element_text(size=12, family="italic"))+
+      theme(panel.spacing.x = unit(1, "lines"), title=element_text(size=12))+
       scale_x_continuous(expand=c(0,0))+
       ggtitle(paste(paste0("sample "
                                    , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell]
