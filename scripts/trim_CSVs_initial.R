@@ -145,9 +145,15 @@ map(1:24, function(SAD){
 })      
 
 
-
-
-
+flist<-list.files(path="data", pattern="SAD_special_.*_l_.*_.csv")
+newest_SADS_from_annotate<-future_map_dfr(flist, function(onefile){
+  if(file.size(paste0("data/", onefile))>5){
+  read_csv(paste0("data/",onefile), col_types = cols (.default = "c"))%>% 
+    mutate(SAD_ind=as.numeric(str_split(onefile, pattern="_")[[1]][[3]]))
+  }
+})
+file.info("data/SAD_special_15_l_0_inds_17783_outernew_1000_.csv")$size>10
+str_split("data/SAD_special_15_l_0_inds_17783_outernew_1000_.csv", pattern="_")
 # 
 # obs<-future_map(my_obs_cps_sofar, function(rep){
 #   map(rep, function(SAD){
