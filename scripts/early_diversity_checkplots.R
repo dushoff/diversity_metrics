@@ -6,6 +6,8 @@ source("/Rstudio_Git/checkPlots/checkFuns.R")
 #to get info about each SAD
 source("scripts/checkplot_initials.R")
 library(furrr)
+library(gridExtra)
+library(grid)
 plan(strategy=multiprocess, workers=7)
 
 
@@ -15,7 +17,11 @@ pst_names<-function(x){paste(map(1:length(x)
                                  , function(y){
                                     paste0(names(x)[y]
                                       , ": "
-                                      ,ifelse(is.numeric(x[y]), round(x[y],2), x[y]))})
+                                      ,ifelse(is.na(as.numeric(x[y]))
+                                                    , x[y]
+                                                    , round(as.numeric(x[y]), 2)
+                                                    )
+                                              )})
                                    ,collapse = ", ")}
 
 
@@ -47,10 +53,9 @@ future_map(1:24, function(SAD){
       scale_x_continuous(expand=c(0,0))+
       ggtitle(paste(paste0(
                      c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell], " Checkplot")
-<<<<<<< HEAD
+
                     ,"\n"
-=======
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
+
                     , pst_names(SADinfo$distribution_info)
                     , pst_names(SADinfo$community_info) 
                     , collapse = ", "
@@ -85,69 +90,79 @@ future_map(1:24, function(SAD){
   })
 })
 dev.off()
+
+
+
   
-<<<<<<< HEAD
+
+#########################
+# spend a few minutes on the very skewed SADS I have been playing with on my computer. 
+
 ############ make a few range plots???
-pdf('figures/try_ASY_slugs.pdf')
-future_map(1:24, function(SAD){
+pdf('figures/try_ASY_slugs_impoved_ti.pdf')
+map(1:24, function(SAD){
   myd<-read_bigs("data/asy", SAD) %>% 
     mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
     mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>% 
-    mutate(est=chaoest)
+    mutate(est=chaoest) %>% 
+    filter(inds<3000)
   SADinfo<-flatten(flatten(SADs_list))[[SAD]]
   map(c(-1,0,1), function(ell){
-    mydl<-myd %>% filter(l==ell)
-    if(sum(mydl$p[!is.na(mydl$p)])>0){
-      tryCatch(mydl[seq(25, length(mydl$p), 25),] %>% filter(!is.na(p))  %>%
-                 rangePlot()+
-                 theme_classic()+
-                 facet_wrap(~inds, scales="free", nrow=3)+
-                 theme(panel.spacing.x = unit(1, "lines"))+
-                 scale_x_continuous(expand=c(0,0) limits=c(0,1))+
-                 ggtitle(paste(paste0("asymptotic "
-                                      , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell], " slugplot")
-                               ,"\n"
-                               , pst_names(SADinfo$distribution_info)
-                               , pst_names(SADinfo$community_info) 
-                               , collapse = ", "
-                               , sep = ", ")))
-    }
+    #store a bunch of slugs as a list
+    slugs<- map(rev(unique(myd$inds[!is.na(myd$inds>0)])), function(inds){
+      mydl<-myd %>% filter(l==ell, inds==inds)
+      print(c(ell, SAD, inds))
+        tryCatch(mydl %>%
+                   rangePlot(title=paste0("sample N = ", inds), target=as.numeric(SADinfo$community_info[2-ell]))+
+                   theme(title=element_text(size=7)),
+                 error=function(e){ggplot(data.frame(x=seq(0,1, 0.1), y=0:10),aes(x,y))})
+      
+      
+    })
+    #plot all sample sizes for each ell
+    grid.arrange(grobs=slugs, ncol=2
+                          , top = textGrob(paste(paste0("asymptotic "
+                                                                  , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell]
+                                                                  , " slugplot")
+                                                           ,"\n"
+                                                           , pst_names(SADinfo$distribution_info)
+                                                           ,"\n"
+                                                           , pst_names(SADinfo$community_info) 
+                                                           , collapse = ", "
+                                                           , sep = " ")
+                                                     , gp=gpar(fontsize=12,font=3)))
   })
 })
 dev.off()
-
 # slugs for obs as well
-pdf("figures/obs_SlugPlot.pdf", width=11, height=8.5)
-future_map(1:24, function(SAD){
+pdf("figures/obs_SlugPlot.pdf", height=8.5, width=11)
+map(1:24, function(SAD){
+  SADinfo<-flatten(flatten(SADs_list))[[SAD]]
   bigdl<-read_bigs("data/obs", SAD) %>% 
     mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
     mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>% 
     mutate(est=obsD)
-  yodl<-bigdl[seq(25, length(bigdl$p), 25),]
   map(c(-1,0,1), function(ell){
-    SADinfo<-flatten(flatten(SADs_list))[[SAD]]
-    mydl<-yodl%>%
-      filter(l==ell) 
-    mydl %>%
-      # checkplot(facets=15)+
-      rangePlot()+
-      theme_classic()+
-      facet_wrap(~size, scales="free", nrow=3)+
-      theme(panel.spacing.x = unit(1, "lines"))+
-      scale_x_continuous(expand=c(0,0), limits=c(0,1))+
-      ggtitle(paste(paste0(
-        c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell], " slugplot")
-        ,"\n"
-        , pst_names(SADinfo$distribution_info)
-        , pst_names(SADinfo$community_info) 
-        , collapse = ", "
-        , sep = ", "))
+   
+    slugs<- map(unique(bigdl$size[bigdl$size<3000]), function(inds){
+      mydl<-bigdl %>% filter(l==ell, size==inds)
+    mydl %>% filter(!is.na(p))  %>%
+      rangePlot(title=paste0("sample N = ", inds))+
+      theme(title=element_text(size=7))
+  })
+    grid.arrange(grobs=slugs, ncol=2, top = textGrob(paste(paste0("observed "
+                                                                  , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell]
+                                                                  , " slugplot")
+                                                           ,"\n"
+                                                           , pst_names(SADinfo$distribution_info)
+                                                           ,"\n"
+                                                           , pst_names(SADinfo$community_info) 
+                                                           , collapse = ", "
+                                                           , sep = " ")
+                                                     , gp=gpar(fontsize=12,font=3)))
   })
 })
 dev.off()
-=======
-
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
 
 
 pdf("figures/first_new_cps.pdf", height=4.5, width=8)
@@ -206,29 +221,94 @@ map(c(-1, 1), function(m){
 
 dev.off()
 
+
+
+##########
+# code to look at actual sampling uncertainty
+
+plan(strategy=multiprocess, workers=7)
+getug<-future_map_dfr(1:24, function(SAD){
+  x<-read.csv(paste0("data/asy_SAD", SAD, ".csv")) 
+  x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
+})
+
+
+getug2<-future_map_dfr(1:24, function(SAD){
+  x<-read.csv(paste0("data/asy_SAD", SAD, "_other.csv")) 
+  x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
+})
+
+getobs<-future_map_dfr(1:24, function(SAD){
+  x<-read.csv(paste0("data/obs_SAD", SAD, ".csv")) 
+  x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
+})
+
+getnewSADs<-map_dfr(c(7,15), function(SAD){
+  x<-read.csv(paste0("data/asy_SAD_special", SAD, ".csv")) 
+  x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
+})
+
+#summarize SDlog(diversity) # for some reason this seems to be taking a long time isn't THAT much data is it?
+sdlogs<-getug2  %>% 
+  gather(etype, div, chaoest, obsD ) %>% 
+  group_by(l, inds, SAD_ind, etype) %>% 
+  summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
+
+#sdlogs as a function
+sdlogs<-function(x){
+  x  %>% 
+  gather(etype, div, chaoest, obsD ) %>% 
+  group_by(l, inds, SAD_ind, etype) %>% 
+  summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
+}
+#just look at the two new SADs
+newsdlogs<-sdlogs(getnewSADs)
+
+
+#repeat for obs only
+sdlogs_O<-getobs  %>% 
+  group_by(l, size, SAD_ind) %>% 
+  summarize(sdlog=sd(log(obsD), na.rm=T), cv=sd(obsD, na.rm=T)/mean(obsD, na.rm=T))
+
+
+pdf(file="figures/sampling_variability_skewed.pdf")
+
+  # pdf(file="figures/sampling_variabilit.pdf")
+
+# future_map(c(1:4, 5:8, 9:12, 13:16, 17:20, 21:24), function(x){SAD_ind %in%x &
+map(c("chaoest", "obsD"), function(et){
+  dat<-newsdlogs %>%
+    filter(etype==et)
+  tryCatch({
+    dat %>% ggplot(aes(inds, sdlog, color=factor(l), shape=factor(l)))+
+      geom_point()+
+      geom_line()+
+      facet_wrap(~SAD_ind, ncol=5)+
+      theme_classic()+scale_x_log10()+
+      theme(axis.text.x=element_text(angle=90))+
+      # geom_hline(yintercept=0.1)+
+     
+    labs(x="sample size", y=paste0("SD of log(", et, ") under random sampling"))
+    })
+})
+dev.off()
+
+flatten(flatten(SADs_list))[22]
+
+#look at SDlog of estimates
 <<<<<<< HEAD
+pdf("figures/ugly_variability_in_obsD.pdf")
+sdlogs_O %>% ggplot(aes(size, sdlog, color=factor(l), shape=factor(l)))+
+  geom_point()+
+  geom_line()+
+  facet_wrap(~SAD_ind, ncol=5)+
+  theme_classic()+scale_x_log10()+
+  theme(axis.text.x=element_text(angle=90))+
+  # geom_hline(yintercept=0.1)+
+  labs(x="sample size", y=paste0("SD of log(observed diversity) under random sampling"))
 
-#figure out why some slugplots are funny looking, save changes
-myp<-mydl %>% filter(size==1778, l==0) %>% mutate(est=obsD)
-
-myp[seq(25, length(myp$p), 25),] %>% rangePlot()
-
+dev.off()
 =======
->>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
-pdf(file="figures/diversity_slugs_early_Simp_10000.pdf", height=3.5, width=3.5)
-rangePlot(mycps_sofar[seq(25, length(mycps_sofar$p), 25),] %>%
-    filter(inds==10000& l==-1) %>%
-    mutate(est=chaoest) ,
-    target=10
-    , title=c("richness", "Hill-Shannon", "Hill-Simpson")[3], opacity=0.05)+
-    theme_classic()
-dev.off()
-
-pdf(file="figures/diversity_slugs_early_RICH_10000.pdf", height=3.5, width=3.5)
-rangePlot(mycps_sofar[seq(25, length(mycps_sofar$p), 25),] %>%
-              filter(inds==10000& l==1) %>%
-              mutate(est=chaoest) ,
-          target=200
-          , title=c("richness", "Hill-Shannon", "Hill-Simpson")[1], opacity=0.05)+
-    theme_classic()
-dev.off()
+  
+  
+  >>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a

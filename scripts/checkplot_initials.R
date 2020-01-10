@@ -31,7 +31,9 @@ mycv<-function(x){sd(x)/mean(x)}
 
 SADs_list<-map(c("lnorm", "gamma"), function(distr){
     map(c(100, 200), function(rich){
-        map(c(0.01,0.05, .15,.25,.5,.75,.85), function(simp_Prop){
+        map(c(0.05, .15,.25,.5,.75,.85), function(simp_Prop){
+            
+        # map(c(0.01,0.05, .15,.25,.5,.75,.85), function(simp_Prop){ #this is the special sads loop
             fit_SAD(rich = rich, simpson = simp_Prop*(rich-1)+1, dstr = distr)
         })
     })
