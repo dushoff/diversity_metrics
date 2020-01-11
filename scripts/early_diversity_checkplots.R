@@ -87,7 +87,7 @@ future_map(1:24, function(SAD){
         checkplot(facets=9)+
         theme_classic()+
         facet_wrap(~inds, scales="free", nrow=3)+
-        theme(panel.spacing.x = unit(1, "lines"))+
+        theme(panel.spacing.x = unit(1, "lines"), title=element_text(size=12))+
         scale_x_continuous(expand=c(0,0))+
         ggtitle(paste(paste0("asymptotic "
                                               , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell]
@@ -97,8 +97,9 @@ future_map(1:24, function(SAD){
                                        ,"\n"
                                        , pst_names(SADinfo$community_info) 
                                        , collapse = ", "
-                                       , sep = " ")
-                                 , gp=gpar(fontsize=12,font=3)))
+                                       , sep = " "))
+       )
+                                 
         }
   })
 })
@@ -178,23 +179,23 @@ map(1:24, function(SAD){
 dev.off()
 
 
-pdf("figures/first_new_cps.pdf", height=4.5, width=8)
-
-   # map(c(-1,0,1), function(l){
-   map(rev(round(10^seq(2, 4, 0.25))), function(size){
-   SAD %>% filter(size==size)  %>%
-      mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
-      #   mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>%
-      #   # filter(hilld!="Hill-Shannon") %>%
-        checkplot(facets=8)+
-        theme_classic()+
-        facet_grid(~l, scales="free")+
-        theme(panel.spacing.x = unit(2, "lines"))+
-        scale_x_continuous(expand=c(0,0))
-    })
-  })
-})
-dev.off()
+# pdf("figures/first_new_cps.pdf", height=4.5, width=8)
+# 
+#    # map(c(-1,0,1), function(l){
+#    map(rev(round(10^seq(2, 4, 0.25))), function(size){
+#    SAD %>% filter(size==size)  %>%
+#       mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
+#       #   mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>%
+#       #   # filter(hilld!="Hill-Shannon") %>%
+#         checkplot(facets=8)+
+#         theme_classic()+
+#         facet_grid(~l, scales="free")+
+#         theme(panel.spacing.x = unit(2, "lines"))+
+#         scale_x_continuous(expand=c(0,0))
+#     })
+#   })
+# })
+# dev.off()
 
 
 
@@ -205,14 +206,14 @@ dev.off()
 plan(strategy=multiprocess, workers=7)
 getug<-future_map_dfr(1:24, function(SAD){
   x<-read.csv(paste0("data/asy_SAD", SAD, ".csv")) 
-  x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
+  x %>% mutate(SAD_ind=SAD)
 })
 
 
-getug2<-future_map_dfr(1:24, function(SAD){
-  x<-read.csv(paste0("data/asy_SAD", SAD, "_other.csv")) 
-  x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
-})
+# getug2<-future_map_dfr(1:24, function(SAD){
+#   x<-read.csv(paste0("data/asy_SAD", SAD, "_other.csv")) 
+#   x %>% bind_cols(SAD_ind=rep(SAD, length(x[,2])))
+# })
 
 getobs<-future_map_dfr(1:24, function(SAD){
   x<-read.csv(paste0("data/obs_SAD", SAD, ".csv")) 
@@ -235,7 +236,8 @@ sdlogs<-getug2  %>%
 #just look at the two new SADs
 # newsdlogs<-sdlogs(getnewSADs)
 
-newsdlogs<-sdlogs(newest_SADS_from_annotate)
+newsdlogs<-sdlogs(amarelSADS)
+amasdlogs<-sdlogs(getug)
 
 # #repeat for obs only
 # sdlogs_O<-getobs  %>% 
@@ -256,7 +258,7 @@ tomerge<-map_dfr(1:length(flatten(flatten(SADs_list))), function(SAD_ind){
 # make a mini figure to this effect that is a .png for google docs and just has a few
 
 for(et in c("asymptotic estimator", "sample diversity")){
-  et<-"asymptotic estimator"
+ 
   thekey<-str_split(et, pattern=" ")[[1]][1]
   print(thekey)
    
@@ -290,7 +292,7 @@ for(et in c("asymptotic estimator", "sample diversity")){
 
 
 
-pdf(file="figures/sampling_variability_skewed.pdf", width=11, height=8.5)
+pdf(file="figures/sampling_variability_unskewed.pdf", width=11, height=8.5)
 
  map(c("asymptotic estimator", "sample diversity"), function(et){
   dat<-newsdlogs %>% 

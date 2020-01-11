@@ -25,18 +25,18 @@ map(1:24, function(SAD){
                     )
                     , error=function(e){data.frame(c(rep(size,8),x))}
                   )
-                tryCatch(file.remove(paste(
-
-                  "data/SAD", SAD, "_l_", l, "_inds_", size, "_outernew_",  x, "_.csv", sep="")
-
-                )
-                , error=function(e){
-                  print( paste(
-                  "data/SAD", SAD, "_l_", l, "_inds_", size
-
-                  , "_outernew_",  x, "_.csv   does not exist", sep=""))}
-
-                )
+                # tryCatch(file.remove(paste(
+                # 
+                #   "data/SAD", SAD, "_l_", l, "_inds_", size, "_outernew_",  x, "_.csv", sep="")
+                # 
+                # )
+                # , error=function(e){
+                #   print( paste(
+                #   "data/SAD", SAD, "_l_", l, "_inds_", size
+                # 
+                #   , "_outernew_",  x, "_.csv   does not exist", sep=""))}
+                # 
+                # )
           
                 return(data.frame(out))
           })
@@ -153,7 +153,23 @@ newest_SADS_from_annotate<-future_map_dfr(flist, function(onefile){
   }
 })
 
+amfiles<-list.files(path="data", pattern="SAD[0123456789]+_.*outernew_.*_.csv")
 
+newest_SADS_from_amarel<-future_map_dfr(amfiles, function(onefile){
+  if(file.size(paste0("data/", onefile))>5){
+    read_csv(paste0("data/",onefile), col_types = cols (.default = "c"))%>% 
+      mutate(SAD_ind=as.numeric(gsub("_.*", "", gsub("SAD", "", onefile))))
+  }
+})
+
+bigasy<-list.files(path="data", pattern="asy_SAD[0123456789]+.csv")
+
+amarelSADS<-bind_rows(newest_SADS_from_amarel, 
+                future_map_dfr(bigasy, function(onefile){
+ 
+    read_csv(paste0("data/",onefile), col_types = cols (.default = "c"))
+
+}))
 # 
 # obs<-future_map(my_obs_cps_sofar, function(rep){
 #   map(rep, function(SAD){
