@@ -24,6 +24,15 @@ pst_names<-function(x){paste(map(1:length(x)
                                               )})
                                    ,collapse = ", ")}
 
+#sdlogs as a function
+sdlogs<-function(x){
+  x  %>% 
+    gather(etype, div, chaoest, obsD ) %>% 
+    mutate(div=as.numeric(div)) %>% 
+    group_by(l, inds, SAD_ind, etype) %>% 
+    summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
+}
+
 
 
 
@@ -49,7 +58,7 @@ future_map(1:24, function(SAD){
       checkplot(facets=15)+
       theme_classic()+
       facet_wrap(~size, scales="free", nrow=3, labeller=function(x){paste0("N = ", x)})+
-      theme(panel.spacing.x = unit(1, "lines"), title=element_text(size=12, family="italic"))+
+      theme(panel.spacing.x = unit(1, "lines"), title=element_text(size=12))+
       scale_x_continuous(expand=c(0,0))+
       ggtitle(paste(paste0("sample "
                                    , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell]
@@ -222,31 +231,68 @@ sdlogs<-getug2  %>%
   group_by(l, inds, SAD_ind, etype) %>% 
   summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
 
-#sdlogs as a function
-sdlogs<-function(x){
-  x  %>% 
-  gather(etype, div, chaoest, obsD ) %>% 
-  mutate(div=as.numeric(div)) %>% 
-  group_by(l, inds, SAD_ind, etype) %>% 
-  summarize(sdlog=sd(log(div), na.rm=T), cv=sd(div, na.rm=T)/mean(div, na.rm=T))
-}
+
 #just look at the two new SADs
-newsdlogs<-sdlogs(getnewSADs)
+# newsdlogs<-sdlogs(getnewSADs)
 
 newsdlogs<-sdlogs(newest_SADS_from_annotate)
 
-#repeat for obs only
-sdlogs_O<-getobs  %>% 
-  group_by(l, size, SAD_ind) %>% 
-  summarize(sdlog=sd(log(obsD), na.rm=T), cv=sd(obsD, na.rm=T)/mean(obsD, na.rm=T))
+# #repeat for obs only
+# sdlogs_O<-getobs  %>% 
+#   group_by(l, size, SAD_ind) %>% 
+#   summarize(sdlog=sd(log(obsD), na.rm=T), cv=sd(obsD, na.rm=T)/mean(obsD, na.rm=T))
+
+###########
+# some sad info useful for plotting
+tomerge<-map_dfr(1:length(flatten(flatten(SADs_list))), function(SAD_ind){
+  myinf<-flatten(flatten(SADs_list))[[SAD_ind]]
+  data.frame(SAD_ind
+             , dist = myinf$distribution_info[[1]]
+             , rich = myinf$community_info[[1]]
+             , even = round((myinf$community_info[3]-1)/(myinf$community_info[[1]]-1),2)
+  )
+})
+#######
+# make a mini figure to this effect that is a .png for google docs and just has a few
+
+for(et in c("asymptotic estimator", "sample diversity")){
+  et<-"asymptotic estimator"
+  thekey<-str_split(et, pattern=" ")[[1]][1]
+  print(thekey)
+   
+  dat<-newsdlogs %>% 
+    left_join(tomerge) %>% 
+    mutate(etype=factor(etype, labels=c("asymptotic estimator", "sample diversity"))) %>% 
+    filter(as.numeric(l)<5) %>% 
+    mutate(Hill_Diversity=c("richness", "Hill-Shannon", "Hill-Simpson")[2-as.numeric(l)]) %>%
+    filter(etype==et) %>% 
+    filter(even %in% c(0.05, 0.15, 0.5), rich==200)
+  
+  myp<-tryCatch({
+    dat %>% ggplot(aes(as.numeric(inds), sdlog, color=Hill_Diversity, shape=Hill_Diversity))+
+      geom_point()+
+      geom_line()+
+      facet_grid(dist+rich~even)+
+      theme_classic()+scale_x_log10()+
+      theme(axis.text.x=element_text(angle=90))+
+      # geom_hline(yintercept=0.1)+
+      
+      labs(x="sample size", y=paste0("SD of log(", et, ") under random sampling"))
+  })
+  
+  png(file=paste0("figures/variability_fig_for_maintext_"
+                  , thekey
+                  , ".png")
+      ,height=756, width=1028, res=150)
+  myp
+  dev.off()
+}
+
 
 
 pdf(file="figures/sampling_variability_skewed.pdf", width=11, height=8.5)
 
-  # pdf(file="figures/sampling_variabilit.pdf")
-
-# future_map(c(1:4, 5:8, 9:12, 13:16, 17:20, 21:24), function(x){SAD_ind %in%x &
-map(c("asymptotic estimator", "sample diversity"), function(et){
+ map(c("asymptotic estimator", "sample diversity"), function(et){
   dat<-newsdlogs %>% 
     left_join(tomerge) %>% 
     mutate(etype=factor(etype, labels=c("asymptotic estimator", "sample diversity"))) %>% 
@@ -273,14 +319,7 @@ map(c(1,7,8,15,22), function(SAD){
   flatten(flatten(SADs_list))[[SAD]][1:2]
 })
 
-tomerge<-map_dfr(1:length(flatten(flatten(SADs_list))), function(SAD_ind){
-  myinf<-flatten(flatten(SADs_list))[[SAD_ind]]
-  data.frame(SAD_ind
-             , dist = myinf$distribution_info[[1]]
-             , rich = myinf$community_info[[1]]
-             , even = round((myinf$community_info[3]-1)/(myinf$community_info[[1]]-1),2)
-  )
-})
+
 
 #look at SDlog of estimates
 <<<<<<< HEAD
