@@ -6,43 +6,80 @@ library(furrr)
 plan(strategy=multiprocess, workers=7)
 
 
-one_obs<-read.csv("data/new_trycheckingobs_SAD_10iter_1.csv")
-
-
-byl(one_obs)
 
 #next step is to repeat this but sending the newer .csvs to the data directory, then will bind rows from the ones in the home directory.
 
 map(1:24, function(SAD){
+
   write.csv(bind_rows(
     read.csv(paste0("data/asy_SAD", SAD,  ".csv"))
              , future_map_dfr(1:1000, function(x){
+
         map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
           map_dfr(c(-1,0,1), function(l){
                 
                 out<-tryCatch(read.csv(paste(
+
                     "data/SAD", SAD, "_l_", l, "_inds_", size, "_outernew_",  x, "_.csv", sep="")
+
                     )
                     , error=function(e){data.frame(c(rep(size,8),x))}
                   )
                 tryCatch(file.remove(paste(
+
                   "data/SAD", SAD, "_l_", l, "_inds_", size, "_outernew_",  x, "_.csv", sep="")
+
                 )
                 , error=function(e){
                   print( paste(
                   "data/SAD", SAD, "_l_", l, "_inds_", size
+
                   , "_outernew_",  x, "_.csv   does not exist", sep=""))}
+
                 )
           
                 return(data.frame(out))
           })
       })
+
   }))
   , paste0("data/asy_SAD", SAD, ".csv"), row.names=F)
+
 })     
   
   
   
+#now do the 2 special SADS
+
+map(c(1,7,8,15,22), function(SAD){
+  
+  
+        new<-map_dfr(1:10000, function(x){
+            map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
+              map_dfr(c(-1,0,1), function(l){
+      out<-tryCatch(read.csv(paste(
+          "data/SAD_special_", SAD, "_l_", l, "_inds_", size, "_outernew_",  x, "_.csv", sep="")
+          )
+          , error=function(e){data.frame(c(rep(size,8),x))}
+          )
+          
+      # tryCatch(file.remove(paste(
+      #       "data/SAD_special_", SAD, "_l_", l, "_inds_", size, "_outernew_",  x, "_.csv", sep="")
+      #       )
+      #       , error=function(e){
+      #         print( paste(
+      #         "data/SAD_special_", SAD, "_l_", l, "_inds_", size
+      #         , "_outernew_",  x, "_.csv   does not exist", sep=""))}
+      #         )
+      out
+                    return(data.frame(out))
+        })
+      })
+  })
+        new<-new[!is.null(new[,2])]
+write.csv(new, paste0("data/asy_SAD_special", SAD, ".csv"), row.names=F)
+
+  })    
   
   
   
@@ -54,14 +91,7 @@ map(1:24, function(SAD){
   
   
   
-  
-)
-  
-  
-  
-  
-  
-  
+
 
 #thsi combine: try bind rows of the old and the new. If it works sesms easy to recycles in the loop
 future_map(1:24, function(SAD){
@@ -75,10 +105,13 @@ future_map(1:24, function(SAD){
   )
 })
 
+
 ############## this is kind of nice there was no size on the new trycheckingobs ones so I think I can try this again and get it right. #######
 
 map(1:24, function(SAD){
-    write.csv(
+
+    write.csv(bind_rows(
+
       future_map_dfr(1:100, function(x){
         # map_dfr(rev(round(10^seq(2, 4, 0.25))), function(size){
         
@@ -102,13 +135,25 @@ map(1:24, function(SAD){
           )
           
           return(data.frame(out))
-      })
+
+      }),
+      read.csv(paste0("data/obs_SAD", SAD, ".csv"))
+    )
   # })
-    , paste0("data/obs_SAD", SAD, ".csv"), row.names=F)
-  })      
+    , paste0("data/obs_SAD", SAD, ".csv"),
+  row.names=F)
+})      
 
 
-
+flist<-list.files(path="data", pattern="SAD_special_.*_l_.*_.csv")
+newest_SADS_from_annotate<-future_map_dfr(flist, function(onefile){
+  if(file.size(paste0("data/", onefile))>5){
+  read_csv(paste0("data/",onefile), col_types = cols (.default = "c"))%>% 
+    mutate(SAD_ind=as.numeric(str_split(onefile, pattern="_")[[1]][[3]]))
+  }
+})
+file.info("data/SAD_special_15_l_0_inds_17783_outernew_1000_.csv")$size>10
+str_split("data/SAD_special_15_l_0_inds_17783_outernew_1000_.csv", pattern="_")
 # 
 # obs<-future_map(my_obs_cps_sofar, function(rep){
 #   map(rep, function(SAD){
