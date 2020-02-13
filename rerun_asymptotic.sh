@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1 # Number of tasks 
 #SBATCH --cpus-per-task=1 # Number of CPUs per task 
 #SBATCH --mem=192GB # Requested memory 
-#SBATCH --array=0-71 # Array job will submit 71 jobs
+#SBATCH --array=0-1091 # Array job will submit 71 jobs
 #SBATCH --time=72:00:00 # Total run time limit (HH:MM:SS)
 #SBATCH --output=slurm.%N.%j.out # STDOUT file 
 #SBATCH --error=slurm.%N.%j.err  # STDERR file 

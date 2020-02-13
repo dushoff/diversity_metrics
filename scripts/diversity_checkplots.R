@@ -86,31 +86,31 @@ SADs_list<-map(c("lnorm", "gamma"), function(distr){
 
 ##############
 # make rank abundance distributions
-# myabs<-map_dfr(flatten(flatten(SADs_list)) #, function(x) data.frame(names(x)))
-#                , function(x){data.frame(ab=x$rel_abundances)}
-#                , .id="SAD")
-# 
-# 
-# pdf("figures/RAD_for_extreme_SADs_rich_200.pdf")
-# myabs %>% left_join(data.frame(
-#   SAD=as.character(1:24)
-#   , skew=factor(c("uneven", "int","int", "int","int", "even"), levels=c("uneven", "int", "even"))
-#   , dist=factor(c(rep("lognormal", 12), rep("gamma", 12)), levels=c("lognormal", "gamma"))
-# )) %>% 
-#   mutate(abD=paste(dist, skew)) %>% 
-#   group_by(SAD, abD, dist, skew) %>% 
-#   mutate(abrank=min_rank(desc(ab)), log_relative_abundance=log(ab), relative_abundance=ab) %>% 
-#   gather(scl, rel_abund, relative_abundance, log_relative_abundance )%>% 
-#   filter(SAD %in% c("7","10","12","19","22","24")) %>% 
-#   ggplot(aes(abrank, rel_abund, color=dist))+
-#     geom_point(alpha=0.1, size=1)+
-#     geom_line(size=.4, alpha=0.1)+
-#     theme_classic()+
-#     theme(text=element_text(size=16))+
-#     labs(x="abundance rank", y="", color="", shape="")+
-#     facet_grid(fct_rev(scl)~skew, scales="free", switch="y", labeller=remsub)
-# dev.off()               
-# 
+myabs<-map_dfr(flatten(flatten(SADs_list)) #, function(x) data.frame(names(x)))
+               , function(x){data.frame(ab=x$rel_abundances)}
+               , .id="SAD")
+
+
+pdf("figures/RAD_for_extreme_SADs_rich_200.pdf")
+myabs %>% left_join(data.frame(
+  SAD=as.character(1:24)
+  , skew=factor(c("uneven", "int","int", "int","int", "even"), levels=c("uneven", "int", "even"))
+  , dist=factor(c(rep("lognormal", 12), rep("gamma", 12)), levels=c("lognormal", "gamma"))
+)) %>%
+  mutate(abD=paste(dist, skew)) %>%
+  group_by(SAD, abD, dist, skew) %>%
+  mutate(abrank=min_rank(desc(ab)), log_relative_abundance=log(ab), relative_abundance=ab) %>%
+  gather(scl, rel_abund, relative_abundance, log_relative_abundance )%>%
+  filter(SAD %in% c("7","10","12","19","22","24")) %>%
+  ggplot(aes(abrank, rel_abund, color=dist))+
+    geom_point(alpha=0.3, size=1)+
+    geom_line(size=.4, alpha=0.3)+
+    theme_classic()+
+    theme(text=element_text(size=16))+
+    labs(x="abundance rank", y="", color="", shape="")+
+    facet_grid(fct_rev(scl)~skew, scales="free", switch="y", labeller=remsub)
+dev.off()
+
 
 
 ####################################
@@ -185,33 +185,37 @@ checkplot_inf<-function(SAD, B=2000, l, inds, reps){
 #   })
 # })
 
-
-map(c(rev(1:24)), function(SAD){
+# running this will copy over existing files, 
+# but maybe this is a good way to get things going on amarel and see smaller pieces more quickly
+# mninor adjustments to run in /scratch directory
+map(c(rev(1:28)), function(SAD){
   map(c(-1,0,1), function(l){
-    p<-SAD*3-2+l
+    map(1:13, function(size_ind){
+      
+      p<-(SAD*3-2+l)+(size_ind-1)*84
 
 mycode<-c(
-  "source(\"scripts/checkplot_initials.R\")"
-,  "source(\"scripts/checkplot_inf.R\")"
+  "source(\"/home/roswell/diversity_metrics/scripts/checkplot_initials.R\")"
+,  "source(\"/home/roswell/diversity_metrics/scripts/checkplot_inf.R\")"
 ,  "reps<-50"
 , "outerreps<-1000"
+, "size<-rev(round(10^seq(2, 5, 0.25)))[size_ind]"
 , "nc<-12"
 , "plan(strategy=multisession, workers=nc)"
 
 , "map(rev(1:outerreps), function(x){"
-, "    map(rev(round(10^seq(2, 5, 0.25))), function(size){"
+
 , "        start<-Sys.time()"
         
 , paste0("out<-checkplot_inf(flatten(flatten(SADs_list))[[", SAD, "]], l=", l, ", inds=size, reps=reps)")
-,         paste0("write.csv(out, paste(\"data/SAD", SAD, "\",\"l\",", l, ",\"inds\", size, \"outernew\",  x, \".csv\", sep=\"_\"), row.names=F)")
+,         paste0("write.csv(out, paste(\"/scratch/SAD", SAD, "\",\"l\",", l, ",\"inds\", size, \"outernew\",  x, \".csv\", sep=\"_\"), row.names=F)")
 , "rm(out)"
 ,       "print(Sys.time()-start)"
-,      "})"
 
 , "})")
-
+print(p)
 write_lines(mycode, paste0("scripts/asy_",p, ".R"))
-
+    })
   })
 })
   

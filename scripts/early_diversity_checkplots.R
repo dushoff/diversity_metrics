@@ -57,7 +57,7 @@ future_map(1:24, function(SAD){
       filter(l==ell) %>%
       checkplot(facets=15)+
       theme_classic()+
-      facet_wrap(~size, scales="free", nrow=3, labeller=function(x){paste0("N = ", x)})+
+      facet_wrap(~size, scales="free", nrow=3)+
       theme(panel.spacing.x = unit(1, "lines"), title=element_text(size=12))+
       scale_x_continuous(expand=c(0,0))+
       ggtitle(paste(paste0("sample "
@@ -68,7 +68,7 @@ future_map(1:24, function(SAD){
                             ,"\n"
                             , pst_names(SADinfo$community_info) 
                             , collapse = ", "
-                            , sep = " ")
+                            , sep = "")
               )
   })
 })
@@ -179,6 +179,38 @@ map(1:24, function(SAD){
 dev.off()
 
 
+############
+# figures with select results for main text. 
+pdf("figures/obs_SlugPlot_main.pdf", height=6, width=4)
+map(c(1,6,13,18), function(SAD){
+  SADinfo<-flatten(flatten(SADs_list))[[SAD]]
+  bigdl<-read_bigs("data/obs", SAD) %>% 
+    mutate(hilld=c("richness", "Hill-Shannon", "Hill-Simpson")[2-l]) %>%
+    mutate(hilld=factor(hilld, levels=c("richness", "Hill-Shannon", "Hill-Simpson"))) %>% 
+    mutate(est=obsD)
+  map(c(-1,0,1), function(ell){
+    
+    slugs<- map(c(100, 316, 10000), function(inds){
+      mydl<-bigdl %>% filter(size==inds, l==ell)
+      mydl %>% filter(!is.na(p))  %>%
+        rangePlot(title=paste0("sample N = ", inds))+
+        theme(title=element_text(size=7))
+    })
+    grid.arrange(grobs=slugs, ncol=1, top = textGrob(paste(paste0("observed "
+                                                                  , c("richness", "Hill-Shannon", "Hill-Simpson")[2-ell]
+                                                                  , " slugplot")
+                                                           ,"\n"
+                                                           , pst_names(SADinfo$distribution_info)
+                                                           ,"\n"
+                                                           , pst_names(SADinfo$community_info) 
+                                                           , collapse = ", "
+                                                           , sep = " ")
+                                                     , gp=gpar(fontsize=8,font=3)))
+  })
+})
+dev.off()
+
+
 # pdf("figures/first_new_cps.pdf", height=4.5, width=8)
 # 
 #    # map(c(-1,0,1), function(l){
@@ -236,7 +268,7 @@ sdlogs<-getug2  %>%
 #just look at the two new SADs
 # newsdlogs<-sdlogs(getnewSADs)
 
-newsdlogs<-sdlogs(amarelSADS)
+newsdlogs<-sdlogs(newest_SADS_from_annotate)
 amasdlogs<-sdlogs(getug)
 
 # #repeat for obs only
@@ -292,7 +324,7 @@ for(et in c("asymptotic estimator", "sample diversity")){
 
 
 
-pdf(file="figures/sampling_variability_unskewed.pdf", width=11, height=8.5)
+pdf(file="figures/sampling_variability_skewed_2.pdf", width=11, height=8.5)
 
  map(c("asymptotic estimator", "sample diversity"), function(et){
   dat<-newsdlogs %>% 
@@ -324,7 +356,7 @@ map(c(1,7,8,15,22), function(SAD){
 
 
 #look at SDlog of estimates
-<<<<<<< HEAD
+
 pdf("figures/ugly_variability_in_obsD.pdf")
 sdlogs_O %>% ggplot(aes(size, sdlog, color=factor(l), shape=factor(l)))+
   geom_point()+
@@ -336,7 +368,4 @@ sdlogs_O %>% ggplot(aes(size, sdlog, color=factor(l), shape=factor(l)))+
   labs(x="sample size", y=paste0("SD of log(observed diversity) under random sampling"))
 
 dev.off()
-=======
-  
-  
-  >>>>>>> a9bc6c38c1d2521ff2203fe88bda2821b1ae992a
+
