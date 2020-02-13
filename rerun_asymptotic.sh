@@ -15,4 +15,4 @@ module load intel/17.0.4
 
 module load R-Project/3.4.1
 
-srun Rscript scripts/asy_$SLURM_ARRAY_TASK_ID.R 
+srun Rscript /home/mr984/diversity_metrics/scripts/asy_$SLURM_ARRAY_TASK_ID.R 

@@ -195,8 +195,8 @@ map(c(rev(1:28)), function(SAD){
       p<-(SAD*3-2+l)+(size_ind-1)*84
 
 mycode<-c(
-  "source(\"/home/roswell/diversity_metrics/scripts/checkplot_initials.R\")"
-,  "source(\"/home/roswell/diversity_metrics/scripts/checkplot_inf.R\")"
+  "source(\"/home/mr984/diversity_metrics/scripts/checkplot_initials.R\")"
+,  "source(\"/home/mr984/diversity_metrics/scripts/checkplot_inf.R\")"
 ,  "reps<-50"
 , "outerreps<-1000"
 , "size<-rev(round(10^seq(2, 5, 0.25)))[size_ind]"
