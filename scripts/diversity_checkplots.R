@@ -208,7 +208,7 @@ mycode<-c(
 , "        start<-Sys.time()"
         
 , paste0("out<-checkplot_inf(flatten(flatten(SADs_list))[[", SAD, "]], l=", l, ", inds=size, reps=reps)")
-,         paste0("write.csv(out, paste(\"/scratch/SAD", SAD, "\",\"l\",", l, ",\"inds\", size, \"outernew\",  x, \".csv\", sep=\"_\"), row.names=F)")
+,         paste0("write.csv(out, paste(\"/scratch/mr984/SAD", SAD, "\",\"l\",", l, ",\"inds\", size, \"outernew\",  x, \".csv\", sep=\"_\"), row.names=F)")
 , "rm(out)"
 ,       "print(Sys.time()-start)"
 
