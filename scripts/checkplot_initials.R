@@ -2,7 +2,7 @@
 #############
 #load functions and packages
 library(furrr)#parallelization
-source("/home/mr984/scripts/helper_funs/uniroot_gamma_and_lnorm.R")
+source("/home/mr984/diversity_metrics/scripts/helper_funs/uniroot_gamma_and_lnorm.R")
 # source("/Rstudio_Git/Dushoff_diversity/scripts/helper_funs/radplot.R")
 # source("scripts/helper_funs/prettify.R")
 library(scales)#trans_breaks
