@@ -199,7 +199,7 @@ mycode<-c(
 ,  "source(\"/home/mr984/diversity_metrics/scripts/checkplot_inf.R\")"
 ,  "reps<-50"
 , "outerreps<-1000"
-, "size<-rev(round(10^seq(2, 5, 0.25)))[size_ind]"
+, "size<-rev(round(10^seq(2, 5, 0.25)))[", size_ind, "]"
 , "nc<-12"
 , "plan(strategy=multisession, workers=nc)"
 

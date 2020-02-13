@@ -2,7 +2,9 @@ source("/home/mr984/diversity_metrics/scripts/checkplot_initials.R")
 source("/home/mr984/diversity_metrics/scripts/checkplot_inf.R")
 reps<-50
 outerreps<-1000
-size<-rev(round(10^seq(2, 5, 0.25)))[size_ind]
+size<-rev(round(10^seq(2, 5, 0.25)))[
+7
+]
 nc<-12
 plan(strategy=multisession, workers=nc)
 map(rev(1:outerreps), function(x){
