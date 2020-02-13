@@ -10,7 +10,7 @@
 #SBATCH --output=slurm.%N.%j.out # STDOUT file 
 #SBATCH --error=slurm.%N.%j.err  # STDERR file 
 
-
+cd /scratch/mr984
 module load intel/17.0.4
 
 module load R-Project/3.4.1
