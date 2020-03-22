@@ -17,4 +17,4 @@ module load intel/17.0.4
 
 module load R-Project/3.4.1
 
-srun Rscript scripts/acutal_diversity_coverage.R 
+srun Rscript scripts/actual_diversity_coverage.R 

@@ -30,29 +30,31 @@ lnorm_comm<-fit_SAD(rich=richness, simpson=simpson, dstr="lnorm")
 
 # 2) from each SAD, take 1e4 samples at 10 sample sizes from say 1e1 to 1e4.
 # 
-nc<-25
-plan(strategy = multiprocesses, workers = nc)
+nc<-24
+plan(strategy = multiprocess, workers = nc)
 
 reps<-1e4
 SS<-c(10^c(1:5), 5*10^c(1:5))
-
+clist<-list("gamma_comm"=gamma_comm, 
+        "lnorm_comm"=lnorm_comm)
 tic()
 baseline_samples<-future_map_dfr(1:reps
-                                 # , .options = future_options(globals = c("reps", "SS", "gamma_comm", "lnorm_comm", "sample_infinite"
+                                  # , .options = future_options(globals(structure=T, add=c("reps", "SS", "gamma_comm", "lnorm_comm", "sample_infinite"
                                  # , "dfun", "compute_cov"))
                                  , function(rep){
                                      map_dfr(SS, function(indis){
-                                         map_dfr(c("gamma_comm", "lnorm_comm"), function(SAD){
-                                             mydst=get(SAD, envir=.GlobalEnv)[[3]]
+                                         map_dfr(1:length(clist), function(SAD){
+                                             mydst=clist[[SAD]][[3]]
                                              myabs=sample_infinite(mydst, indis)
                                              # 3) For each sample, compute true coverage, Hill diversity with ell={-1,0,1}
                                              # 
                                              rich=sum(myabs>0)
                                              shan=dfun(myabs,0)
                                              simp=dfun(myabs,-1)
-                                             cov=(myabs>0)*mydst
+                                             cov=sum((myabs>0)*mydst)
                                              
-                                             return(data.frame(t(myabs), SS=SS, comm=SAD, rich=rich, shan=shan, simp=simp, tc=cov))
+                                             return(data.frame(t(myabs), SS=indis, comm=names(clist)[SAD]
+                                                               , rich=rich, shan=shan, simp=simp, tc=cov))
                                          })
                                      })
                                  })
