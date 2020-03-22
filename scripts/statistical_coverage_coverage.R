@@ -1,11 +1,3 @@
-#check statistical coverage for CI for coverage-standardized samples
-
-# CI for coverage-based rarefaction test plan. Goal is to test statistical coverage of these CI, but not necessarily to "checkplot" them, in that nuance beyond whether they are shifted high/low vs. simply to narrow might not be clear from this and that's ok.
-# 
-
-
-# 3) For each sample, compute true coverage, Hill diversity with ell={-1,0,1}
-# 
 # 4)  for each SAD, bin observations, say 100 at a time, by true coverage. This means that in each bin you'd have 100 samples of very similar true coverage, they may have a variety of different sample sizes.
 # 
 # 5) For each bin, make a boxplot or similar for each Hill number. Goal is to visualize mean diversity given coverage, and the distribution. Should be clean-looking. Record mean diversity, mean coverage for each bin, hill number.
@@ -21,75 +13,15 @@
 # 
 # 8) Bonus, but might want to do this earlier and with a simple small dataset: biplot of true coverage and Chao's estimated coverage. Lost track of data from the other day and so going to backburner this for now and get all of this up and running on big computer asap.
 # 
-#0 Load some libraries and functions
-library(furrr)
-source("scripts/helper_funs/uniroot_gamma_and_lnorm.R")
-# source("scripts/helper_funs/estimation_funs.R")
-R_FUTURE_FORK_ENABLE=T
-library(iNEXT)
-library(tictoc)
-library(data.table)
-
-
-# 1: simulate 2 SADS. More is unweildy. Have same Richness (100-200 ish), Evenness (realistic) but one lognormal and the other gamma shaped.
-
-# simulate full a few full communities. Using a nice eveness like 0.3 leads to a weird simpson of 60.7. Fine
-
-
-richness<-200
-even<-0.3
-simpson<-even*(richness-1)+1
-
-gamma_comm<-fit_SAD(rich=richness, simpson=simpson, dstr="gamma")
-lnorm_comm<-fit_SAD(rich=richness, simpson=simpson, dstr="lnorm")
-
-# 2) from each SAD, take 1e4 samples at 10 sample sizes from say 1e1 to 1e4.
-# 
-nc<-7
-plan(strategy = multiprocess, workers = nc)
-
-reps<-7
-SS<-c(10^c(1:5), 5*10^c(1:5))
-
-tic()
-baseline_samples<-future_map_dfr(1:reps
-     # , .options = future_options(globals = c("reps", "SS", "gamma_comm", "lnorm_comm", "sample_infinite"
-                                             # , "dfun", "compute_cov"))
-     , function(rep){
-    map_dfr(SS, function(indis){
-        map_dfr(c("gamma_comm", "lnorm_comm"), function(SAD){
-            mydst=get(SAD, envir=.GlobalEnv)[[3]]
-            print(mydst)
-            myabs=sample_infinite(mydst, indis)
-            rich=sum(myabs>0)
-            shan=dfun(myabs,0)
-            simp=dfun(myabs,-1)
-            cov=(myabs>0)*mydst
-            
-            return(data.frame(myabs, SS=SS, comm=SAD, rich=rich, shan=shan, simp=simp))
-        })
-    })
-})
-toc()
-
-
-
-
-#that was kinda dumb I forgot some important info.
-fwrite(baseline_samples %>% 
-           rowwise() %>% 
-           summarize(SS=sum(.)) %>% 
-           mutate(comm=c("gamma", "lognormal"))
-       , "data/comm_samp.csv" )
 
 bs<-fread("data/comm_samp.csv")
 
-# 3) For each sample, compute true coverage, Hill diversity with ell={-1,0,1}
 
 
 
 
-somedata_to_think_about<-map_dfr(seq(100,1500, 200), function(SS){
+choaex
+somedata_to_think_about<-map_dfr(SS, function(ss){
     future_map_dfr(1:reps, function(rep){
         map_dfr(1:100, function(myrep){
             #draw a finite sample of size=SS
