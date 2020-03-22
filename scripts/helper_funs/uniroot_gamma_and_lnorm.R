@@ -2,7 +2,9 @@
 
 #returns a list. First element is SAD type and shape parameter. Second element is summary community info (total abundance, richness, shannon, simpson). Final element is abundance vector. 0 abundances throw warning but not error. 
 
-source("/home/mr984/diversity_metrics/scripts/helper_funs/estimation_funs.R")
+# source("/home/mr984/diversity_metrics/scripts/helper_funs/estimation_funs.R")
+
+source("scripts/helper_funs/estimation_funs.R")
 
 #define variables but also give them values for messing with
 # totAb<-1e7 #total true abundance in community
