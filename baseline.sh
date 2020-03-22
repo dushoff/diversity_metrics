@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=25 # Number of CPUs per task 
 #SBATCH --mem=192GB # Requested memory 
 # commonted out maybe SBATCH --array=0-1091 # Array job will submit 71 jobs
-#SBATCH --time=14:00:00 # Total run time limit (HH:MM:SS)
+#SBATCH --time=3:00:00 # Total run time limit (HH:MM:SS)
 #SBATCH --output=slurm.%N.%j.out # STDOUT file 
 #SBATCH --error=slurm.%N.%j.err  # STDERR file
 #SBATCH --requeue # Return job to the queue if preempted
