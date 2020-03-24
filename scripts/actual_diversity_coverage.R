@@ -33,8 +33,8 @@ lnorm_comm<-fit_SAD(rich=richness, simpson=simpson, dstr="lnorm")
 nc<-24
 plan(strategy = multiprocess, workers = nc)
 
-reps<-1e4
-SS<-c(10^c(1:5), 5*10^c(1:5))
+reps<-5e3
+# SS<-c(10^c(1:5), 5*10^c(1:5))
 clist<-list("gamma_comm"=gamma_comm, 
         "lnorm_comm"=lnorm_comm)
 tic()
@@ -42,22 +42,21 @@ baseline_samples<-future_map_dfr(1:reps
                                   # , .options = future_options(globals(structure=T, add=c("reps", "SS", "gamma_comm", "lnorm_comm", "sample_infinite"
                                  # , "dfun", "compute_cov"))
                                  , function(rep){
-                                     map_dfr(SS, function(indis){
-                                         map_dfr(1:length(clist), function(SAD){
-                                             mydst=clist[[SAD]][[3]]
-                                             myabs=sample_infinite(mydst, indis)
-                                             # 3) For each sample, compute true coverage, Hill diversity with ell={-1,0,1}
-                                             # 
-                                             rich=sum(myabs>0)
-                                             shan=dfun(myabs,0)
-                                             simp=dfun(myabs,-1)
-                                             cov=sum((myabs>0)*mydst)
-                                             
-                                             return(data.frame(t(myabs), SS=indis, comm=names(clist)[SAD]
-                                                               , rich=rich, shan=shan, simp=simp, tc=cov))
-                                         })
-                                     })
+                                 indis<-runif(1, 5e1, 5e3)
+                                     map_dfr(1:length(clist), function(SAD){
+                                         mydst=clist[[SAD]][[3]]
+                                         myabs=sample_infinite(mydst, indis)
+                                         # 3) For each sample, compute true coverage, Hill diversity with ell={-1,0,1}
+                                         # 
+                                         rich=sum(myabs>0)
+                                         shan=dfun(myabs,0)
+                                         simp=dfun(myabs,-1)
+                                         cov=sum((myabs>0)*mydst)
+                                         
+                                         return(data.frame(t(myabs), SS=indis, comm=names(clist)[SAD]
+                                                           , rich=rich, shan=shan, simp=simp, tc=cov))
                                  })
+                             })
 toc()
 
 
@@ -65,4 +64,4 @@ toc()
 
 #write to disk.
 fwrite(baseline_samples
-       , "data/comm_samp.csv" )
+       , "data/comm_samp_short.csv" )

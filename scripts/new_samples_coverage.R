@@ -9,7 +9,7 @@
 # 
 
 #load communities from before 
-load(my_coms.RData)
+load("my_coms.RData")
 
 library(furrr)
 source("scripts/helper_funs/uniroot_gamma_and_lnorm.R")
@@ -23,9 +23,9 @@ bs<-fread("data/comm_samp.csv")
 
 
 SS<-c(100, 200, 500, 1000, 2000, 5000, 1000)
-reps<-400
+reps<-4
 
-nc<-24
+nc<-4
 plan(strategy = multiprocess, workers = nc)
 
 
@@ -44,7 +44,7 @@ compare_samples<-future_map_dfr(1:reps
                                              shan=dfun(myabs,0)
                                              simp=dfun(myabs,-1)
                                              cov=sum((myabs>0)*mydst)
-                                             ecov<-iNEXT:::Chat.Ind(maybs)
+                                             ecov<-iNEXT:::Chat.Ind(myabs, sum(myabs>0))
                                              return(data.frame(t(myabs), SS=indis, comm=names(clist)[SAD]
                                                                , rich=rich, shan=shan, simp=simp, tc=cov, ec=ecov))
                                          })
