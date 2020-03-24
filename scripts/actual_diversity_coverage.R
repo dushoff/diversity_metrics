@@ -15,7 +15,6 @@ library(iNEXT)
 library(tictoc)
 library(data.table)
 
-
 # 1: simulate 2 SADS. More is unweildy. Have same Richness (100-200 ish), Evenness (realistic) but one lognormal and the other gamma shaped.
 
 # simulate full a few full communities. Using a nice eveness like 0.3 leads to a weird simpson of 60.7. Fine
@@ -30,10 +29,10 @@ lnorm_comm<-fit_SAD(rich=richness, simpson=simpson, dstr="lnorm")
 
 # 2) from each SAD, take 1e4 samples at 10 sample sizes from say 1e1 to 1e4.
 # 
-nc<-24
+nc<-24 #24 on amarel
 plan(strategy = multiprocess, workers = nc)
 
-reps<-5e3
+reps<-1e5
 # SS<-c(10^c(1:5), 5*10^c(1:5))
 clist<-list("gamma_comm"=gamma_comm, 
         "lnorm_comm"=lnorm_comm)
@@ -65,3 +64,8 @@ toc()
 #write to disk.
 fwrite(baseline_samples
        , "data/comm_samp_short.csv" )
+
+
+bs_short<-baseline_samples[,-c(1:200)] %>%
+    gather(dtype, div, rich, shan, simp)
+

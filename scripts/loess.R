@@ -3,7 +3,7 @@ library(data.table)
 library(tidyverse)
 library(furrr)
 plan(strategy=multiprocess, workers=6)
-bs<-fread("data/comm_samp.csv")
+bs<-fread("data/comm_samp_short.csv")
 
 bs_short<-bs[,-c(1:200)] %>%
     gather(dtype, div, rich, shan, simp)
