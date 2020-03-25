@@ -9,7 +9,7 @@ tic()
 csamples<-fread("data/new_samples_for_rarefaction.csv")
 logit<-function(x){log(x/(1-x))}
 invlogit<-function(x)(exp(x)/(1+exp(x)))
-target<-invlogit(seq(0.5, 5, 0.25))[
+clev<-invlogit(seq(0.5, 5, 0.25))[
 10
 ]
 toc()
@@ -17,7 +17,6 @@ print("read")
 plan(strategy=multiprocess, workers=24)
 csamples<-csamples %>% mutate(rowind=1:nrow(csamples))
 tic()
-the_chao_estimates<-map(targets, function(clev){
   one_level<-future_map_dfr(1:nrow(csamples), function(rown){
               data.frame(estimateD(
             as.numeric(csamples[rown, 1:200])
@@ -30,6 +29,4 @@ the_chao_estimates<-map(targets, function(clev){
     })
     fwrite(one_level, file=paste0("data/coverage_rarefaction_at_",clev, ".csv"))
    print(paste0("wrote", clev))
-})
 toc()
-print("crunched")

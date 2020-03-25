@@ -26,7 +26,7 @@ map(c(1:13), function(tar){
         ,"logit<-function(x){log(x/(1-x))}"
         ,"invlogit<-function(x)(exp(x)/(1+exp(x)))"
         
-        , "target<-invlogit(seq(0.5, 5, 0.25))["
+        , "clev<-invlogit(seq(0.5, 5, 0.25))["
         , tar, "]"
         , "toc()"
         , "print(\"read\")"
@@ -36,7 +36,7 @@ map(c(1:13), function(tar){
         
         
         , "tic()"
-        , "the_chao_estimates<-map(targets, function(clev){"
+    
         , "  one_level<-future_map_dfr(1:nrow(csamples), function(rown){"
         , "              data.frame(estimateD("
         , "            as.numeric(csamples[rown, 1:200])"
@@ -50,9 +50,7 @@ map(c(1:13), function(tar){
         , "    fwrite(one_level, file=paste0(\"data/coverage_rarefaction_at_\",clev, \".csv\"))"
         , "   print(paste0(\"wrote\", clev))"
         
-        , "})" 
         , "toc()"
-        , "print(\"crunched\")"
     )
     
     write_lines(mycode, paste0("scripts/raref_for_test_", tar-1, ".R"))
