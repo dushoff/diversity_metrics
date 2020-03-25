@@ -47,9 +47,7 @@ map(c(1:13), function(tar){
         ,"            , rowind=rown"
         , "        )"
         , "    })"
-        , "    fwrite(one_level, file=paste0(\"data/coverage_rarefaction_at_\","
-        , tar
-        , " \".csv\"))"
+        , "    fwrite(one_level, file=paste0(\"data/coverage_rarefaction_at_\",clev, \".csv\"))"
         , "   print(paste0(\"wrote\", clev))"
         
         , "})" 

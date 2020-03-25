@@ -28,9 +28,7 @@ the_chao_estimates<-map(targets, function(clev){
             , rowind=rown
         )
     })
-    fwrite(one_level, file=paste0("data/coverage_rarefaction_at_",
-5
- ".csv"))
+    fwrite(one_level, file=paste0("data/coverage_rarefaction_at_",clev, ".csv"))
    print(paste0("wrote", clev))
 })
 toc()
