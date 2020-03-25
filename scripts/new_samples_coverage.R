@@ -19,13 +19,13 @@ library(tictoc)
 library(data.table)
 #
 
-bs<-fread("data/comm_samp.csv")
+# bs<-fread("data/comm_samp.csv")
 
 
-SS<-c(100, 200, 500, 1000, 2000, 5000, 1000)
-reps<-4
+SS<-c(seq(100, 2000, 100))
+reps<-5e3
 
-nc<-4
+nc<-24
 plan(strategy = multiprocess, workers = nc)
 
 
@@ -51,3 +51,5 @@ compare_samples<-future_map_dfr(1:reps
                                      })
                                  })
 toc()
+
+fwrite(compare_samples, "data/new_samples_for_rarefaction.csv")

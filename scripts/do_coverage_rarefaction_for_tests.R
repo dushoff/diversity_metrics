@@ -21,19 +21,25 @@ library(tictoc)
 
 # we have some kind of results to read in
 tic()
-csamples<-fread("data/new_samples_for_comparison.csv")
-targets<-fread("data/mean_obs_cov.csv")
+csamples<-fread("data/new_samples_for_rarefaction.csv")
+
+logit<-function(x){log(x/(1-x))}
+invlogit<-function(x)(exp(x)/(1+exp(x)))
+
+targets<-invlogit(seq(0.5, 5, 0.25))
 toc()
 print("read")
 
 # we also have some set of coverages we want, here's a placeholder in case I don't figure it out
-
+plan(strategy=multiprocess, workers=24 )
 # csamples<-baseline_samples from testing
+# csamples<-csamples %>% sample_n(560)
 csamples<-csamples %>% mutate(rowind=1:nrow(csamples))
+
+
 tic()
 the_chao_estimates<-future_map_dfr(1:nrow(csamples), function(rown){
-    targs<-targets %>% fiilter(comm==csamples[rown, "comm"]) %>% pull(tc)
-    map_dfr(targs, function(clev){
+    map_dfr(targets, function(clev){
                data.frame(estimateD(
             as.numeric(csamples[rown, 1:200])
             , base = "coverage"
@@ -48,6 +54,6 @@ toc()
 print("crunched")
 
 tic()
-fwrite(the_chao_estimates, file="data/chaoests.csv")
+fwrite(the_chao_estimates, file="data/chaoests_full.csv")
 toc()
 print("wrote")
