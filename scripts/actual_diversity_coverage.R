@@ -23,7 +23,8 @@ library(data.table)
 richness<-200
 even<-0.3
 simpson<-even*(richness-1)+1
-
+simpson<-50
+even<-(simpson-1)/(richness-1)
 gamma_comm<-fit_SAD(rich=richness, simpson=simpson, dstr="gamma")
 lnorm_comm<-fit_SAD(rich=richness, simpson=simpson, dstr="lnorm")
 
@@ -36,6 +37,8 @@ reps<-1e5
 # SS<-c(10^c(1:5), 5*10^c(1:5))
 clist<-list("gamma_comm"=gamma_comm, 
         "lnorm_comm"=lnorm_comm)
+
+save(clist, file="my_comms.RData")
 tic()
 baseline_samples<-future_map_dfr(1:reps
                                   # , .options = future_options(globals(structure=T, add=c("reps", "SS", "gamma_comm", "lnorm_comm", "sample_infinite"

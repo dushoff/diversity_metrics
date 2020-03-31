@@ -1,4 +1,4 @@
-source("/home/mr984/diversity_metrics/scripts/checkplot_initials.R")
+devtools::install_deps()source("/home/mr984/diversity_metrics/scripts/checkplot_initials.R")
 source("/home/mr984/diversity_metrics/scripts/checkplot_inf.R")
 reps<-50
 outerreps<-1000
