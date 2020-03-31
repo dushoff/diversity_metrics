@@ -21,7 +21,7 @@ map(c(1:13), function(tar){
         
         ,"# we have some kind of results to read in"
         ,"tic()"
-        ,"csamples<-fread(\"data/new_samples_for_rarefaction.csv\")"
+        ,"csamples<-fread(\"data/new_samples_for_rarefaction_2.csv\")"
         
         ,"logit<-function(x){log(x/(1-x))}"
         ,"invlogit<-function(x)(exp(x)/(1+exp(x)))"
@@ -47,7 +47,7 @@ map(c(1:13), function(tar){
         ,"            , rowind=rown"
         , "        )"
         , "    })"
-        , "    fwrite(one_level, file=paste0(\"data/coverage_rarefaction_at_\",clev, \".csv\"))"
+        , "    fwrite(one_level, file=paste0(\"data/coverage_rarefaction_at_\",clev, \"_2.csv\"))"
         , "   print(paste0(\"wrote\", clev))"
         
         , "toc()"
