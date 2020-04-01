@@ -8,7 +8,7 @@ logit<-function(x){log(x/(1-x))}
 invlogit<-function(x)(exp(x)/(1+exp(x)))
 
 plan(strategy=multiprocess, workers=6)
-bs<-fread("data/comm_samp_short.csv")
+bs<-fread("data/comm_samp_short_2.csv")
 
 bs_short<-bs[,-c(1:200)] %>%
     gather(dtype, div, rich, shan, simp)
@@ -16,14 +16,14 @@ bs_short<-bs[,-c(1:200)] %>%
 bs_sub <- bs_short %>% sample_n(5e3)
 
 
-# pdf("figures/loess_smooth_5e4_points.pdf")
-# bs_short %>% sample_n(5e3) %>% 
-#     ggplot(aes(log(tc/(1-tc)), div, color=SS))+
-#     geom_point(alpha=0.1)+
-#     facet_grid(dtype~comm, scales="free_y")+
-#     theme_classic()+
-#     geom_smooth(method="loess", formula=y~x, color="red")#, se=F)
-# dev.off()
+pdf("figures/loess_smooth_5e3_points_2.pdf")
+bs_short %>% sample_n(5e3) %>%
+    ggplot(aes(log(tc/(1-tc)), div, color=SS))+
+    geom_point(alpha=0.1)+
+    facet_grid(dtype~comm, scales="free_y")+
+    theme_classic()+
+    geom_smooth(method="loess", formula=y~x, color="red")#, se=F)
+dev.off()
 
 combo<-bs_short %>% group_by(comm, dtype) %>% summarize(resi=n())
 
@@ -62,4 +62,4 @@ get_predictions<-future_map_dfr(1:6, function(indx){
 
 get_predictions
 
-fwrite(get_predictions, "data/gam_preds.csv")
+fwrite(get_predictions, "data/gam_preds_2.csv")
