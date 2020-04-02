@@ -12,16 +12,16 @@ invlogit<-function(x)(exp(x)/(1+exp(x)))
 find_targ<-function(x){tlist[which.min(abs(tlist-x))]}
 
 #read in general data
-sample_dat<-fread("data/new_samples_for_rarefaction.csv", drop=1:200) %>% 
+sample_dat<-fread("data/new_samples_for_rarefaction_2.csv", drop=1:200) %>% 
     rowid_to_column(var="rowind") 
-gam_preds<-fread("data/gam_preds.csv")
+gam_preds<-fread("data/gam_preds_2.csv")
 
 tlist<-invlogit(seq(0.5,5,0.25))
 
 all_slug<-future_map_dfr(tlist, function(clev){
     tryCatch({
         #read rarefaction data one d.f. at a time
-        newChaoests<-fread(paste0("data/coverage_rarefaction_at_", clev, ".csv"))
+        newChaoests<-fread(paste0("data/coverage_rarefaction_at_", clev, "_2.csv"))
         # filter for only the "rarefied" results, at least for now.
         generous<-newChaoests %>% filter(method=="interpolated")
         rm(newChaoests)
@@ -83,7 +83,7 @@ all_slug<-future_map_dfr(tlist, function(clev){
 })
 
 
-pdf("figures/coverage_rarefaction_CI_too_narrow.pdf")
+pdf("figures/coverage_rarefaction_CI_too_narrow_2.pdf")
 stat_cov_toplot<-all_slug%>% left_join(data.frame(ell=c(-1,0,1), hill=c("Hill-Simpson", "Hill-Shannon", "Richness"))) %>% 
   filter(!is.na(stat_cov)) 
 stat_cov_toplot$hill<-factor(stat_cov_toplot$hill, levels=c("Hill-Simpson", "Hill-Shannon", "Richness"))

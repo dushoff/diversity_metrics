@@ -1,7 +1,7 @@
 library(data.table)
 library(tidyverse)
 library(iNEXT)
-dat<-fread("data/comm_samp_short.csv") 
+dat<-fread("data/comm_samp_short_2.csv") 
 ec_fun<-function(x){abus=as.numeric(x[1:200])
     iNEXT:::Chat.Ind(abus, sum(abus))}
 ec_fun(c(dat[1,]))
@@ -25,7 +25,7 @@ with_ec %>% filter(ec!=1, tc!=1) %>%
     labs(x="true sample coverage", y="estimated sample coverage") #, color="sample size"
 dev.off()
 
-pdf("figures/coverage_estimates_arithmetic_scale.pdf")
+pdf("figures/coverage_estimates_arithmetic_scale_2.pdf")
 with_ec %>% # filter(ec!=1, tc!=1) %>%
     ggplot(aes(tc, ec))+ # color=SS
     geom_abline(slope=1)+
